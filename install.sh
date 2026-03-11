@@ -9,7 +9,7 @@
 #   2. Clones your dotfiles repo to ~/.dotfiles
 #   3. Installs zsh and sets it as default shell
 #   4. Installs zsh plugins (autosuggestions, syntax-highlighting)
-#   5. Installs Starship, applies Tokyo Night preset + OS logo
+#   5. Installs Starship, applies Tokyo Night preset
 #   6. Installs JetBrains Mono Nerd Font
 #   7. Installs Kitty terminal, symlinks kitty.conf from dotfiles
 #   8. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
@@ -129,10 +129,9 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 5. Install Starship + Tokyo Night preset + OS logo
+# 5. Install Starship + Tokyo Night preset
 # -----------------------------------------------------------------------------
 section "Starship"
-
 if ! command -v starship &>/dev/null; then
     info "Installing Starship..."
     curl -fsSL https://starship.rs/install.sh | sh -s -- --yes
@@ -140,60 +139,17 @@ if ! command -v starship &>/dev/null; then
 else
     success "Starship already installed — $(starship --version)"
 fi
-
 STARSHIP_CONFIG="$HOME/.config/starship.toml"
 mkdir -p "$HOME/.config"
-
 if ! grep -q "tokyo-night" "$STARSHIP_CONFIG" 2>/dev/null; then
     info "Applying Tokyo Night preset..."
     starship preset tokyo-night -o "$STARSHIP_CONFIG"
-
-    cat >> "$STARSHIP_CONFIG" << 'EOF'
-
-# -----------------------------------------------------------------------------
-# OS logo — auto-detects distro, shows correct logo on prompt
-# -----------------------------------------------------------------------------
-[os]
-disabled = false
-style = "bold white"
-
-[os.symbols]
-Arch = " "
-Debian = " "
-Ubuntu = " "
-Fedora = " "
-CentOS = " "
-openSUSE = " "
-Manjaro = " "
-NixOS = " "
-Windows = " "
-Macos = " "
-Unknown = " "
-EOF
-
-    python3 - "$STARSHIP_CONFIG" << 'PYEOF'
-import sys
-
-path = sys.argv[1]
-with open(path, 'r') as f:
-    content = f.read()
-
-if 'format = """' in content and '$os' not in content:
-    content = content.replace('format = """', 'format = """\n$os ', 1)
-elif "format = '" in content and '$os' not in content:
-    content = content.replace("format = '", "format = '$os ", 1)
-
-with open(path, 'w') as f:
-    f.write(content)
-
-print("OS logo injected into format")
-PYEOF
-
-    success "Tokyo Night preset applied with OS logo"
+    # Remove hardcoded apple logo from Tokyo Night preset
+    sed -i '/\[  \](bg:#a3aed2 fg:#090c0c)/d' "$STARSHIP_CONFIG"
+    success "Tokyo Night preset applied"
 else
     warn "Starship config already exists — skipping preset"
 fi
-
 # Hook Starship into .zshrc
 if ! grep -q "starship init zsh" "$HOME/.zshrc"; then
     echo "" >> "$HOME/.zshrc"
@@ -203,14 +159,12 @@ if ! grep -q "starship init zsh" "$HOME/.zshrc"; then
 else
     warn "Starship already in ~/.zshrc — skipping"
 fi
-
 # Hook Starship into .bashrc too (fallback)
 if [ -f "$HOME/.bashrc" ] && ! grep -q "starship init bash" "$HOME/.bashrc"; then
     echo "" >> "$HOME/.bashrc"
     echo "# Starship prompt" >> "$HOME/.bashrc"
     echo 'eval "$(starship init bash)"' >> "$HOME/.bashrc"
 fi
-
 # -----------------------------------------------------------------------------
 # 6. Install JetBrains Mono Nerd Font
 # -----------------------------------------------------------------------------
