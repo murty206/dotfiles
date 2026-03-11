@@ -145,7 +145,13 @@ if ! grep -q "tokyo-night" "$STARSHIP_CONFIG" 2>/dev/null; then
     info "Applying Tokyo Night preset..."
     starship preset tokyo-night -o "$STARSHIP_CONFIG"
     # Remove hardcoded apple logo from Tokyo Night preset
-    sed -i '/bg:#a3aed2 fg:#090c0c/d' "$STARSHIP_CONFIG"
+    python3 -c "
+with open('$STARSHIP_CONFIG', 'r') as f:
+    lines = f.readlines()
+lines = [l for l in lines if '090c0c' not in l]
+with open('$STARSHIP_CONFIG', 'w') as f:
+    f.writelines(lines)
+"
     success "Tokyo Night preset applied"
 else
     warn "Starship config already exists — skipping preset"
