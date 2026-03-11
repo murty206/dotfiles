@@ -9,8 +9,10 @@
 #   2. Clones your dotfiles repo to ~/.dotfiles
 #   3. Installs zsh and sets it as default shell
 #   4. Installs zsh plugins (autosuggestions, syntax-highlighting)
-#   5. Installs Starship prompt
-#   6. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
+#   5. Installs Starship, applies Tokyo Night preset + OS logo
+#   6. Installs JetBrains Mono Nerd Font
+#   7. Installs Kitty terminal, symlinks kitty.conf from dotfiles
+#   8. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
 # =============================================================================
 
 set -e
@@ -127,15 +129,69 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 5. Install Starship prompt
+# 5. Install Starship + Tokyo Night preset + OS logo
 # -----------------------------------------------------------------------------
 section "Starship"
+
 if ! command -v starship &>/dev/null; then
     info "Installing Starship..."
     curl -fsSL https://starship.rs/install.sh | sh -s -- --yes
     success "Starship installed"
 else
     success "Starship already installed — $(starship --version)"
+fi
+
+STARSHIP_CONFIG="$HOME/.config/starship.toml"
+mkdir -p "$HOME/.config"
+
+if ! grep -q "tokyo-night" "$STARSHIP_CONFIG" 2>/dev/null; then
+    info "Applying Tokyo Night preset..."
+    starship preset tokyo-night -o "$STARSHIP_CONFIG"
+
+    cat >> "$STARSHIP_CONFIG" << 'EOF'
+
+# -----------------------------------------------------------------------------
+# OS logo — auto-detects distro, shows correct logo on prompt
+# -----------------------------------------------------------------------------
+[os]
+disabled = false
+style = "bold white"
+
+[os.symbols]
+Arch = " "
+Debian = " "
+Ubuntu = " "
+Fedora = " "
+CentOS = " "
+openSUSE = " "
+Manjaro = " "
+NixOS = " "
+Windows = " "
+Macos = " "
+Unknown = " "
+EOF
+
+    python3 - "$STARSHIP_CONFIG" << 'PYEOF'
+import sys
+
+path = sys.argv[1]
+with open(path, 'r') as f:
+    content = f.read()
+
+if 'format = """' in content and '$os' not in content:
+    content = content.replace('format = """', 'format = """\n$os ', 1)
+elif "format = '" in content and '$os' not in content:
+    content = content.replace("format = '", "format = '$os ", 1)
+
+with open(path, 'w') as f:
+    f.write(content)
+
+print("OS logo injected into format")
+PYEOF
+
+    success "Tokyo Night preset applied with OS logo"
+else
+    warn "Starship config already exists — skipping preset"
 fi
 
 # Hook Starship into .zshrc
@@ -156,7 +212,140 @@ if [ -f "$HOME/.bashrc" ] && ! grep -q "starship init bash" "$HOME/.bashrc"; the
 fi
 
 # -----------------------------------------------------------------------------
-# 6. Hook aliases.sh into shell configs
+# 6. Install JetBrains Mono Nerd Font
+# -----------------------------------------------------------------------------
+section "JetBrains Mono Nerd Font"
+
+FONT_DIR="$HOME/.local/share/fonts"
+FONT_CHECK="$FONT_DIR/JetBrainsMonoNerdFont-Regular.ttf"
+
+if [ -f "$FONT_CHECK" ]; then
+    success "JetBrains Mono Nerd Font already installed"
+else
+    info "Downloading JetBrains Mono Nerd Font..."
+    mkdir -p "$FONT_DIR"
+    FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
+    TMP_DIR=$(mktemp -d)
+    curl -fsSL "$FONT_URL" -o "$TMP_DIR/JetBrainsMono.tar.xz"
+    tar -xf "$TMP_DIR/JetBrainsMono.tar.xz" -C "$TMP_DIR"
+    cp "$TMP_DIR"/*.ttf "$FONT_DIR/" 2>/dev/null || true
+    cp "$TMP_DIR"/*.otf "$FONT_DIR/" 2>/dev/null || true
+    rm -rf "$TMP_DIR"
+    fc-cache -f "$FONT_DIR"
+    success "JetBrains Mono Nerd Font installed"
+fi
+
+# -----------------------------------------------------------------------------
+# 7. Install Kitty + symlink config
+# -----------------------------------------------------------------------------
+section "Kitty terminal"
+
+if ! command -v kitty &>/dev/null; then
+    info "Installing Kitty..."
+    if command -v paru &>/dev/null;     then paru -S --noconfirm kitty
+    elif command -v apt &>/dev/null;    then sudo apt install -y kitty
+    elif command -v dnf &>/dev/null;    then sudo dnf install -y kitty
+    fi
+    success "Kitty installed"
+else
+    success "Kitty already installed — $(kitty --version)"
+fi
+
+# Symlink kitty.conf from dotfiles
+KITTY_CONFIG_DIR="$HOME/.config/kitty"
+KITTY_CONFIG="$KITTY_CONFIG_DIR/kitty.conf"
+DOTFILES_KITTY="$DOTFILES_DIR/kitty.conf"
+
+mkdir -p "$KITTY_CONFIG_DIR"
+
+if [ ! -f "$DOTFILES_KITTY" ]; then
+    warn "kitty.conf not found in dotfiles repo — creating default config..."
+    cat > "$DOTFILES_KITTY" << 'EOF'
+# =============================================================================
+# kitty.conf — Murty's Kitty terminal config
+# Managed via dotfiles. Edit here, push to GitHub, run 'update' to sync.
+# =============================================================================
+
+# Font
+font_family      JetBrainsMono Nerd Font
+bold_font        JetBrainsMono Nerd Font Bold
+italic_font      JetBrainsMono Nerd Font Italic
+bold_italic_font JetBrainsMono Nerd Font Bold Italic
+font_size        12.0
+
+# Tokyo Night color scheme
+foreground              #a9b1d6
+background              #1a1b26
+selection_foreground    #1a1b26
+selection_background    #7aa2f7
+cursor                  #c0caf5
+cursor_text_color       #1a1b26
+
+# Black
+color0  #414868
+color8  #414868
+
+# Red
+color1  #f7768e
+color9  #f7768e
+
+# Green
+color2  #9ece6a
+color10 #9ece6a
+
+# Yellow
+color3  #e0af68
+color11 #e0af68
+
+# Blue
+color4  #7aa2f7
+color12 #7aa2f7
+
+# Magenta
+color5  #bb9af7
+color13 #bb9af7
+
+# Cyan
+color6  #7dcfff
+color14 #7dcfff
+
+# White
+color7  #c0caf5
+color15 #c0caf5
+
+# Window
+window_padding_width    8
+background_opacity      0.95
+confirm_os_window_close 0
+
+# Scrollback
+scrollback_lines        10000
+
+# Performance
+repaint_delay           10
+input_delay             3
+sync_to_monitor         yes
+
+# Bell
+enable_audio_bell       no
+EOF
+    success "Default kitty.conf created in dotfiles"
+fi
+
+if [ -L "$KITTY_CONFIG" ]; then
+    warn "kitty.conf symlink already exists — skipping"
+elif [ -f "$KITTY_CONFIG" ]; then
+    warn "Existing kitty.conf found — backing up to kitty.conf.bak"
+    mv "$KITTY_CONFIG" "$KITTY_CONFIG.bak"
+    ln -s "$DOTFILES_KITTY" "$KITTY_CONFIG"
+    success "kitty.conf symlinked from dotfiles"
+else
+    ln -s "$DOTFILES_KITTY" "$KITTY_CONFIG"
+    success "kitty.conf symlinked from dotfiles"
+fi
+
+# -----------------------------------------------------------------------------
+# 8. Hook aliases.sh into shell configs
 # -----------------------------------------------------------------------------
 section "Aliases"
 
@@ -185,11 +374,21 @@ echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}  Install complete!${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
-echo "  Next steps:"
-echo "    1. Log out and back in (or open a new terminal) to start using zsh"
-echo "    2. Run 'update' anytime to pull the latest aliases from GitHub"
+echo "  What was set up:"
+echo "    ✓ zsh (default shell)"
+echo "    ✓ zsh-autosuggestions + zsh-syntax-highlighting"
+echo "    ✓ Starship prompt (Tokyo Night + distro logo)"
+echo "    ✓ JetBrains Mono Nerd Font"
+echo "    ✓ Kitty terminal (Tokyo Night, symlinked config)"
+echo "    ✓ Dotfiles aliases"
 echo ""
-warn "If this is a fresh machine, you may want to set up your SSH key:"
+echo "  Next steps:"
+echo "    1. Log out and back in to start using zsh + Kitty"
+echo "    2. Open Kitty — font and colors are ready"
+echo "    3. Run 'update' anytime to sync latest changes from GitHub"
+echo ""
+warn "Fresh machine? Set up your SSH key for GitHub:"
 echo "    ssh-keygen -t ed25519 -C \"your@email.com\""
-echo "    cat ~/.ssh/id_ed25519.pub  # paste this into GitHub → Settings → SSH keys"
+echo "    cat ~/.ssh/id_ed25519.pub"
+echo "    → paste into: GitHub → Settings → SSH and GPG keys"
 echo ""
