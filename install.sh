@@ -144,15 +144,41 @@ mkdir -p "$HOME/.config"
 if ! grep -q "tokyo-night" "$STARSHIP_CONFIG" 2>/dev/null; then
     info "Applying Tokyo Night preset..."
     starship preset tokyo-night -o "$STARSHIP_CONFIG"
-    # Remove hardcoded apple logo from Tokyo Night preset
-    python3 -c "
+    python3 << PYEOF
 with open('$STARSHIP_CONFIG', 'r') as f:
-    lines = f.readlines()
+    content = f.read()
+
+# Remove hardcoded apple logo
+lines = content.splitlines(keepends=True)
 lines = [l for l in lines if '090c0c' not in l]
+content = ''.join(lines)
+
+# Add $os to format line
+content = content.replace('format = """\n[░▒▓]', 'format = """\n[░▒▓](#a3aed2)[' + chr(0x0024) + 'os](bg:#a3aed2 fg:#090c0c)')
+
+# Append OS module with correct codepoints
+content += '''
+[os]
+disabled = false
+style = "fg:#090c0c bg:#a3aed2 bold"
+
+[os.symbols]
+Arch = "''' + chr(0xf303) + ''' "
+Debian = "''' + chr(0xe77d) + ''' "
+Ubuntu = "''' + chr(0xf31b) + ''' "
+Fedora = "''' + chr(0xf30a) + ''' "
+NixOS = "''' + chr(0xf313) + ''' "
+Mint = "''' + chr(0xf30e) + ''' "
+Macos = "''' + chr(0xf179) + ''' "
+Windows = "''' + chr(0xf17a) + ''' "
+Unknown = "''' + chr(0xf233) + ''' "
+'''
+
 with open('$STARSHIP_CONFIG', 'w') as f:
-    f.writelines(lines)
-"
-    success "Tokyo Night preset applied"
+    f.write(content)
+print("Starship config updated")
+PYEOF
+    success "Tokyo Night preset applied with OS logo"
 else
     warn "Starship config already exists — skipping preset"
 fi
