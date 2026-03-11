@@ -1,29 +1,26 @@
 # dotfiles
 
-My portable shell aliases and configuration, works on any Linux distro.
+My portable shell environment. One command sets up everything on any Linux machine.
 
-## Contents
+## What gets installed
 
-| File | Description |
-|------|-------------|
-| `aliases.sh` | All aliases, functions, and shell config |
-| `install.sh` | One-command installer for new machines |
+| Component | Details |
+|-----------|---------|
+| zsh | Set as default shell |
+| zsh-autosuggestions | Fish-like command suggestions |
+| zsh-syntax-highlighting | Command highlighting as you type |
+| Starship | Tokyo Night prompt with distro logo |
+| JetBrains Mono Nerd Font | Installed system-wide |
+| Kitty | GPU terminal, Tokyo Night colors, config synced via dotfiles |
+| aliases.sh | Portable aliases and functions |
 
 ## Install on a new machine
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<your-username>/dotfiles/main/install.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/murty206/dotfiles/main/install.sh)
 ```
 
-Then reload your shell:
-```bash
-source ~/.zshrc   # or source ~/.bashrc
-```
-
-The installer will:
-- Install git if missing (supports apt, dnf, paru)
-- Clone this repo to `~/.dotfiles`
-- Hook `aliases.sh` into `~/.zshrc` and `~/.bashrc`
+The installer skips anything already set up, so it's safe to run multiple times.
 
 ## Update aliases on any machine
 
@@ -33,13 +30,21 @@ update
 
 Pulls latest from GitHub and reloads aliases instantly.
 
+## Files
+
+| File | Description |
+|------|-------------|
+| `aliases.sh` | All aliases, functions, and shell config |
+| `kitty.conf` | Kitty terminal config (Tokyo Night + JetBrains Mono) |
+| `install.sh` | One-command installer |
+
 ## What's in aliases.sh
 
 | Section | Key aliases |
 |---------|-------------|
 | Navigation | `..` `...` `ll` |
-| System | `cls` `reload` `hist` `df` `free` `cp` `mv` |
-| Package management | `up` `i` `rm-pkg` `search` (auto-detects distro) |
+| System | `cls` `reload` `hist` `df` `free` `cp` `mv` `watch` |
+| Package management | `up` `i` `rm-pkg` `search` `pkg-info` (auto-detects distro) |
 | Power | `r` `poweroff` `poweroff-timer-on/off` |
 | Systemd | `svs` `sr` `sS` `st` `sl` `jl` `jf` |
 | Python | `py` `venv` `activate` `pipi` `pipr` |
@@ -67,10 +72,14 @@ venv                # create .venv if needed, then activate
 canup [iface] [bps] # bring up CAN interface — defaults: can0, 500000
 extract <file>      # extract any archive format
 bak <file>          # quick backup — appends .bak
+update              # pull latest dotfiles from GitHub and reload
 ```
 
 ## Adding new aliases
 
-1. Edit `aliases.sh`
-2. Commit and push to GitHub
-3. Run `update` on any machine to pull changes
+```bash
+e ~/dotfiles/aliases.sh
+cd ~/dotfiles && git add . && git commit -m "new aliases" && git push
+# then on other machines:
+update
+```
