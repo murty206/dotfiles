@@ -17,7 +17,7 @@
 
 set -e
 
-REPO_URL="https://github.com/murty206/dotfiles.git"
+REPO_URL="git@github.com:murty206/dotfiles.git"
 DOTFILES_DIR="$HOME/.dotfiles"
 ALIAS_LINE="[ -f \"\$HOME/.dotfiles/aliases.sh\" ] && source \"\$HOME/.dotfiles/aliases.sh\""
 
