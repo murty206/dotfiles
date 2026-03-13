@@ -175,17 +175,43 @@ function canup() {
 }
 
 # Extract any archive
-function extract() {
-    case "$1" in
-        *.tar.bz2)  tar xjf "$1"   ;;
-        *.tar.gz)   tar xzf "$1"   ;;
-        *.tar.xz)   tar xJf "$1"   ;;
-        *.zip)      unzip "$1"      ;;
-        *.7z)       7z x "$1"       ;;
-        *.gz)       gunzip "$1"     ;;
-        *.rar)      unrar x "$1"    ;;
-        *)          echo "Unknown format: $1" ;;
-    esac
+extract() {
+    # 1. Start the timer
+    local start_time=$SECONDS
+
+    # Define colors
+    local green='\033[0;32m'
+    local red='\033[0;31m'
+    local blue='\033[0;34m'
+    local nc='\033[0m'
+
+    if [[ -f "$1" ]]; then
+        case "${1:l}" in
+            *.tar.bz2|*.tbz2) tar xjf "$1"    ;;
+            *.tar.gz|*.tgz)   tar xzf "$1"    ;;
+            *.tar.xz|*.txz)   tar xJf "$1"    ;;
+            *.tar)            tar xf "$1"     ;;
+            *.bz2)            bunzip2 "$1"    ;;
+            *.rar)            unrar x "$1"    ;;
+            *.gz)             gunzip "$1"     ;;
+            *.zip)            unzip "$1"      ;;
+            *.7z)             7z x "$1"       ;;
+            *.xz)             xz -d "$1"      ;;
+            *)                echo -e "${red}Error:${nc} Unknown format '$1'" && return 1 ;;
+        esac
+
+        # 2. Calculate duration
+        local elapsed=$(( SECONDS - start_time ))
+
+        # 3. Final Report
+        if [ $? -eq 0 ]; then
+            echo -e "${green}Success:${nc} '$1' extracted in ${blue}${elapsed}s${nc}."
+        else
+            echo -e "${red}Error:${nc} Extraction failed after ${elapsed}s."
+        fi
+    else
+        echo -e "${red}Error:${nc} '$1' is not a valid file."
+    fi
 }
 
 # Quick backup of a file
