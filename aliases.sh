@@ -12,6 +12,17 @@
 DOTFILES_DIR="$HOME/.dotfiles"
 
 # -----------------------------------------------------------------------------
+# Zsh history
+# -----------------------------------------------------------------------------
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+setopt APPEND_HISTORY       # append to history file, don't overwrite
+setopt SHARE_HISTORY        # share history between all open terminals
+setopt HIST_IGNORE_DUPS     # don't save duplicate commands
+setopt HIST_IGNORE_SPACE    # don't save commands starting with a space
+
+# -----------------------------------------------------------------------------
 # Self-update
 # -----------------------------------------------------------------------------
 function update() {
