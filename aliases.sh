@@ -1,10 +1,10 @@
 # =============================================================================
 # aliases.sh — Murty's portable shell aliases
-# Repo:   https://github.com/<your-username>/dotfiles  ← update this
+# Repo:   https://github.com/murty206/dotfiles
 # Usage:
 #   Managed automatically by install.sh.
 #   To install on a new machine:
-#     curl -fsSL https://raw.githubusercontent.com/<you>/dotfiles/main/install.sh | bash
+#     bash <(curl -fsSL https://raw.githubusercontent.com/murty206/dotfiles/main/install.sh)
 #   To update aliases on any machine:
 #     update
 # =============================================================================
@@ -14,10 +14,9 @@ DOTFILES_DIR="$HOME/.dotfiles"
 # -----------------------------------------------------------------------------
 # Self-update
 # -----------------------------------------------------------------------------
-# Pull latest from git repo and reload shell config
 function update() {
     echo "→ Pulling latest dotfiles..."
-    git -C "$DOTFILES_DIR" pull --ff-only && \
+    git -C "$DOTFILES_DIR" pull --rebase && \
     source "$DOTFILES_DIR/aliases.sh" && \
     echo "✓ Aliases updated and reloaded."
 }
@@ -137,9 +136,34 @@ alias gco='git checkout'
 # -----------------------------------------------------------------------------
 # CAN bus / embedded dev (STM32 / UAKBSCSD)
 # -----------------------------------------------------------------------------
-alias candown='sudo ip link set can0 down'
-alias canlog='candump can0'
-alias canstat='ip -details link show can0'
+
+# Bring up CAN interface — usage: canup [iface] [bitrate]
+# defaults: can0, 500000
+function canup() {
+    local iface=${1:-can0}
+    local baud=${2:-500000}
+    sudo ip link set "$iface" up type can bitrate "$baud"
+    echo "CAN: $iface up at $baud bps"
+}
+
+# Bring down CAN interface — usage: candown [iface]
+function candown() {
+    local iface=${1:-can0}
+    sudo ip link set "$iface" down
+    echo "CAN: $iface down"
+}
+
+# Dump live CAN traffic — usage: canlog [iface]
+function canlog() {
+    local iface=${1:-can0}
+    candump "$iface"
+}
+
+# Show CAN interface details — usage: canstat [iface]
+function canstat() {
+    local iface=${1:-can0}
+    ip -details link show "$iface"
+}
 
 
 # -----------------------------------------------------------------------------
@@ -165,52 +189,43 @@ function venv() {
     source .venv/bin/activate
 }
 
-# Bring up CAN interface — usage: canup [iface] [bitrate]
-# defaults: can0, 500000
-function canup() {
-    local iface=${1:-can0}
-    local baud=${2:-500000}
-    sudo ip link set "$iface" up type can bitrate "$baud"
-    echo "CAN: $iface up at $baud bps"
-}
-
-# Extract any archive
-extract() {
-    # 1. Start the timer
+# Extract any archive with timer and status report
+function extract() {
     local start_time=$SECONDS
-
-    # Define colors
     local green='\033[0;32m'
     local red='\033[0;31m'
     local blue='\033[0;34m'
     local nc='\033[0m'
 
-    if [[ -f "$1" ]]; then
-        case "${1:l}" in
-            *.tar.bz2|*.tbz2) tar xjf "$1"    ;;
-            *.tar.gz|*.tgz)   tar xzf "$1"    ;;
-            *.tar.xz|*.txz)   tar xJf "$1"    ;;
-            *.tar)            tar xf "$1"     ;;
-            *.bz2)            bunzip2 "$1"    ;;
-            *.rar)            unrar x "$1"    ;;
-            *.gz)             gunzip "$1"     ;;
-            *.zip)            unzip "$1"      ;;
-            *.7z)             7z x "$1"       ;;
-            *.xz)             xz -d "$1"      ;;
-            *)                echo -e "${red}Error:${nc} Unknown format '$1'" && return 1 ;;
-        esac
-
-        # 2. Calculate duration
-        local elapsed=$(( SECONDS - start_time ))
-
-        # 3. Final Report
-        if [ $? -eq 0 ]; then
-            echo -e "${green}Success:${nc} '$1' extracted in ${blue}${elapsed}s${nc}."
-        else
-            echo -e "${red}Error:${nc} Extraction failed after ${elapsed}s."
-        fi
-    else
+    if [[ ! -f "$1" ]]; then
         echo -e "${red}Error:${nc} '$1' is not a valid file."
+        return 1
+    fi
+
+    local exit_code=0
+    case "${1:l}" in
+        *.tar.bz2|*.tbz2) tar xjf "$1"  || exit_code=$? ;;
+        *.tar.gz|*.tgz)   tar xzf "$1"  || exit_code=$? ;;
+        *.tar.xz|*.txz)   tar xJf "$1"  || exit_code=$? ;;
+        *.tar)             tar xf "$1"   || exit_code=$? ;;
+        *.bz2)             bunzip2 "$1"  || exit_code=$? ;;
+        *.rar)             unrar x "$1"  || exit_code=$? ;;
+        *.gz)              gunzip "$1"   || exit_code=$? ;;
+        *.zip)             unzip "$1"    || exit_code=$? ;;
+        *.7z)              7z x "$1"     || exit_code=$? ;;
+        *.xz)              xz -d "$1"   || exit_code=$? ;;
+        *)
+            echo -e "${red}Error:${nc} Unknown format '$1'"
+            return 1
+            ;;
+    esac
+
+    local elapsed=$(( SECONDS - start_time ))
+    if [ $exit_code -eq 0 ]; then
+        echo -e "${green}Success:${nc} '$1' extracted in ${blue}${elapsed}s${nc}."
+    else
+        echo -e "${red}Error:${nc} Extraction failed after ${elapsed}s."
+        return $exit_code
     fi
 }
 
