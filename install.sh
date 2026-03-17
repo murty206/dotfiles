@@ -12,7 +12,8 @@
 #   5. Installs Starship, applies Tokyo Night preset
 #   6. Installs JetBrains Mono Nerd Font
 #   7. Installs Kitty terminal, symlinks kitty.conf from dotfiles
-#   8. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
+#   8. Installs fastfetch, hooks into shell
+#   9. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
 # =============================================================================
 
 set -e
@@ -331,6 +332,46 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# 9. Install fastfetch
+# -----------------------------------------------------------------------------
+section "Fastfetch"
+
+if command -v fastfetch &>/dev/null; then
+    success "fastfetch already installed — $(fastfetch --version | head -1)"
+else
+    info "Installing fastfetch..."
+    if command -v paru &>/dev/null; then
+        paru -S --noconfirm fastfetch
+    elif command -v apt &>/dev/null; then
+        # fastfetch not in default Debian repos, download deb directly
+        TMP_FF=$(mktemp -d)
+        curl -fsSL "https://github.com/fastfetch-cli/fastfetch/releases/latest/download/fastfetch-linux-amd64.deb"             -o "$TMP_FF/fastfetch.deb"
+        sudo dpkg -i "$TMP_FF/fastfetch.deb"
+        rm -rf "$TMP_FF"
+    elif command -v dnf &>/dev/null; then
+        sudo dnf install -y fastfetch
+    fi
+    success "fastfetch installed"
+fi
+
+# Hook fastfetch into .zshrc so it runs on every terminal launch
+if ! grep -q "fastfetch" "$HOME/.zshrc"; then
+    echo "" >> "$HOME/.zshrc"
+    echo "# System overview on terminal launch" >> "$HOME/.zshrc"
+    echo "fastfetch" >> "$HOME/.zshrc"
+    success "fastfetch hooked into ~/.zshrc"
+else
+    warn "fastfetch already in ~/.zshrc — skipping"
+fi
+
+# Hook fastfetch into .bashrc too
+if [ -f "$HOME/.bashrc" ] && ! grep -q "fastfetch" "$HOME/.bashrc"; then
+    echo "" >> "$HOME/.bashrc"
+    echo "# System overview on terminal launch" >> "$HOME/.bashrc"
+    echo "fastfetch" >> "$HOME/.bashrc"
+fi
+
+# -----------------------------------------------------------------------------
 # 8. Hook aliases.sh into shell configs
 # -----------------------------------------------------------------------------
 section "Aliases"
@@ -366,7 +407,8 @@ echo "    ✓ zsh-autosuggestions + zsh-syntax-highlighting"
 echo "    ✓ Starship prompt (Tokyo Night + distro logo)"
 echo "    ✓ JetBrains Mono Nerd Font"
 echo "    ✓ Kitty terminal (Tokyo Night, symlinked config)"
-echo "    ✓ Dotfiles aliases"
+echo "    ✓ Fastfetch (system overview on launch)
+    ✓ Dotfiles aliases"
 echo ""
 echo "  Next steps:"
 echo "    1. Log out and back in to start using zsh + Kitty"
