@@ -9,7 +9,7 @@
 #   2. Clones your dotfiles repo to ~/.dotfiles
 #   3. Installs zsh and sets it as default shell
 #   4. Installs zsh plugins (autosuggestions, syntax-highlighting)
-#   5. Installs Starship, applies Tokyo Night preset
+#   5. Installs Starship, symlinks starship.toml from dotfiles
 #   6. Installs JetBrains Mono Nerd Font
 #   7. Installs Kitty terminal, symlinks kitty.conf from dotfiles
 #   8. Installs fastfetch, hooks into shell
@@ -130,7 +130,7 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 5. Install Starship + Tokyo Night preset
+# 5. Install Starship + symlink config from dotfiles
 # -----------------------------------------------------------------------------
 section "Starship"
 if ! command -v starship &>/dev/null; then
@@ -140,49 +140,27 @@ if ! command -v starship &>/dev/null; then
 else
     success "Starship already installed — $(starship --version)"
 fi
-STARSHIP_CONFIG="$HOME/.config/starship.toml"
+
 mkdir -p "$HOME/.config"
-if ! grep -q "tokyo-night" "$STARSHIP_CONFIG" 2>/dev/null; then
-    info "Applying Tokyo Night preset..."
-    starship preset tokyo-night -o "$STARSHIP_CONFIG"
-    python3 << PYEOF
-with open('$STARSHIP_CONFIG', 'r') as f:
-    content = f.read()
+STARSHIP_LINK="$HOME/.config/starship.toml"
+STARSHIP_DOTFILE="$DOTFILES_DIR/starship.toml"
 
-# Remove hardcoded apple logo
-lines = content.splitlines(keepends=True)
-lines = [l for l in lines if '090c0c' not in l]
-content = ''.join(lines)
-
-# Add $os to format line
-content = content.replace('format = """\n[░▒▓]', 'format = """\n[░▒▓](#a3aed2)[' + chr(0x0024) + 'os](bg:#a3aed2 fg:#090c0c)')
-
-# Append OS module with correct codepoints
-content += '''
-[os]
-disabled = false
-style = "fg:#090c0c bg:#a3aed2 bold"
-
-[os.symbols]
-Arch = "''' + chr(0xf303) + ''' "
-Debian = "''' + chr(0xe77d) + ''' "
-Ubuntu = "''' + chr(0xf31b) + ''' "
-Fedora = "''' + chr(0xf30a) + ''' "
-NixOS = "''' + chr(0xf313) + ''' "
-Mint = "''' + chr(0xf30e) + ''' "
-Macos = "''' + chr(0xf179) + ''' "
-Windows = "''' + chr(0xf17a) + ''' "
-Unknown = "''' + chr(0xf233) + ''' "
-'''
-
-with open('$STARSHIP_CONFIG', 'w') as f:
-    f.write(content)
-print("Starship config updated")
-PYEOF
-    success "Tokyo Night preset applied with OS logo"
+if [ -f "$STARSHIP_DOTFILE" ]; then
+    if [ -L "$STARSHIP_LINK" ]; then
+        warn "starship.toml symlink already exists — skipping"
+    elif [ -f "$STARSHIP_LINK" ]; then
+        warn "Existing starship.toml found — backing up to starship.toml.bak"
+        mv "$STARSHIP_LINK" "$STARSHIP_LINK.bak"
+        ln -s "$STARSHIP_DOTFILE" "$STARSHIP_LINK"
+        success "starship.toml symlinked from dotfiles"
+    else
+        ln -s "$STARSHIP_DOTFILE" "$STARSHIP_LINK"
+        success "starship.toml symlinked from dotfiles"
+    fi
 else
-    warn "Starship config already exists — skipping preset"
+    warn "starship.toml not found in dotfiles — skipping symlink"
 fi
+
 # Hook Starship into .zshrc
 if ! grep -q "starship init zsh" "$HOME/.zshrc"; then
     echo "" >> "$HOME/.zshrc"
@@ -404,7 +382,7 @@ echo ""
 echo "  What was set up:"
 echo "    ✓ zsh (default shell)"
 echo "    ✓ zsh-autosuggestions + zsh-syntax-highlighting"
-echo "    ✓ Starship prompt (Tokyo Night + distro logo)"
+echo "    ✓ Starship prompt (symlinked from dotfiles)"
 echo "    ✓ JetBrains Mono Nerd Font"
 echo "    ✓ Kitty terminal (Tokyo Night, symlinked config)"
 echo "    ✓ Fastfetch (system overview on launch)
