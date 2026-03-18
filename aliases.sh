@@ -175,10 +175,16 @@ function candown() {
     echo "CAN: $iface down"
 }
 
-# Dump live CAN traffic — usage: canlog [iface]
+# Dump live CAN traffic — usage: canlog [iface] [id]
 function canlog() {
     local iface=${1:-can0}
-    candump "$iface"
+    local id=$2
+
+    if [ -n "$id" ]; then
+        candump "$iface,$id:7FF"
+    else
+        candump "$iface"
+    fi
 }
 
 # Show CAN interface details — usage: canstat [iface]
