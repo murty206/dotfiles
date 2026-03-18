@@ -28,10 +28,18 @@ setopt HIST_IGNORE_SPACE    # don't save commands starting with a space
 function update() {
     echo "→ Pulling latest dotfiles..."
     git -C "$DOTFILES_DIR" pull --rebase && \
+    # Ensure symlinks are in place
+    [ -f "$DOTFILES_DIR/kitty.conf" ] && \
+        [ ! -L "$HOME/.config/kitty/kitty.conf" ] && \
+        ln -sf "$DOTFILES_DIR/kitty.conf" "$HOME/.config/kitty/kitty.conf" && \
+        echo "→ kitty.conf symlinked"
+    [ -f "$DOTFILES_DIR/starship.toml" ] && \
+        [ ! -L "$HOME/.config/starship.toml" ] && \
+        ln -sf "$DOTFILES_DIR/starship.toml" "$HOME/.config/starship.toml" && \
+        echo "→ starship.toml symlinked"
     source "$DOTFILES_DIR/aliases.sh" && \
     echo "✓ Aliases updated and reloaded."
 }
-
 
 # -----------------------------------------------------------------------------
 # Navigation
