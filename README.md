@@ -140,9 +140,9 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | Alias | Description |
 |-------|-------------|
 | `canup [iface] [bps]` | Bring up CAN interface — defaults: `can0`, `500000` |
-| `candown` | Bring down can0 |
+| `candown [iface]` | Bring down CAN interface — default: `can0` |
 | `canlog [iface] [id]` | Dump live CAN traffic — optional CAN ID filter (e.g. `canlog can0 1A0`) |
-| `canstat` | Show detailed can0 interface info |
+| `canstat [iface]` | Show detailed CAN interface info — default: `can0` |
 
 ### Network
 | Alias | Description |
@@ -175,6 +175,18 @@ venv
 canup              # defaults: can0 at 500000 bps
 canup can1         # can1 at 500000 bps
 canup can0 250000  # can0 at 250000 bps
+
+# Bring down CAN interface
+candown            # default: can0
+candown can1
+
+# Dump live CAN traffic, optionally filter by CAN ID
+canlog                # all frames on can0
+canlog can0 1A0       # only frames with ID 0x1A0
+
+# Show detailed CAN interface info (link state, bitrate, error counters)
+canstat            # default: can0
+canstat can1
 
 # Extract any archive format automatically
 extract <file>
