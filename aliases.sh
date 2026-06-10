@@ -80,9 +80,9 @@ alias als='alias'
 
 if command -v paru &>/dev/null; then
     # Arch Linux
-    alias up='paru && paru -c'
+    alias up='paru --noconfirm && paru -c --noconfirm'
     alias i='paru -S --noconfirm'
-    alias rm-pkg='paru -Rns'
+    alias rm-pkg='paru -Rns --noconfirm'
     alias search='paru -Ss'
     alias pkg-info='paru -Qi'
 elif command -v apt &>/dev/null; then

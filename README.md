@@ -11,7 +11,7 @@ My portable shell environment. One command sets up everything on any Linux machi
 | zsh-syntax-highlighting | Colors valid commands green, invalid red |
 | Starship | Tokyo Night prompt with automatic distro logo |
 | JetBrains Mono Nerd Font | Installed system-wide for glyph support |
-| Kitty | GPU-accelerated terminal, Tokyo Night colors, config synced via dotfiles |
+| Kitty | GPU-accelerated terminal, 1984 Dark colors, config synced via dotfiles |
 | aliases.sh | Portable aliases and functions, auto-detects distro |
 
 ## Install on a new machine
@@ -42,7 +42,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | File | Description |
 |------|-------------|
 | `aliases.sh` | All aliases, functions, and shell config |
-| `kitty.conf` | Kitty terminal config (Tokyo Night + JetBrains Mono) |
+| `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `install.sh` | One-command installer |
 | `README.md` | This file |
 
@@ -65,6 +65,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 |-------|-------------|
 | `cls` | Clear the terminal |
 | `reload` | Reload shell config without opening new terminal |
+| `path` | Print `$PATH` with one directory per line |
 | `hist <keyword>` | Search command history — e.g. `hist git` |
 | `ports` | Show all open ports and listening services |
 | `myip` | Show your public IP address |
@@ -140,7 +141,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 |-------|-------------|
 | `canup [iface] [bps]` | Bring up CAN interface — defaults: `can0`, `500000` |
 | `candown` | Bring down can0 |
-| `canlog` | Dump live CAN traffic on can0 |
+| `canlog [iface] [id]` | Dump live CAN traffic — optional CAN ID filter (e.g. `canlog can0 1A0`) |
 | `canstat` | Show detailed can0 interface info |
 
 ### Network
