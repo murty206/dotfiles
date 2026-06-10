@@ -1,0 +1,33 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this repo is
+
+Personal portable shell environment (zsh + Starship + Kitty + aliases) deployed to any Linux machine via one curl-piped installer. Repo lives at `~/.dotfiles` once installed; remote is `git@github.com:murty206/dotfiles.git`.
+
+## Common commands
+
+- `update` — shell function defined in `aliases.sh`: `git pull --rebase`, re-creates missing symlinks for `kitty.conf` and `starship.toml`, then `source`s `aliases.sh` back into the current shell. This is how changes propagate to a running session — no restart, no relog.
+- `bash install.sh` — idempotent bootstrap. Safe to re-run; every step checks before acting.
+- `source ~/.dotfiles/aliases.sh` — reload aliases manually (also exposed as `reload`).
+
+There is no build, lint, or test suite. Validation is "run it on a machine and see."
+
+## Architecture
+
+Three moving parts, plus the installer that wires them together:
+
+1. **`aliases.sh`** — sourced from `~/.zshrc` and `~/.bashrc` via a hook line the installer appends. Contains all aliases, the package-manager-detecting block (paru → apt → dnf, picked at source time via `command -v`), and shell functions (`update`, `canup`/`candown`/`canlog`/`canstat`, `venv`, `extract`, `mkcd`, `cs`, `bak`). The CAN bus helpers exist because this dotfiles set targets embedded/STM32 work.
+
+2. **`kitty.conf`** and **`starship.toml`** — config files that live in this repo and are **symlinked** into `~/.config/kitty/kitty.conf` and `~/.config/starship.toml` by the installer. Editing them in the repo immediately affects the running system; no copy step. If a real file already exists at the symlink target, the installer backs it up to `*.bak` before symlinking.
+
+3. **`install.sh`** — bootstrap-only. Detects the package manager once at the top, then walks through numbered sections: git, clone repo, zsh + plugins (zsh-autosuggestions, zsh-syntax-highlighting cloned to `$ZSH_CUSTOM` = `~/.zsh`), Starship, JetBrains Mono Nerd Font, Kitty, fastfetch, and the aliases hook. Each section is guarded so re-runs are safe.
+
+   Note: `install.sh` contains an embedded fallback `kitty.conf` heredoc that only triggers if the repo's `kitty.conf` is missing. Keep it in sync with the real `kitty.conf` (currently 1984 Dark with customizations) so fresh installs get the same colors as `update`d machines.
+
+## Editing workflow
+
+Edits to `aliases.sh`, `kitty.conf`, or `starship.toml` only need to be committed + pushed; `update` on any other machine pulls them in. Because the config files are symlinked, local edits in the repo take effect immediately on the editing machine — no need to run `update` locally after `git pull`.
+
+When adding a new alias or function, put it in the matching section of `aliases.sh` and update the corresponding table in `README.md` — the README is the user-facing reference and is kept in sync by hand.

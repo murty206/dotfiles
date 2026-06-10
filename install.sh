@@ -236,51 +236,55 @@ font_family      JetBrainsMono Nerd Font
 bold_font        JetBrainsMono Nerd Font Bold
 italic_font      JetBrainsMono Nerd Font Italic
 bold_italic_font JetBrainsMono Nerd Font Bold Italic
-font_size        12.0
+font_size        10.0
 
-# Tokyo Night color scheme
+# 1984 Dark Theme color scheme
 foreground              #a9b1d6
-background              #1a1b26
+background              #180b17
 selection_foreground    #1a1b26
 selection_background    #7aa2f7
 cursor                  #c0caf5
 cursor_text_color       #1a1b26
 
 # Black
-color0  #414868
-color8  #414868
+color0  #000000
+color8  #000000
 
 # Red
-color1  #f7768e
-color9  #f7768e
+color1  #ff16b0
+color9  #ff16b0
 
 # Green
-color2  #9ece6a
-color10 #9ece6a
+color2  #b3f361
+color10 #b3f361
 
 # Yellow
-color3  #e0af68
-color11 #e0af68
+color3  #ffea16
+color11 #ffea16
 
 # Blue
-color4  #7aa2f7
-color12 #7aa2f7
+color4  #15d4c8
+color12 #40e0d0
 
 # Magenta
-color5  #bb9af7
-color13 #bb9af7
+color5  #f806fa
+color13 #f806fa
 
 # Cyan
-color6  #7dcfff
-color14 #7dcfff
+color6  #59e1e3
+color14 #6be4e6
 
 # White
-color7  #c0caf5
-color15 #c0caf5
+color7  #feffff
+color15 #feffff
+
+# URL styles
+url_color #f806fa
+url_style single
 
 # Window
 window_padding_width    8
-background_opacity      0.95
+background_opacity      0.85
 confirm_os_window_close 0
 
 # Scrollback
@@ -293,6 +297,16 @@ sync_to_monitor         yes
 
 # Bell
 enable_audio_bell       no
+
+# Copy on select, paste on right click (like PowerShell)
+copy_on_select                  yes
+mouse_map right press ungrabbed paste_from_clipboard
+
+
+# BEGIN_KITTY_THEME
+# 1984 Dark
+#include current-theme.conf
+# END_KITTY_THEME
 EOF
     success "Default kitty.conf created in dotfiles"
 fi
