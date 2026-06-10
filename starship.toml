@@ -80,7 +80,7 @@ Windows = " "
 Unknown = " "
 
 [custom.distro]
-command = "source /etc/os-release && echo $NAME"
+command = ". /etc/os-release && echo $NAME"
 when = "true"
 style = "fg:#090c0c bg:#a3aed2 bold"
 format = "[$output ]($style)"
