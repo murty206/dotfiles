@@ -12,6 +12,7 @@ My portable shell environment. One command sets up everything on any Linux machi
 | Starship | Tokyo Night prompt with automatic distro logo |
 | JetBrains Mono Nerd Font | Installed system-wide for glyph support |
 | Kitty | GPU-accelerated terminal, 1984 Dark colors, config synced via dotfiles |
+| tty-clock | Full-screen terminal clock, run with `clock` |
 | aliases.sh | Portable aliases and functions, auto-detects distro |
 
 ## Install on a new machine
@@ -44,7 +45,22 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `aliases.sh` | All aliases, functions, and shell config |
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `install.sh` | One-command installer |
+| `local.sh` | Machine-local aliases — gitignored, never pushed (see below) |
 | `README.md` | This file |
+
+### Machine-local aliases
+
+This repo is public, so nothing host-specific goes in it — no absolute home
+paths, no project shortcuts, no secrets. Put those in `~/.dotfiles/local.sh`,
+which is gitignored and sourced automatically at the end of `aliases.sh`:
+
+```bash
+# ~/.dotfiles/local.sh
+alias myproject='cd /path/on/this/machine && ./run.sh'
+```
+
+Keeping it out of the tracked files also keeps `update` working — a dirty
+`aliases.sh` makes `git pull --rebase` refuse, which aborts the whole update.
 
 ---
 
@@ -76,6 +92,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `cp` | Copy with confirmation prompt and verbose output |
 | `mv` | Move with confirmation prompt and verbose output |
 | `mkdir` | Create directory including all parents, verbose |
+| `clock` | Full-screen terminal clock, centered, blinking colon (`q` to quit) |
 
 ### Package management (auto-detects distro)
 | Alias | Arch (paru) | Debian/Ubuntu (apt) | Fedora (dnf) |

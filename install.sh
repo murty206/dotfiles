@@ -13,7 +13,8 @@
 #   6. Installs JetBrains Mono Nerd Font
 #   7. Installs Kitty terminal, symlinks kitty.conf from dotfiles
 #   8. Installs fastfetch, hooks into shell
-#   9. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
+#   9. Installs tty-clock (backs the `clock` alias)
+#  10. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
 # =============================================================================
 
 set -e
@@ -364,6 +365,22 @@ if [ -f "$HOME/.bashrc" ] && ! grep -q "fastfetch" "$HOME/.bashrc"; then
 fi
 
 # -----------------------------------------------------------------------------
+# 10. Install tty-clock (backs the `clock` alias)
+# -----------------------------------------------------------------------------
+section "tty-clock"
+
+if command -v tty-clock &>/dev/null; then
+    success "tty-clock already installed"
+else
+    info "Installing tty-clock..."
+    if $PKG_INSTALL tty-clock; then
+        success "tty-clock installed"
+    else
+        warn "tty-clock unavailable in this distro's repos — 'clock' alias will not work until it is installed manually"
+    fi
+fi
+
+# -----------------------------------------------------------------------------
 # 8. Hook aliases.sh into shell configs
 # -----------------------------------------------------------------------------
 section "Aliases"
@@ -400,6 +417,7 @@ echo "    ✓ Starship prompt (symlinked from dotfiles)"
 echo "    ✓ JetBrains Mono Nerd Font"
 echo "    ✓ Kitty terminal (Tokyo Night, symlinked config)"
 echo "    ✓ Fastfetch (system overview on launch)
+    ✓ tty-clock (terminal clock — run 'clock')
     ✓ Dotfiles aliases"
 echo ""
 echo "  Next steps:"

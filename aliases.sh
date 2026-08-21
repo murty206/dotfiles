@@ -40,8 +40,29 @@ function update() {
         echo "→ starship.toml symlinked"
     fi
 
+    # Pull in anything install.sh would have set up but this machine is missing
+    ensure_tty_clock
+
     source "$DOTFILES_DIR/aliases.sh"
     echo "✓ Aliases updated and reloaded."
+}
+
+# -----------------------------------------------------------------------------
+# Dependency bootstrap — mirrors install.sh, re-checked on every `update`
+# -----------------------------------------------------------------------------
+
+# tty-clock backs the `clock` alias. Installs it only when missing.
+function ensure_tty_clock() {
+    command -v tty-clock &>/dev/null && return 0
+
+    echo "→ tty-clock not found — installing (needed by 'clock')..."
+    if command -v paru &>/dev/null;    then paru -S --noconfirm tty-clock
+    elif command -v apt &>/dev/null;   then sudo apt install -y tty-clock
+    elif command -v dnf &>/dev/null;   then sudo dnf install -y tty-clock
+    else
+        echo "! No supported package manager — install tty-clock manually."
+        return 1
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -71,7 +92,7 @@ alias watch='watch -n 1'
 alias cp='cp -iv'
 alias mv='mv -iv'
 alias mkdir='mkdir -pv'
-
+alias clock='tty-clock -c -B'                # centered terminal clock, blinking colon
 
 # -----------------------------------------------------------------------------
 # Package management (auto-detects distro)
@@ -156,7 +177,7 @@ alias gco='git checkout'
 
 
 # -----------------------------------------------------------------------------
-# CAN bus / embedded dev (STM32 / UAKBSCSD)
+# CAN bus / embedded dev (STM32)
 # -----------------------------------------------------------------------------
 
 # Bring up CAN interface — usage: canup [iface] [bitrate]
@@ -259,5 +280,12 @@ function extract() {
 
 # Quick backup of a file
 function bak() { cp "$1" "$1.bak"; }
+
+# -----------------------------------------------------------------------------
+# Machine-local overrides
+# -----------------------------------------------------------------------------
+# This repo is public — nothing host-specific belongs in it. Absolute paths,
+# project shortcuts and the like go in local.sh, which is gitignored.
+[ -f "$DOTFILES_DIR/local.sh" ] && source "$DOTFILES_DIR/local.sh"
 
 # =============================================================================

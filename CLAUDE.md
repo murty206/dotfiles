@@ -8,7 +8,7 @@ Personal portable shell environment (zsh + Starship + Kitty + aliases) deployed 
 
 ## Common commands
 
-- `update` — shell function defined in `aliases.sh`: `git pull --rebase`, re-creates missing symlinks for `kitty.conf` and `starship.toml`, then `source`s `aliases.sh` back into the current shell. This is how changes propagate to a running session — no restart, no relog.
+- `update` — shell function defined in `aliases.sh`: `git pull --rebase`, re-creates missing symlinks for `kitty.conf` and `starship.toml`, runs the `ensure_*` dependency bootstrap, then `source`s `aliases.sh` back into the current shell. This is how changes propagate to a running session — no restart, no relog. Note the `git pull --rebase` refuses on a dirty working tree and `update` returns early — so a tracked file left modified silently disables the whole function (this is why machine-local edits belong in `local.sh`, below).
 - `bash install.sh` — idempotent bootstrap. Safe to re-run; every step checks before acting.
 - `source ~/.dotfiles/aliases.sh` — reload aliases manually (also exposed as `reload`).
 
@@ -18,7 +18,11 @@ There is no build, lint, or test suite. Validation is "run it on a machine and s
 
 Three moving parts, plus the installer that wires them together:
 
-1. **`aliases.sh`** — sourced from `~/.zshrc` and `~/.bashrc` via a hook line the installer appends. Contains all aliases, the package-manager-detecting block (paru → apt → dnf, picked at source time via `command -v`), and shell functions (`update`, `canup`/`candown`/`canlog`/`canstat`, `venv`, `extract`, `mkcd`, `cs`, `bak`). The CAN bus helpers exist because this dotfiles set targets embedded/STM32 work.
+1. **`aliases.sh`** — sourced from `~/.zshrc` and `~/.bashrc` via a hook line the installer appends. Contains all aliases, the package-manager-detecting block (paru → apt → dnf, picked at source time via `command -v`), and shell functions (`update`, `ensure_tty_clock`, `canup`/`candown`/`canlog`/`canstat`, `venv`, `extract`, `mkcd`, `cs`, `bak`). The CAN bus helpers exist because this dotfiles set targets embedded/STM32 work. Its last statement sources `local.sh` if present.
+
+   `ensure_*` functions are the dependency bootstrap: each installs one package only if `command -v` says it is missing, and `update` calls them so machines that were set up before a tool was added catch up without re-running `install.sh`. Every such function needs a matching guarded section in `install.sh`.
+
+   **`local.sh`** — gitignored, not in the repo, may not exist. Holds machine-specific aliases (absolute paths, project shortcuts). The repo is public: nothing host-specific may be committed to a tracked file. If a user asks for an alias containing a real home path or a private project name, it goes here, not in `aliases.sh`.
 
 2. **`kitty.conf`** and **`starship.toml`** — config files that live in this repo and are **symlinked** into `~/.config/kitty/kitty.conf` and `~/.config/starship.toml` by the installer. Editing them in the repo immediately affects the running system; no copy step. If a real file already exists at the symlink target, the installer backs it up to `*.bak` before symlinking.
 

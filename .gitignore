@@ -1,0 +1,4 @@
+# Machine-local aliases and overrides — never committed.
+# Put anything host-specific (absolute paths, project shortcuts) in local.sh;
+# aliases.sh sources it automatically if it exists.
+local.sh
