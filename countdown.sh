@@ -219,6 +219,7 @@ while :; do
     hs_s=$(( hs / 2 ));          [[ "$hs_s" -lt 1 ]] && hs_s=1
     vs_s=$(( (hs_s + 1) / 2 ));  [[ "$vs_s" -lt 1 ]] && vs_s=1
 
+    today="$(date '+%A, %-d %B %Y')"     # follows LC_TIME
     now="$(date '+%H:%M')"
     left_secs=$(( TARGET_EPOCH - $(date +%s) ))
 
@@ -255,15 +256,18 @@ while :; do
         set_title "${LABEL:+$LABEL — }$remaining -> $TARGET"
     fi
 
-    # vertical centering
+    # vertical centering; the date is the first thing dropped on a short screen
     label_h=0; [[ -n "$LABEL" ]] && label_h=2
-    total=$(( 5 * vs_s + 1 + label_h + 5 * vs + 1 + 2 ))
+    base=$(( 5 * vs_s + 1 + label_h + 5 * vs + 1 + 2 ))
+    date_h=1; [[ $(( base + date_h )) -gt "$rows" ]] && date_h=0
+    total=$(( base + date_h ))
     top=$(( (rows - total) / 2 )); [[ "$top" -lt 0 ]] && top=0
 
     {
         printf '\e[H'
         for ((k=0; k<top; k++)); do printf '\e[K\n'; done
 
+        [[ "$date_h" -eq 1 ]] && print_text "$today" "$cols" "2"
         print_digits "$now" "$hs_s" "$vs_s" "$COLOR_CLOCK" "$cols"
         printf '\e[K\n'
 

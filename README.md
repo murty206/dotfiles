@@ -224,7 +224,8 @@ countdown                        # prints usage
 # one and a half hours — write 1h30m for that. The footer always shows the
 # resolved clock time, marked "(tomorrow)" when it landed on the next day,
 # so a misread is visible on the first frame.
-# Current time sits above the countdown at half scale.
+# Current time sits above the countdown at half scale, with the date in plain
+# text above that (dropped automatically when the terminal is too short).
 # Precision adapts — always the two most significant units, so seconds
 # only show up once under an hour:
 #   05:24  hours : minutes      (more than an hour to go)
