@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# countdown.sh — full-screen countdown to a wall-clock time, tty-clock style
+# countdown.sh — full-screen countdown to a time or duration, tty-clock style
 # Repo:   https://github.com/murty206/dotfiles
-# Usage:  countdown [HH:MM] [label]
+# Usage:  countdown <HH:MM | duration> [label]
 #
-#   countdown                       # counts down to 16:45
-#   countdown 18:30                 # counts down to 18:30
-#   countdown 18:30 "Standup"       # with a label above the digits
-#
-# If the target time has already passed today, it counts to tomorrow.
-# Current time is shown above at half scale. Quit with Ctrl+C.
+# An argument containing ":" is read as a wall-clock time, anything else as a
+# duration from now. Current time is shown above at half scale. Ctrl+C quits.
 #
 # Pure bash + coreutils — no dependencies, works in a bare TTY.
 # Run with bash explicitly; it uses bash arrays and is not zsh-compatible.
@@ -17,7 +13,29 @@
 
 set -uo pipefail
 
-TARGET="${1:-16:45}"
+usage() {
+    cat <<'USAGE'
+countdown — full-screen countdown to a time of day, or after a duration
+
+  countdown 16:45              wall-clock time; tomorrow if already past today
+  countdown 25m                25 minutes from now
+  countdown 1h30m              hours and minutes
+  countdown 90s                seconds
+  countdown 25                 a bare number means minutes
+  countdown 16:45 "Standup"    second argument is a label above the digits
+
+The rule is one character: an argument containing ":" is a wall-clock time,
+anything else is a duration. So "1:30" means half past one on the clock, not
+one and a half hours — write 1h30m when you mean the duration. The resolved
+target and the time left appear in the footer from the first frame, and a
+target that landed on the next day is marked "(tomorrow)", so a misread shows
+up immediately rather than an hour later.
+USAGE
+}
+
+[[ $# -eq 0 || "${1:-}" == -h || "${1:-}" == --help ]] && { usage; exit 0; }
+
+SPEC="$1"
 LABEL="${2:-}"
 
 # ---- colors (ANSI background codes)
@@ -52,17 +70,44 @@ SEG[8]="111 101 111 101 111"
 SEG[9]="111 101 111 001 111"
 SEG[:]="0 1 0 1 0"
 
-# ---- resolve target
-if ! TARGET_EPOCH="$(date -d "$TARGET" +%s 2>/dev/null)"; then
-    echo "Invalid time: $TARGET   (example: 16:45)" >&2
-    exit 1
-fi
-if [[ "$TARGET_EPOCH" -le "$(date +%s)" ]]; then
-    TARGET_EPOCH="$(date -d "tomorrow $TARGET" +%s)"
-    TOMORROW=" (tomorrow)"
+# ---- resolve target: ":" means a clock time, anything else a duration
+TOMORROW=""
+
+if [[ "$SPEC" == *:* ]]; then
+    if ! TARGET_EPOCH="$(date -d "$SPEC" +%s 2>/dev/null)"; then
+        echo "Invalid time: $SPEC   (example: 16:45)" >&2
+        exit 1
+    fi
+    if [[ "$TARGET_EPOCH" -le "$(date +%s)" ]]; then
+        TARGET_EPOCH="$(date -d "tomorrow $SPEC" +%s)"
+        TOMORROW=" (tomorrow)"
+    fi
 else
-    TOMORROW=""
+    secs=0; rest="$SPEC"; ok=0
+    if [[ "$rest" =~ ^[0-9]+$ ]]; then
+        secs=$(( rest * 60 )); ok=1                     # bare number = minutes
+    else
+        while [[ "$rest" =~ ^([0-9]+)([hms])(.*)$ ]]; do
+            case "${BASH_REMATCH[2]}" in
+                h) secs=$(( secs + BASH_REMATCH[1] * 3600 ));;
+                m) secs=$(( secs + BASH_REMATCH[1] * 60   ));;
+                s) secs=$(( secs + BASH_REMATCH[1]        ));;
+            esac
+            rest="${BASH_REMATCH[3]}"; ok=1
+        done
+        [[ -n "$rest" ]] && ok=0                        # trailing junk
+    fi
+    if [[ "$ok" -ne 1 || "$secs" -le 0 ]]; then
+        echo "Invalid duration: $SPEC   (examples: 25m, 1h30m, 90s, 25)" >&2
+        exit 1
+    fi
+    TARGET_EPOCH=$(( $(date +%s) + secs ))
+    [[ "$(date -d "@$TARGET_EPOCH" +%F)" != "$(date +%F)" ]] && TOMORROW=" (tomorrow)"
 fi
+
+# What the footer and title call the target — always a clock time, so a
+# duration shows you the wall-clock moment it resolved to.
+TARGET="$(date -d "@$TARGET_EPOCH" '+%H:%M')"
 
 # ---- terminal title: without this the tab just shows "bash countdown.sh"
 # Terminated with ST (ESC \), not BEL — a BEL-terminated OSC would emit a

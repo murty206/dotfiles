@@ -94,7 +94,7 @@ Keeping it out of the tracked files also keeps `update` working — a dirty
 | `mv` | Move with confirmation prompt and verbose output |
 | `mkdir` | Create directory including all parents, verbose |
 | `clock` | Full-screen terminal clock, centered, blinking colon (`q` to quit) |
-| `countdown [HH:MM] [label]` | Full-screen countdown to a wall-clock time — see below |
+| `countdown <HH:MM \| duration> [label]` | Full-screen countdown to a time of day or after a duration — see below |
 
 ### Package management (auto-detects distro)
 | Alias | Arch (paru) | Debian/Ubuntu (apt) | Fedora (dnf) |
@@ -211,10 +211,19 @@ canstat can1
 extract <file>
 # Supports: .tar.gz .tar.bz2 .tar.xz .zip .7z .rar .gz .bz2 .xz
 
-# Countdown to a wall-clock time, full screen
-countdown                        # to 16:45
-countdown 18:30                  # to 18:30
-countdown 18:30 "Standup"        # with a label above the digits
+# Countdown to a time of day, or after a duration, full screen
+countdown 18:30                  # wall-clock time; tomorrow if already past
+countdown 25m                    # 25 minutes from now
+countdown 1h30m                  # hours and minutes
+countdown 90s                    # seconds
+countdown 25                     # a bare number means minutes
+countdown 18:30 "Standup"        # second argument is a label above the digits
+countdown                        # prints usage
+# The rule is one character: an argument containing ":" is a wall-clock time,
+# anything else is a duration. So "1:30" is half past one on the clock, not
+# one and a half hours — write 1h30m for that. The footer always shows the
+# resolved clock time, marked "(tomorrow)" when it landed on the next day,
+# so a misread is visible on the first frame.
 # Current time sits above the countdown at half scale.
 # Precision adapts — always the two most significant units, so seconds
 # only show up once under an hour:
