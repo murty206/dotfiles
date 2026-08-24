@@ -93,6 +93,7 @@ alias cp='cp -iv'
 alias mv='mv -iv'
 alias mkdir='mkdir -pv'
 alias clock='tty-clock -c -B'                # centered terminal clock, blinking colon
+alias countdown='bash "$DOTFILES_DIR/countdown.sh"'   # countdown to a wall-clock time
 
 # -----------------------------------------------------------------------------
 # Package management (auto-detects distro)

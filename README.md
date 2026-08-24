@@ -43,6 +43,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | File | Description |
 |------|-------------|
 | `aliases.sh` | All aliases, functions, and shell config |
+| `countdown.sh` | Full-screen countdown clock, backs the `countdown` alias |
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `install.sh` | One-command installer |
 | `local.sh` | Machine-local aliases — gitignored, never pushed (see below) |
@@ -93,6 +94,7 @@ Keeping it out of the tracked files also keeps `update` working — a dirty
 | `mv` | Move with confirmation prompt and verbose output |
 | `mkdir` | Create directory including all parents, verbose |
 | `clock` | Full-screen terminal clock, centered, blinking colon (`q` to quit) |
+| `countdown [HH:MM] [label]` | Full-screen countdown to a wall-clock time — see below |
 
 ### Package management (auto-detects distro)
 | Alias | Arch (paru) | Debian/Ubuntu (apt) | Fedora (dnf) |
@@ -208,6 +210,23 @@ canstat can1
 # Extract any archive format automatically
 extract <file>
 # Supports: .tar.gz .tar.bz2 .tar.xz .zip .7z .rar .gz .bz2 .xz
+
+# Countdown to a wall-clock time, full screen
+countdown                        # to 16:45
+countdown 18:30                  # to 18:30
+countdown 18:30 "Standup"        # with a label above the digits
+# Current time sits above the countdown at half scale.
+# Precision adapts — always the two most significant units, so seconds
+# only show up once under an hour:
+#   05:24  hours : minutes      (more than an hour to go)
+#   44:57  minutes : seconds    (inside the last hour)
+# Digits go cyan -> yellow (last 30 min) -> red (last 5 min).
+# At zero it fires three alert layers, each skipped silently if unavailable:
+# terminal bell (PC-speaker buzzer in a bare TTY, window urgency hint in
+# kitty), a notify-send desktop notification, and a sound through the sound
+# server. Toggle them with ALERT_* at the top of countdown.sh.
+# Target already passed today means tomorrow.
+# The remaining time is mirrored into the terminal title. Ctrl+C to quit.
 
 # Quick file backup
 bak <file>         # creates file.bak
