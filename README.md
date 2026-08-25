@@ -219,6 +219,9 @@ countdown 90s                    # seconds
 countdown 25                     # a bare number means minutes
 countdown 18:30 "Standup"        # second argument is a label above the digits
 countdown                        # prints usage
+COUNTDOWN_NO_HINT=1 countdown 17:00   # drop the "Ctrl+C to quit" hint from the
+                                 # footer — for places the keyboard never reaches
+                                 # this process, e.g. behind a locked screensaver
 # The rule is one character: an argument containing ":" is a wall-clock time,
 # anything else is a duration. So "1:30" is half past one on the clock, not
 # one and a half hours — write 1h30m for that. The footer always shows the

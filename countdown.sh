@@ -38,6 +38,11 @@ USAGE
 SPEC="$1"
 LABEL="${2:-}"
 
+# The footer normally ends with a "Ctrl+C to quit" hint. Set COUNTDOWN_NO_HINT=1
+# to drop it — useful where the keyboard never reaches this process anyway, such
+# as behind a locked screensaver, where the hint promises an exit that isn't there.
+if [[ -n "${COUNTDOWN_NO_HINT:-}" ]]; then HINT=""; else HINT="  ·  Ctrl+C to quit"; fi
+
 # ---- colors (ANSI background codes)
 COLOR_CLOCK=44      # current time         : blue
 COLOR_NORMAL=46     # countdown            : cyan
@@ -234,7 +239,7 @@ while :; do
             alert "$TARGET reached."
         fi
         [[ $(( $(date +%s) % 2 )) -eq 0 ]] && color=$COLOR_DONE
-        footer="TIME'S UP  —  target $TARGET  ·  Ctrl+C to quit"
+        footer="TIME'S UP  —  target $TARGET$HINT"
         set_title "TIME'S UP - $TARGET"
     else
         if [[ "$left_secs" -ge 3600 ]]; then
@@ -252,7 +257,7 @@ while :; do
         elif [[ "$left_secs" -lt 1800 ]]; then color=$COLOR_WARN
         else                                   color=$COLOR_NORMAL
         fi
-        footer="target $TARGET$TOMORROW  ·  $remaining  ·  Ctrl+C to quit"
+        footer="target $TARGET$TOMORROW  ·  $remaining$HINT"
         set_title "${LABEL:+$LABEL — }$remaining -> $TARGET"
     fi
 
@@ -284,5 +289,9 @@ while :; do
         printf '\e[J'
     }
 
-    sleep 1
+    # Sleep to the next wall-clock second rather than a flat 1s. Each frame
+    # forks tput twice and date three times, so a flat sleep makes the period
+    # ~1.03s and the display drops a second every half minute (46 -> 44).
+    rem=$(( 1000000000 - 10#$(date +%N) ))
+    sleep "$(printf '%d.%09d' "$(( rem / 1000000000 ))" "$(( rem % 1000000000 ))")"
 done
