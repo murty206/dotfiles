@@ -37,6 +37,7 @@ USAGE
 
 SPEC="$1"
 LABEL="${2:-}"
+LABEL_H=0; [[ -n "$LABEL" ]] && LABEL_H=2   # rows the label costs, used by both the scale fit and the centering
 
 # The footer normally ends with a "Ctrl+C to quit" hint. Set COUNTDOWN_NO_HINT=1
 # to drop it — useful where the keyboard never reaches this process anyway, such
@@ -217,12 +218,32 @@ while :; do
     cols="$(tput cols  2>/dev/null || echo 80)"
     rows="$(tput lines 2>/dev/null || echo 24)"
 
-    # every state renders 5 characters (HH:MM or MM:SS) = 18 cells wide
-    # countdown at full scale, clock at half
-    hs=$(( (cols - 4) / 18 ));   [[ "$hs" -lt 1 ]] && hs=1;   [[ "$hs" -gt 8 ]] && hs=8
+    # Scale to whichever axis runs out first. Every state renders 5 characters
+    # (HH:MM or MM:SS) = 18 cells wide per unit of scale, so the width gives a
+    # starting point; then step down until the stacked rows fit too. Without the
+    # vertical pass a wide-but-short window silently clips the digits, and a
+    # fixed ceiling would leave a 1920x1080 terminal rendering at a fraction of
+    # the space it has. The remaining cap is only a sanity bound.
+    hs=$(( (cols - 4) / 18 )); [[ "$hs" -gt 20 ]] && hs=20
+    while [[ "$hs" -gt 1 ]]; do
+        _hs_s=$(( hs / 2 ));         [[ "$_hs_s" -lt 1 ]] && _hs_s=1
+        _vs_s=$(( (_hs_s + 1) / 2 )); [[ "$_vs_s" -lt 1 ]] && _vs_s=1
+        _vs=$(( (hs + 1) / 2 ))
+        # mirrors the "base" budget used for vertical centering below
+        [[ $(( 5 * _vs_s + 1 + LABEL_H + 5 * _vs + 1 + 2 )) -le "$rows" ]] && break
+        hs=$(( hs - 1 ))
+    done
+    [[ "$hs" -lt 1 ]] && hs=1
     vs=$(( (hs + 1) / 2 ));      [[ "$vs" -lt 1 ]] && vs=1
     hs_s=$(( hs / 2 ));          [[ "$hs_s" -lt 1 ]] && hs_s=1
     vs_s=$(( (hs_s + 1) / 2 ));  [[ "$vs_s" -lt 1 ]] && vs_s=1
+
+    # Even the smallest scale needs 14 rows with the clock on top. Below that
+    # the clock goes, which is the least useful of the three (the countdown is
+    # the point, and the footer carries the target). Order of sacrifice on a
+    # shrinking window: date, then clock.
+    clock_h=1
+    [[ $(( 5 * vs_s + 1 + LABEL_H + 5 * vs + 1 + 2 )) -gt "$rows" ]] && clock_h=0
 
     today="$(date '+%A, %-d %B %Y')"     # follows LC_TIME
     now="$(date '+%H:%M')"
@@ -262,8 +283,8 @@ while :; do
     fi
 
     # vertical centering; the date is the first thing dropped on a short screen
-    label_h=0; [[ -n "$LABEL" ]] && label_h=2
-    base=$(( 5 * vs_s + 1 + label_h + 5 * vs + 1 + 2 ))
+    label_h=$LABEL_H
+    base=$(( clock_h * (5 * vs_s + 1) + label_h + 5 * vs + 1 + 2 ))
     date_h=1; [[ $(( base + date_h )) -gt "$rows" ]] && date_h=0
     total=$(( base + date_h ))
     top=$(( (rows - total) / 2 )); [[ "$top" -lt 0 ]] && top=0
@@ -273,8 +294,10 @@ while :; do
         for ((k=0; k<top; k++)); do printf '\e[K\n'; done
 
         [[ "$date_h" -eq 1 ]] && print_text "$today" "$cols" "2"
-        print_digits "$now" "$hs_s" "$vs_s" "$COLOR_CLOCK" "$cols"
-        printf '\e[K\n'
+            if [[ "$clock_h" -eq 1 ]]; then
+            print_digits "$now" "$hs_s" "$vs_s" "$COLOR_CLOCK" "$cols"
+            printf '\e[K\n'
+        fi
 
         if [[ -n "$LABEL" ]]; then
             print_text "$LABEL" "$cols" "1"

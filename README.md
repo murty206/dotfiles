@@ -228,7 +228,10 @@ COUNTDOWN_NO_HINT=1 countdown 17:00   # drop the "Ctrl+C to quit" hint from the
 # resolved clock time, marked "(tomorrow)" when it landed on the next day,
 # so a misread is visible on the first frame.
 # Current time sits above the countdown at half scale, with the date in plain
-# text above that (dropped automatically when the terminal is too short).
+# text above that. The digits scale to whichever axis runs out first, so the
+# same script fills a 1024x768 panel and a 1920x1080 one; on a window too short
+# for everything it drops the date first, then the clock, and keeps the
+# countdown and footer down to a 30x9 terminal.
 # Precision adapts — always the two most significant units, so seconds
 # only show up once under an hour:
 #   05:24  hours : minutes      (more than an hour to go)
