@@ -167,17 +167,17 @@ project paths. Do not hand it to an agent, and do not sync it between machines.
 
 ## Toggles
 
-Six variables at the top of the script.
+Nine variables at the top of the script.
 
 | Variable | Default | Effect | Columns saved when off |
 |----------|---------|--------|------------------------|
 | `SHOW_TOKENS` | `1` | The `124k/1M` token count before the context percentage | ~9 |
 | `SHOW_SEVEN_DAY` | `1` | The trailing seven-day quota | ~10 |
 | `SHOW_SUBPATH` | `1` | Project-relative path instead of a bare basename | varies |
-| `SHOW_FLAGS` | `1` | The `⚡` / effort / thinking markers |
-| `SHOW_SESSION_AGE` | `1` | The trailing `sess 13h` age marker |
-| `SESSION_WARN_H` | `4` | Hours before the age appears at all, in yellow |
-| `SESSION_ALARM_H` | `12` | Hours before it turns red | 0 when normal |
+| `SHOW_FLAGS` | `1` | The `⚡` / effort / thinking markers | 0 when normal |
+| `SHOW_SESSION_AGE` | `1` | The trailing `sess 13h` age marker | 0 below the threshold |
+| `SESSION_WARN_H` | `4` | Hours before the age appears at all, in yellow | — |
+| `SESSION_ALARM_H` | `12` | Hours before it turns red | — |
 | `DEFAULT_EFFORT` | `high` | Which effort level counts as normal and stays hidden | — |
 | `BAR_WIDTH` | `10` | Cells per bar | 2 per cell removed |
 
