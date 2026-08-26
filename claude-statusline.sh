@@ -12,6 +12,9 @@ SHOW_TOKENS=1        # raw token count ("91k/1M") before the context percentage
 SHOW_SEVEN_DAY=1     # weekly quota at the end of the line
 SHOW_SUBPATH=1       # "project/sub/dir" when below the project root, else basename
 SHOW_FLAGS=1         # markers for fast mode / non-default effort / thinking off
+SHOW_SESSION_AGE=1   # "sess 13h" once a session has been running a long time
+SESSION_WARN_H=4     # hours before the session age appears at all, in yellow
+SESSION_ALARM_H=12   # hours before it turns red
 DEFAULT_EFFORT=high  # effort level considered normal — only deviations are shown
 BAR_WIDTH=10         # cells per bar
 # ------------------------------------------------------------------------------
@@ -93,6 +96,7 @@ print("\n".join([
     "yes" if d.get("fast_mode") else "",
     sub(d, "effort").get("level") or "",
     "" if sub(d, "thinking").get("enabled", True) is False else "yes",
+    num(sub(d, "cost").get("total_duration_ms")),
     "END",
 ]))
 ' 2>/dev/null)
@@ -100,7 +104,7 @@ print("\n".join([
 cwd="${F[0]-}"     ; proj="${F[1]-}"    ; model="${F[2]-}"   ; model_id="${F[3]-}"
 used="${F[4]-}"    ; tokens="${F[5]-}"  ; ctxsize="${F[6]-}"
 quota="${F[7]-}"   ; reset="${F[8]-}"   ; quota7="${F[9]-}"
-fastmode="${F[10]-}"; effort="${F[11]-}"; thinking="${F[12]-}"
+fastmode="${F[10]-}"; effort="${F[11]-}"; thinking="${F[12]-}"; dur_ms="${F[13]-}"
 
 # --- helpers (no subshells: this runs on every redraw) ------------------------
 
@@ -201,6 +205,19 @@ if is_num "$used"; then
     if [ "$SHOW_SEVEN_DAY" = 1 ] && is_num "$quota7"; then
         q7=$(heat "$quota7")
         ctx_display="${ctx_display}\033[36m · \033[0m7d ${q7}${quota7}%"
+    fi
+
+    # A session that has been open for days is the single most expensive habit
+    # there is, and nothing else in the UI reports it. Stays hidden until it
+    # crosses SESSION_WARN_H so the line does not grow for normal sessions.
+    if [ "$SHOW_SESSION_AGE" = 1 ] && is_num "$dur_ms" && [ "$dur_ms" -gt 0 ]; then
+        hours=$(( dur_ms / 3600000 ))
+        if [ "$hours" -ge "$SESSION_WARN_H" ]; then
+            if [ "$hours" -ge $(( SESSION_ALARM_H * 4 )) ]; then age="$(( hours / 24 ))d"
+            else age="${hours}h"; fi
+            [ "$hours" -ge "$SESSION_ALARM_H" ] && ac='\033[31m' || ac='\033[33m'
+            ctx_display="${ctx_display}\033[36m · \033[0msess ${ac}${age}"
+        fi
     fi
 
     ctx_display="${ctx_display}\033[0m"

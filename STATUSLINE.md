@@ -1,7 +1,7 @@
 # Claude Code status line
 
 ```
-myproject/src [main] | Opus 5 · 1M ⚡ | 124k/1M 12% █░░░░░░░░░ · █████░░░░░ 55% · 3h35m [13:50] · 7d 16%
+myproject/src [main] | Opus 5 · 1M ⚡ | 124k/1M 12% █░░░░░░░░░ · █████░░░░░ 55% · 3h35m [13:50] · 7d 16% · sess 13h
 ```
 
 One line, `claude-statusline.sh`, symlinked into `~/.claude/`. Same file on every
@@ -18,6 +18,7 @@ machine — that is the whole point, so resist the urge to fork it per host.
 | `· █████░░░░░ 55%` | Five-hour quota |
 | `· 3h35m [13:50]` | Time until the five-hour quota resets, and the clock time it happens |
 | `· 7d 16%` | Seven-day quota. No bar — but this is the window that costs you days rather than hours when it fills |
+| `· sess 13h` | How long this session has been running. Hidden below `SESSION_WARN_H`, yellow from there, red from `SESSION_ALARM_H`, switching to days past four times the alarm |
 
 Bars and percentages run green under 50%, yellow to 79%, red at 80% and above.
 The full line is about 105 columns; see [Toggles](#toggles) if that is too wide.
@@ -173,7 +174,10 @@ Six variables at the top of the script.
 | `SHOW_TOKENS` | `1` | The `124k/1M` token count before the context percentage | ~9 |
 | `SHOW_SEVEN_DAY` | `1` | The trailing seven-day quota | ~10 |
 | `SHOW_SUBPATH` | `1` | Project-relative path instead of a bare basename | varies |
-| `SHOW_FLAGS` | `1` | The `⚡` / effort / thinking markers | 0 when normal |
+| `SHOW_FLAGS` | `1` | The `⚡` / effort / thinking markers |
+| `SHOW_SESSION_AGE` | `1` | The trailing `sess 13h` age marker |
+| `SESSION_WARN_H` | `4` | Hours before the age appears at all, in yellow |
+| `SESSION_ALARM_H` | `12` | Hours before it turns red | 0 when normal |
 | `DEFAULT_EFFORT` | `high` | Which effort level counts as normal and stays hidden | — |
 | `BAR_WIDTH` | `10` | Cells per bar | 2 per cell removed |
 
@@ -192,6 +196,14 @@ background. Quiet labels in the script reset to the default foreground instead,
 which is readable by definition in any theme.
 
 **The line wraps.** Turn off `SHOW_TOKENS` first, then `SHOW_SEVEN_DAY`.
+
+**Why a session-age marker at all.** A session that has been open for days is
+the most expensive habit there is — every turn re-reads the whole accumulated
+context, and repeated compaction quietly degrades what the model remembers.
+Nothing else in the UI reports it: the context percentage resets after each
+compaction, so a three-month session can sit at a comfortable 30% forever.
+The marker stays hidden for normal sessions and only speaks up once the number
+is worth acting on.
 
 **Nothing appears at all.** Run the fixture command from the install section by
 hand. If that prints a line, the script is fine and the problem is the
