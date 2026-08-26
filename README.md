@@ -44,7 +44,9 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 |------|-------------|
 | `aliases.sh` | All aliases, functions, and shell config |
 | `countdown.sh` | Full-screen countdown clock, backs the `countdown` alias |
+| `claude-statusline.sh` | Claude Code status line — installed by hand, not by `install.sh` (see below) |
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
+| `starship.toml` | Starship prompt config (Tokyo Night) |
 | `install.sh` | One-command installer |
 | `local.sh` | Machine-local aliases — gitignored, never pushed (see below) |
 | `README.md` | This file |
@@ -62,6 +64,70 @@ alias myproject='cd /path/on/this/machine && ./run.sh'
 
 Keeping it out of the tracked files also keeps `update` working — a dirty
 `aliases.sh` makes `git pull --rebase` refuse, which aborts the whole update.
+
+---
+
+## Claude Code status line
+
+```
+myproject/src [main] | Opus 5 · 1M ⚡ | 124k/1M 12% █░░░░░░░░░ · █████░░░░░ 55% · 3h35m [13:50] · 7d 16%
+```
+
+| Segment | Meaning |
+|---------|---------|
+| `myproject/src` | Current directory. Prefixed with the project name when you are below the project root — plain basename otherwise, and never prefixed with `$HOME` |
+| `[main]` | Git branch, or the short SHA when detached. Absent outside a repo |
+| `Opus 5 · 1M` | Model. The `(1M context)` suffix is rewritten as a `· 1M` tag to save a quarter of the line |
+| `⚡` | Fast mode is on. Only shown when it is |
+| `·low` `·no-think` | Reasoning effort left somewhere other than `DEFAULT_EFFORT`, or thinking switched off. Only shown when abnormal — these are easy to toggle and easy to forget |
+| `124k/1M 12% █░░░░░░░░░` | Context window: tokens used, percentage, bar |
+| `· █████░░░░░ 55%` | Five-hour quota |
+| `· 3h35m [13:50]` | Time until the five-hour quota resets, and the clock time it happens |
+| `· 7d 16%` | Seven-day quota. No bar — but this is the window that costs you days rather than hours when it fills |
+
+Bars and percentages run green under 50%, yellow to 79%, red at 80% and above.
+
+### Install
+
+Deliberately **not** wired into `install.sh`. `~/.claude/settings.json` is
+personal — permission rules, hooks, project paths — and an installer has no
+business merging itself into it. Two steps, on the machines you want it on:
+
+```bash
+ln -sf ~/.dotfiles/claude-statusline.sh ~/.claude/statusline-command.sh
+```
+
+then add to `~/.claude/settings.json`:
+
+```json
+"statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
+```
+
+The symlink means `update` propagates changes with no reinstall. Needs `python3`
+and bash 4+ (for `mapfile`) — so on macOS, run it under Homebrew bash, not the
+3.2 that ships with the system. One python process per redraw, about 35 ms.
+
+On Windows, hand the script to an agent and ask for the equivalent — it is a
+single-backend file with no clever dependencies, which is most of why there is
+no `jq` fast path in it.
+
+### Toggles
+
+Six variables at the top of the script. The full line is about 105 columns; turn
+things off if your terminal is narrower.
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `SHOW_TOKENS` | `1` | The `124k/1M` token count before the context percentage |
+| `SHOW_SEVEN_DAY` | `1` | The trailing seven-day quota |
+| `SHOW_SUBPATH` | `1` | Project-relative path instead of a bare basename |
+| `SHOW_FLAGS` | `1` | The `⚡` / effort / thinking markers |
+| `DEFAULT_EFFORT` | `high` | Which effort level counts as normal and stays hidden |
+| `BAR_WIDTH` | `10` | Cells per bar |
+
+`CLAUDE_STATUSLINE_DEBUG=1` dumps the raw payload to
+`$TMPDIR/claude-statusline-debug.json`, mode `600`. Off by default and worth
+leaving off: the payload carries `session_id`, `transcript_path` and `cwd`.
 
 ---
 
