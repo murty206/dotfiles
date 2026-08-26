@@ -129,12 +129,26 @@ get it running on Windows, and troubleshooting.
 ### Package management (auto-detects distro)
 | Alias | Arch (paru) | Debian/Ubuntu (apt) | Fedora (dnf) |
 |-------|-------------|---------------------|--------------|
-| `up` | Full system upgrade + cleanup | `apt update && upgrade && autoremove` | `dnf upgrade && autoremove` |
+| `up` | Full system upgrade + cleanup | `apt update && upgrade`, then autoremove **only after showing the plan and asking** — see below | `dnf upgrade && autoremove` |
 | `i <pkg>` | Install package | `apt install` | `dnf install` |
 | `rm-pkg <pkg>` | Remove package + deps | `apt remove --purge` | `dnf remove` |
 | `search <pkg>` | Search for package | `apt search` | `dnf search` |
 | `pkg-info <pkg>` | Show package info | `apt show` | `dnf info` |
 | `als` | List all active aliases | same | same |
+
+On Debian/Ubuntu `up` is a function, not an alias. It upgrades, then prints what
+`autoremove` would delete and waits for a `y` — it never removes packages
+unattended. A package that has dropped out of the archive is indistinguishable
+from garbage to `autoremove`, and an interpreter some venv depends on, or a
+library a hand-built binary links against, is exactly that kind of package.
+
+Set `UP_KEEP` in `local.sh` to an extended regex of names that must never be
+removed on that machine; a match turns the prompt into a flat refusal:
+
+```bash
+# ~/.dotfiles/local.sh
+UP_KEEP='python3\.11|libav|libvpx'
+```
 
 ### Power / reboot
 | Alias | Description |

@@ -100,6 +100,13 @@ alias countdown='bash "$DOTFILES_DIR/countdown.sh"'   # countdown to a wall-cloc
 # -----------------------------------------------------------------------------
 alias als='alias'
 
+# Must happen before the if/elif below, not inside it. bash parses that whole
+# compound command before running any of it, so an `up` alias left over from a
+# previous source would still be live when `up() {` is parsed — and bash expands
+# aliases in a function definition's name, which is a syntax error that kills
+# the rest of this file.
+unalias up 2>/dev/null
+
 if command -v paru &>/dev/null; then
     # Arch Linux
     alias up='paru --noconfirm && paru -c --noconfirm'
@@ -109,7 +116,46 @@ if command -v paru &>/dev/null; then
     alias pkg-info='paru -Qi'
 elif command -v apt &>/dev/null; then
     # Debian / Ubuntu
-    alias up='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
+    # A function rather than an alias, because `apt autoremove -y` is the one
+    # step of a routine upgrade that can delete something you still need.
+    # Anything no longer in the archive looks like garbage to it — an
+    # interpreter kept alive for a venv, a library some hand-built binary links
+    # against. So print the plan and ask instead of assuming.
+    #
+    # Set UP_KEEP in local.sh to an extended regex of package names that must
+    # never be autoremoved on this machine; a match turns the prompt into a
+    # refusal. Example:
+    #   UP_KEEP='python3\.11|libav|libvpx'
+    up() {
+        sudo apt update && sudo apt upgrade -y || return
+        local plan hits reply
+        plan=$(apt-get --dry-run --purge autoremove 2>/dev/null \
+               | awk '/^(Remv|Purg) /{print $2}')
+        if [ -z "$plan" ]; then
+            echo "autoremove: nothing to remove"
+            return 0
+        fi
+        echo
+        echo "autoremove wants to remove $(printf '%s\n' "$plan" | wc -l) package(s):"
+        printf '%s\n' "$plan" | sed 's/^/  /'
+        if [ -n "${UP_KEEP:-}" ]; then
+            hits=$(printf '%s\n' "$plan" | grep -E "$UP_KEEP")
+            if [ -n "$hits" ]; then
+                echo
+                echo "refusing — these match UP_KEEP:"
+                printf '%s\n' "$hits" | sed 's/^/  /'
+                echo "nothing removed. Find out why they went orphaned first."
+                return 1
+            fi
+        fi
+        echo
+        printf 'remove them? [y/N] '
+        read -r reply
+        case "$reply" in
+            [yY]|[yY][eE][sS]) sudo apt autoremove -y ;;
+            *) echo "skipped — run 'sudo apt autoremove' by hand if you want them gone" ;;
+        esac
+    }
     alias i='sudo apt install -y'
     alias rm-pkg='sudo apt remove --purge -y'
     alias search='apt search'
