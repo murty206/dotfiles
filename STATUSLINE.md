@@ -1,7 +1,7 @@
 # Claude Code status line
 
 ```
-myproject/src [main] | Opus 5 · 1M ⚡ | 124k/1M 12% █░░░░░░░░░ · █████░░░░░ 55% · 3h35m [13:50] · 7d 16% · sess 13h
+myproject/src [main] | Opus 5 ⚡ | 124k/1M 12% █░░░░░░░░░ · █████░░░░░ 55% · 3h35m [13:50] · 7d 16% · sess 13h
 ```
 
 One line, `claude-statusline.sh`, symlinked into `~/.claude/`. Same file on every
@@ -11,7 +11,7 @@ machine — that is the whole point, so resist the urge to fork it per host.
 |---------|---------|
 | `myproject/src` | Current directory. Prefixed with the project name when you are below the project root — plain basename otherwise, and never prefixed with `$HOME` |
 | `[main]` | Git branch, or the short SHA when detached. Absent outside a repo |
-| `Opus 5 · 1M` | Model. The `(1M context)` suffix is rewritten as a `· 1M` tag to save a quarter of the line |
+| `Opus 5` | Model, with the `(1M context)` suffix dropped — it was a quarter of the line. The window size comes back as a `· 1M` tag only when `SHOW_TOKENS` is off; with the counter on, `124k/1M` already says it and the tag was printing `1M` twice |
 | `⚡` | Fast mode is on. Only shown when it is |
 | `·low` `·no-think` | Reasoning effort left somewhere other than `DEFAULT_EFFORT`, or thinking switched off. Only shown when abnormal — these are easy to toggle and easy to forget |
 | `124k/1M 12% █░░░░░░░░░` | Context window: tokens used, percentage, bar |
@@ -21,7 +21,7 @@ machine — that is the whole point, so resist the urge to fork it per host.
 | `· sess 13h` | How long this session has been running. Hidden below `SESSION_WARN_H`, yellow from there, red from `SESSION_ALARM_H`, switching to days past four times the alarm |
 
 Bars and percentages run green under 50%, yellow to 79%, red at 80% and above.
-The full line is about 105 columns; see [Toggles](#toggles) if that is too wide.
+The full line is about 100 columns; see [Toggles](#toggles) if that is too wide.
 
 ---
 
@@ -203,7 +203,7 @@ Nine variables at the top of the script.
 
 | Variable | Default | Effect | Columns saved when off |
 |----------|---------|--------|------------------------|
-| `SHOW_TOKENS` | `1` | The `124k/1M` token count before the context percentage | ~9 |
+| `SHOW_TOKENS` | `1` | The `124k/1M` token count before the context percentage. Switching it off puts the `· 1M` tag back on the model, since nothing else would state the window size — so the net saving is smaller than the counter's own width | ~4 |
 | `SHOW_SEVEN_DAY` | `1` | The trailing seven-day quota | ~10 |
 | `SHOW_SUBPATH` | `1` | Project-relative path instead of a bare basename | varies |
 | `SHOW_FLAGS` | `1` | The `⚡` / effort / thinking markers | 0 when normal |

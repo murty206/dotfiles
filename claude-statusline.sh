@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Claude Code status line.
 #
-#   dotfiles [main] | Opus 5 · 1M | 91k/1M 9% ░░░░░░░░░░ · █░░░░░░░░░ 10% · 3h57m [13:50] · 7d 16%
-#   └ dir     └ git   └ model      └ context window       └ 5h quota    └ resets      └ 7d quota
+#   dotfiles [main] | Opus 5 | 91k/1M 9% ░░░░░░░░░░ · █░░░░░░░░░ 10% · 3h57m [13:50] · 7d 16%
+#   └ dir    └ git    └ model  └ context window       └ 5h quota       └ resets        └ 7d quota
 #
 # Install: see README. Nothing here is host-specific; the whole file is safe to
 # read on a shared machine.
@@ -185,10 +185,15 @@ branch=$(git -C "$git_dir" symbolic-ref --short HEAD 2>/dev/null \
 # --- model, plus markers for anything left switched away from normal ----------
 model_display=""
 if [ -n "$model" ] && [ "$model" != "None" ]; then
-    # "Opus 5 (1M context)" is a quarter of the line; the id already tells us
-    # the window size, so drop the parenthetical and re-add it as a tag.
+    # "Opus 5 (1M context)" is a quarter of the line, so drop the parenthetical.
     short="${model%% (*}"
-    case "$model_id" in *'[1m]'*) short="${short} · 1M" ;; esac
+    # Bring the window size back as a tag only when the token counter is off.
+    # With SHOW_TOKENS on it is already there — "Opus 5 · 1M | 297k/1M" says 1M
+    # twice in the same line, which is the sort of thing you stop seeing after
+    # a week and it still costs five columns.
+    if [ "$SHOW_TOKENS" != 1 ]; then
+        case "$model_id" in *'[1m]'*) short="${short} · 1M" ;; esac
+    fi
 
     flags=""
     if [ "$SHOW_FLAGS" = 1 ]; then
