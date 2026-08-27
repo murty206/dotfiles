@@ -1,0 +1,17 @@
+# Keep LF in the working tree, not just in the blob.
+#
+# Git for Windows ships core.autocrlf=true in its system config, so a checkout
+# there rewrites these to CRLF. Git Bash runs a CRLF script anyway, so nothing
+# breaks locally and the blob stays clean — which is exactly why this goes
+# unnoticed. It bites one step later: a copy taken off that checkout and onto a
+# Linux box is a bash script with a \r on every line, and there it does not run.
+#
+# These files are the shared artefact of this repo (see STATUSLINE.md, "Same
+# file on every machine"), so pin the ending rather than trusting each host's
+# git config.
+
+*.sh   text eol=lf
+*.py   text eol=lf
+*.toml text eol=lf
+*.conf text eol=lf
+*.md   text eol=lf
