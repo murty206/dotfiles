@@ -23,6 +23,29 @@ machine — that is the whole point, so resist the urge to fork it per host.
 Bars and percentages run green under 50%, yellow to 79%, red at 80% and above.
 The full line is about 100 columns; see [Toggles](#toggles) if that is too wide.
 
+**Separators are a three-level hierarchy**, which is easier to read than to
+guess at:
+
+| Mark | Colour | Spacing | Job |
+|------|--------|---------|-----|
+| `\|` | cyan | both sides | Boundary between the three top-level groups: directory, model, metrics. Appears exactly twice |
+| `·` | cyan | both sides | Item separator *inside* the metrics group — quota, reset, seven-day, session |
+| `·` | yellow | none after | Prefix on a flag, as in `·low` or `·no-think`. Attached to its word, so it is a label rather than a separator |
+| — | — | space only | Directory and branch are not separated at all; the colour change does the work |
+
+So: space < `·` < `|`. The dot carrying two jobs is the one rough edge, and
+spacing plus colour are all that tell them apart. The old `· 1M` model tag sat
+exactly on that fault line — cyan and spaced like a separator, but a label — and
+that is a second reason it is gone by default.
+
+**The two bars are mirrored on purpose.** The context window reads
+`32% ███░░░░░░░` and the five-hour quota reads `█░░░░░░░░░ 16%` — percentage
+first on one, bar first on the other. That is not an oversight: it puts the two
+bars either side of the `·`, touching, so you compare fills at a glance instead
+of hunting for two bars separated by a percentage. It does read as an
+inconsistency the first time you notice it, which is why it is written down
+here — if you are about to "fix" the ordering, this is the reason not to.
+
 ---
 
 ## Install — Linux and WSL
