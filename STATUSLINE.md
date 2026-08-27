@@ -54,9 +54,10 @@ echo '{"workspace":{"current_dir":"/tmp/demo","project_dir":"/tmp/demo"},
 
 The symlink means `update` propagates changes with no reinstall.
 
-**Requirements:** `python3`, and bash 4+ for `mapfile`. On macOS that means
-Homebrew bash, not the 3.2 the system ships. One python process per redraw,
-about 35 ms.
+**Requirements:** python 3.7+ under either name — the script prefers `python3`
+and falls back to `python`, which is what Git Bash on Windows provides — and
+bash 4+ for `mapfile`. On macOS that means Homebrew bash, not the 3.2 the system
+ships. One python process per redraw, about 35 ms.
 
 Do **not** copy `settings.json` between machines. The script is the shared part;
 the settings file is personal to each host.
@@ -117,18 +118,36 @@ If a glyph still renders as a box:
 
 ## Windows
 
-Three cases, and two of them need no work.
+Three cases, and only the last one needs work.
 
 **WSL** — it is Linux. Follow the Linux install above and you are done. This is
 the option that actually gives you one identical status line everywhere.
 
-**Native Windows + Git Bash** — try it unmodified first. Git Bash ships bash 5,
-so `mapfile` is fine. The one likely snag is the interpreter name:
+**Native Windows + Git Bash** — works unmodified. It did not always. Three
+things differ from Linux, all three are now handled in the script, and **not one
+of them announced itself**: the script exited 0 and drew a line every time, with
+pieces quietly missing. They are written down because the symptoms are the only
+way to recognise them, and because anyone running a copy from before this was
+fixed will see exactly these.
 
-```bash
-python3 --version   # if this works, change nothing
-python  --version   # if only this works, change python3 -> python in the script
-```
+| What differs on Windows | Symptom | Handled by |
+|---|---|---|
+| Git Bash finds `python`, not `python3` | nothing renders at all | `command -v python3` picks the name — a builtin, so no extra process per redraw |
+| Native Windows python writes `\r\n` on stdout | context and quota segments vanish; `·no-think` sticks on permanently | `sys.stdout.reconfigure(newline="\n")`, behind a `hasattr` guard for python < 3.7 |
+| Claude Code passes `C:\Users\...` | the entire path prints instead of the basename | backslashes folded to `/`, gated on a drive letter or UNC prefix so Unix paths keep theirs |
+
+The middle one is worth understanding rather than copying. `mapfile` splits the
+python output on `\n`, so a producer emitting `\r\n` leaves a trailing `\r` on
+every single field. `is_num "12\r"` is then false, which drops the whole context
+and quota block, and `"yes\r"` never equals `"yes"`, which pins the no-think
+marker on. The directory and the model name still render perfectly — that is
+what makes it hard to see. If you ever meet a status line that has a directory
+and a model and nothing else, suspect line endings before anything else.
+
+All three changes are inert on Linux: the interpreter check finds `python3`, the
+reconfigure call is a no-op on a stream that already uses `\n`, and the path
+fold never fires without a drive letter. Verified by running the fixture set on
+both.
 
 **Anything else** — hand the script to an agent. It is public, so give the URL
 rather than the file:
@@ -150,13 +169,26 @@ A prompt that produces a usable port:
 > here, whether Git Bash is available, and whether the interpreter is `python3`
 > or `python`. Prefer the smallest change that works over a rewrite.
 >
-> Keep the six toggles at the top of the file under the same names:
-> SHOW_TOKENS, SHOW_SEVEN_DAY, SHOW_SUBPATH, SHOW_FLAGS, DEFAULT_EFFORT,
-> BAR_WIDTH.
+> Three platform differences already bit me once on native Windows, and none of
+> them produced an error — the script exited 0 with pieces of the line missing.
+> Check all three explicitly rather than trusting that it looks fine:
+> the interpreter name; whether python writes `\r\n` on stdout (`mapfile` splits
+> on `\n`, so a trailing `\r` makes every numeric test fail); and the path
+> separator in `current_dir` (the script strips to a basename with `/`).
+> Fix these in the producer, not by adding a `tr` or `sed` to the pipeline —
+> the script is built around exactly one python process and no other forks.
+>
+> Keep the nine toggles at the top of the file under the same names:
+> SHOW_TOKENS, SHOW_SEVEN_DAY, SHOW_SUBPATH, SHOW_FLAGS, SHOW_SESSION_AGE,
+> SESSION_WARN_H, SESSION_ALARM_H, DEFAULT_EFFORT, BAR_WIDTH.
 >
 > Test with fixture payloads before declaring it done: normal, `fast_mode` true,
-> quota at 100%, `rate_limits` missing entirely, malformed JSON, empty input.
-> None may crash; missing data must drop its segment silently.
+> quota at 100%, `rate_limits` missing entirely, malformed JSON, empty input,
+> a path below the project root, and an absolute path in this platform's own
+> format. None may crash; missing data must drop its segment silently.
+> Build the payloads in a real language, not by hand in the shell — a fixture
+> mangled by quoting looks exactly like a broken script and will send you after
+> the wrong bug.
 >
 > Do not edit my settings.json — tell me what to add and I will do it.
 
@@ -178,7 +210,7 @@ Nine variables at the top of the script.
 | `SHOW_SESSION_AGE` | `1` | The trailing `sess 13h` age marker | 0 below the threshold |
 | `SESSION_WARN_H` | `4` | Hours before the age appears at all, in yellow | — |
 | `SESSION_ALARM_H` | `12` | Hours before it turns red | — |
-| `DEFAULT_EFFORT` | `high` | Which effort level counts as normal and stays hidden | — |
+| `DEFAULT_EFFORT` | `xhigh` | Which effort level counts as normal and stays hidden. Set it to whatever `effortLevel` your `settings.json` uses, or the marker you wanted as a warning becomes permanent furniture | — |
 | `BAR_WIDTH` | `10` | Cells per bar | 2 per cell removed |
 
 The script cannot detect terminal width: Claude Code runs it without a
@@ -208,8 +240,20 @@ is worth acting on.
 **Nothing appears at all.** Run the fixture command from the install section by
 hand. If that prints a line, the script is fine and the problem is the
 `statusLine` entry in `settings.json`. If it prints only a directory name, the
-python side is failing — run it without the `2>/dev/null` on the `python3 -c`
+python side is failing — run it without the `2>/dev/null` on the `"$PY" -c`
 call to see the error.
+
+**A directory and a model, and nothing after them.** Every numeric segment gone,
+`·no-think` showing even with thinking on, and exit status 0. That is a line
+ending problem: python is emitting `\r\n`, `mapfile` splits on `\n`, and the
+`\r` left on each field makes `is_num "12\r"` false and `"yes\r" != "yes"`.
+Handled in the script since the Windows fixes, so this only appears on an older
+copy — `update`, or check that the `sys.stdout.reconfigure` line is present.
+
+**The whole absolute path where a basename belongs.** The path separator is not
+`/`, so `${cwd##*/}` had nothing to strip. Same fix, same version — the script
+folds a Windows drive-letter or UNC path to forward slashes before the shell
+sees it.
 
 **Wrong numbers, or a stale reset time.** Statusline redraws are driven by
 Claude Code, not by a timer. The clock only advances when something else
