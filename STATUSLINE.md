@@ -233,7 +233,7 @@ Nine variables at the top of the script.
 | `SHOW_SESSION_AGE` | `1` | The trailing `sess 13h` age marker | 0 below the threshold |
 | `SESSION_WARN_H` | `4` | Hours before the age appears at all, in yellow | — |
 | `SESSION_ALARM_H` | `12` | Hours before it turns red | — |
-| `DEFAULT_EFFORT` | `xhigh` | Which effort level counts as normal and stays hidden. Set it to whatever `effortLevel` your `settings.json` uses, or the marker you wanted as a warning becomes permanent furniture | — |
+| `DEFAULT_EFFORT` | `high` | Which effort level counts as normal and stays hidden. Set it to whatever `effortLevel` your `settings.json` uses, or the marker you wanted as a warning becomes permanent furniture | — |
 | `BAR_WIDTH` | `10` | Cells per bar | 2 per cell removed |
 
 The script cannot detect terminal width: Claude Code runs it without a

@@ -15,7 +15,7 @@ SHOW_FLAGS=1         # markers for fast mode / non-default effort / thinking off
 SHOW_SESSION_AGE=1   # "sess 13h" once a session has been running a long time
 SESSION_WARN_H=4     # hours before the session age appears at all, in yellow
 SESSION_ALARM_H=12   # hours before it turns red
-DEFAULT_EFFORT=xhigh # effort level considered normal — only deviations are shown
+DEFAULT_EFFORT=high  # effort level considered normal — only deviations are shown
 BAR_WIDTH=10         # cells per bar
 # ------------------------------------------------------------------------------
 
