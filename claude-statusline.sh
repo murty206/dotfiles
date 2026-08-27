@@ -15,7 +15,7 @@ SHOW_FLAGS=1         # markers for fast mode / non-default effort / thinking off
 SHOW_SESSION_AGE=1   # "sess 13h" once a session has been running a long time
 SESSION_WARN_H=4     # hours before the session age appears at all, in yellow
 SESSION_ALARM_H=12   # hours before it turns red
-DEFAULT_EFFORT=high  # effort level considered normal — only deviations are shown
+DEFAULT_EFFORT=xhigh # effort level considered normal — only deviations are shown
 BAR_WIDTH=10         # cells per bar
 # ------------------------------------------------------------------------------
 
@@ -28,12 +28,25 @@ if [ -n "${CLAUDE_STATUSLINE_DEBUG:-}" ]; then
     ( umask 077; printf '%s' "$input" > "${TMPDIR:-/tmp}/claude-statusline-debug.json" ) 2>/dev/null
 fi
 
+# Interpreter name. python3 everywhere except native Windows, where Git Bash
+# finds only "python". `command -v` is a builtin, so this adds no process per
+# redraw.
+if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi
+
 # One python process for the whole payload. Percentages arrive pre-rounded and
 # the reset time pre-formatted, so bash never touches a float — that keeps the
 # output identical under a locale with a comma decimal separator.
-mapfile -t F < <(printf '%s' "$input" | python3 -c '
-import sys, json, time
+mapfile -t F < <(printf '%s' "$input" | "$PY" -c '
+import sys, json, re, time
 from datetime import datetime
+
+# Native Windows python opens stdout in text mode and rewrites "\n" as "\r\n".
+# mapfile splits on "\n", so every field would keep a trailing "\r" — enough for
+# is_num "12\r" to be false, which drops the entire context and quota block, and
+# for "yes\r" != "yes", which pins the no-think marker on. A no-op on Linux.
+# Guarded because reconfigure() only exists from python 3.7.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(newline="\n")
 
 try:
     d = json.load(sys.stdin)
@@ -82,9 +95,19 @@ try:
 except (KeyError, TypeError, ValueError):
     pass
 
+def wp(v):
+    # Native Windows hands over "C:\Users\...", but the shell below strips to the
+    # basename with "${cwd##*/}" — with no "/" to strip it would print the whole
+    # path. Gated on a drive letter or a UNC prefix, so a Unix path that
+    # legitimately contains a backslash is left alone; cwd also feeds `git -C`,
+    # and git accepts either separator on Windows.
+    if re.match(r"^[A-Za-z]:[\\/]", v) or v.startswith("\\\\"):
+        return v.replace("\\", "/")
+    return v
+
 print("\n".join([
-    ws.get("current_dir") or d.get("cwd") or "",
-    ws.get("project_dir") or "",
+    wp(ws.get("current_dir") or d.get("cwd") or ""),
+    wp(ws.get("project_dir") or ""),
     name,
     mid,
     pct(cw),
