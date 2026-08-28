@@ -35,6 +35,18 @@ only then, **ask** for the start time — do not invent one, and do not silently
 log an end time with no duration. A wrong duration is worse than a missing one,
 because it will be averaged into a measurement later.
 
+## The session's shape
+
+Also read `.claude/compact-count` if it exists — how many times the context was
+compacted. **Record the number in the entry**, even when it is zero, and note
+whether the two-compaction warning fired and what happened next: the question
+was split, closed whole, or the warning was ignored.
+
+This is the only chance to keep it. The next fresh start resets the counter, so
+a number not written into the log at close is a number that never existed. It is
+also the one that says whether the session was the right size, which no other
+field records.
+
 **Delete the file as the last step**, after the commit. That is what marks the
 session closed and lets `/acilis` open the next one cleanly. If anything above
 failed, leave it in place — a stamp left standing is a session you can still
@@ -73,8 +85,9 @@ log. The log is history; `CLAUDE.md` is the rule in force.
 **5. Commit.** Follow the repository's existing message style — read
 `git log --oneline -10` first rather than assuming one.
 
-**6. Delete `.claude/session-start`.** See above. This is the step that closes
-the session.
+**6. Delete `.claude/session-start` and `.claude/compact-count`.** See above.
+This is the step that closes the session — and do not delete the counter until
+its number is in the entry.
 
 **7. Give a three-line closing summary:**
 - Closed this session
