@@ -46,6 +46,8 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `countdown.sh` | Full-screen countdown clock, backs the `countdown` alias |
 | `claude-statusline.sh` | Claude Code status line — installed by hand, not by `install.sh` |
 | `STATUSLINE.md` | Full status line reference: segments, toggles, fonts, Windows, troubleshooting |
+| `claude-commands/` | Claude Code slash commands — symlinked into `~/.claude/commands/` (see below) |
+| `claude-session-context.sh` | `SessionStart` hook — says whether the context is fresh, counts compactions |
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `starship.toml` | Starship prompt config (Tokyo Night) |
 | `install.sh` | One-command installer |
@@ -71,7 +73,7 @@ Keeping it out of the tracked files also keeps `update` working — a dirty
 ## Claude Code status line
 
 ```
-myproject/src [main] | Opus 5 · 1M ⚡ | 124k/1M 12% █░░░░░░░░░ · █████░░░░░ 55% · 3h35m [13:50] · 7d 16%
+myproject/src [main] | Opus 5 ⚡ | 124k/1M 12% █░░░░░░░░░ · █████░░░░░ 55% · 3h35m [13:50] · 7d 16%
 ```
 
 Directory, git branch, model, context window, and both quota windows with the
@@ -92,6 +94,79 @@ then add to `~/.claude/settings.json`:
 **[STATUSLINE.md](STATUSLINE.md)** has the rest: what every segment means, the
 six toggles for narrower terminals, font installation on each platform, how to
 get it running on Windows, and troubleshooting.
+
+---
+
+## Claude Code slash commands
+
+Every `.md` file in `claude-commands/` becomes a slash command on every machine,
+symlinked into `~/.claude/commands/`. Unlike the status line these need no
+`settings.json` edit — a file there is picked up by its name alone — so
+`install.sh` sets them up, and `update` links anything the repo has gained since.
+
+| Command | What it does |
+|---------|--------------|
+| `/acilis` | Opens a session: stamps the start time, reads the queue, and begins on the top item |
+| `/kapanis` | Closes it: writes the log entry with its rationale, updates the queue, commits |
+
+**They are a pair.** `/acilis` writes the start time to `.claude/session-start`
+in the project; `/kapanis` reads it back, works out the duration, and deletes the
+file. The file's existence *is* the state — present means a session is open — so
+neither command has to ask you what time you started, and neither needs a rule
+about work that runs past midnight.
+
+Both take the clock from the machine, through Claude Code's
+`` !`command` `` injection, which runs before the file reaches the model. So
+`/kapanis` on its own is enough; pass `[HH:MM]` only to override the end time
+when you are closing a session well after it actually ended.
+
+Run `/clear` **before** `/acilis`. A slash command is a prompt, so it cannot
+clear for you — `/clear` would erase the prompt mid-run.
+
+### The session-context hook
+
+`/acilis` does not take your word for it that the context is fresh, because
+**`--continue` and `--resume` do not clear it** and a compaction only shortens
+it. `claude-session-context.sh` runs on `SessionStart` and prints one line that
+Claude reads:
+
+| Line | When |
+|---|---|
+| `session-context: FRESH` | `startup` or `clear` |
+| `session-context: CARRIED OVER` | `resume` or `fork` |
+| `session-context: COMPACTED — compaction N` | `compact`, with a running count |
+
+On the second compaction it adds an `ACTION` line telling the agent to say,
+unprompted and once, that the session has run long enough to close. The count
+resets on the next `FRESH`. State lives in `.claude/compact-count` next to
+`.claude/session-start`; gitignore both.
+
+It takes the kind of start as an argument rather than reading stdin — the
+matcher values are documented, a `source` field in the payload is not. Wire it
+up by hand, like the status line, since `settings.json` is personal:
+
+```bash
+ln -sf ~/.dotfiles/claude-session-context.sh ~/.claude/session-context.sh
+```
+
+```json
+"SessionStart": [
+  { "matcher": "startup|clear",
+    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh startup-or-clear" }] },
+  { "matcher": "resume|fork",
+    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh carried-over" }] },
+  { "matcher": "compact",
+    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh compact" }] }
+]
+```
+
+A project can define its own `/acilis` or `/kapanis` in its `.claude/commands/`,
+and that copy wins. The ones here are the generic fallback: they search for a
+log and a queue by the usual names instead of knowing them. Add
+`.claude/session-start` to the project's `.gitignore` — it is state, not history.
+
+Nothing host-specific may go in these files; this repo is public. A command that
+needs to name a real project belongs in that project, not here.
 
 ---
 

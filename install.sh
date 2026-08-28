@@ -381,6 +381,39 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# 11. Symlink Claude Code slash commands
+# -----------------------------------------------------------------------------
+# Unlike claude-statusline.sh, these need no settings.json edit — a file in
+# ~/.claude/commands/ is picked up by its name alone — so there is no reason to
+# leave them manual. Symlinked, not copied: editing the repo copy changes the
+# live command with no reinstall.
+section "Claude Code commands"
+
+CLAUDE_CMD_SRC="$DOTFILES_DIR/claude-commands"
+CLAUDE_CMD_DIR="$HOME/.claude/commands"
+
+if [ -d "$CLAUDE_CMD_SRC" ]; then
+    mkdir -p "$CLAUDE_CMD_DIR"
+    for cmd in "$CLAUDE_CMD_SRC"/*.md; do
+        [ -e "$cmd" ] || continue
+        target="$CLAUDE_CMD_DIR/$(basename "$cmd")"
+        if [ -L "$target" ]; then
+            warn "$(basename "$cmd") symlink already exists — skipping"
+        elif [ -f "$target" ]; then
+            warn "Existing $(basename "$cmd") found — backing up to $(basename "$cmd").bak"
+            mv "$target" "$target.bak"
+            ln -s "$cmd" "$target"
+            success "$(basename "$cmd") symlinked from dotfiles"
+        else
+            ln -s "$cmd" "$target"
+            success "$(basename "$cmd") symlinked from dotfiles"
+        fi
+    done
+else
+    warn "claude-commands/ not found in dotfiles — skipping"
+fi
+
+# -----------------------------------------------------------------------------
 # 8. Hook aliases.sh into shell configs
 # -----------------------------------------------------------------------------
 section "Aliases"

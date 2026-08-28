@@ -40,6 +40,30 @@ function update() {
         echo "→ starship.toml symlinked"
     fi
 
+    # Claude Code slash commands. Looped rather than named one by one, so a
+    # command added to the repo reaches every machine on the next `update`
+    # without an install.sh re-run. Editing an already-linked file needs no
+    # step at all — the symlink points straight at the repo.
+    if [ -d "$DOTFILES_DIR/claude-commands" ]; then
+        mkdir -p "$HOME/.claude/commands"
+        for _cmd in "$DOTFILES_DIR"/claude-commands/*.md; do
+            [ -e "$_cmd" ] || continue
+            _target="$HOME/.claude/commands/$(basename "$_cmd")"
+            if [ -L "$_target" ]; then
+                :
+            elif [ -f "$_target" ]; then
+                # Never clobber a hand-written command, but do not fail quietly
+                # either: a real file here means this machine stopped receiving
+                # updates for that command, and nothing else would say so.
+                echo "! $(basename "$_cmd") exists as a real file — not linked, not updating"
+            else
+                ln -s "$_cmd" "$_target"
+                echo "→ $(basename "$_cmd") symlinked"
+            fi
+        done
+        unset _cmd _target
+    fi
+
     # Pull in anything install.sh would have set up but this machine is missing
     ensure_tty_clock
 
