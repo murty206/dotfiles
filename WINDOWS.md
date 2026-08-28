@@ -112,6 +112,16 @@ ln -s ~/.dotfiles/claude-commands/kapanis.md ~/.claude/commands/kapanis.md
 No `settings.json` entry — a file in `~/.claude/commands/` is picked up by its
 name alone.
 
+### 2b. Global CLAUDE.md
+
+```bash
+ln -s ~/.dotfiles/claude-global.md ~/.claude/CLAUDE.md
+```
+
+Loaded in every project on the machine. Also no `settings.json` entry. If a real
+file already exists there, move it aside first — the link is what keeps this
+machine in step with the others.
+
 ### 3. Session-context hook
 
 ```bash
@@ -177,6 +187,7 @@ cd ~/.dotfiles && git pull --ff-only
 cp claude-statusline.sh        ~/.claude/statusline-command.sh
 cp claude-session-context.sh   ~/.claude/session-context.sh
 cp claude-commands/*.md        ~/.claude/commands/
+cp claude-global.md            ~/.claude/CLAUDE.md
 ```
 
 You will not get a reminder from Windows. You will get one from the Linux side:

@@ -13,6 +13,8 @@ My portable shell environment. One command sets up everything on any Linux machi
 | JetBrains Mono Nerd Font | Installed system-wide for glyph support |
 | Kitty | GPU-accelerated terminal, 1984 Dark colors, config synced via dotfiles |
 | tty-clock | Full-screen terminal clock, run with `clock` |
+| GitHub CLI (`gh`) | Repos, PRs and issues from the terminal. Needs one `gh auth login` per machine |
+| Claude Code | Slash commands and the global `CLAUDE.md`, symlinked from this repo |
 | aliases.sh | Portable aliases and functions, auto-detects distro |
 
 ## Install on a new machine
@@ -48,6 +50,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `STATUSLINE.md` | Full status line reference: segments, toggles, fonts, Windows, troubleshooting |
 | `claude-commands/` | Claude Code slash commands — symlinked into `~/.claude/commands/` (see below) |
 | `claude-session-context.sh` | `SessionStart` hook — says whether the context is fresh, counts compactions |
+| `claude-global.md` | Global `CLAUDE.md` — symlinked to `~/.claude/CLAUDE.md`, loaded in every project |
 | `WINDOWS.md` | Setting up the Claude Code pieces on Windows — by hand, and why |
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `starship.toml` | Starship prompt config (Tokyo Night) |
@@ -104,6 +107,13 @@ Every `.md` file in `claude-commands/` becomes a slash command on every machine,
 symlinked into `~/.claude/commands/`. Unlike the status line these need no
 `settings.json` edit — a file there is picked up by its name alone — so
 `install.sh` sets them up, and `update` links anything the repo has gained since.
+`claude-global.md` rides the same mechanism into `~/.claude/CLAUDE.md`, which
+Claude Code loads in **every** project on the machine.
+
+That last one is why this repo being public is a live constraint rather than a
+formality: a line added to `claude-global.md` is read by every agent in every
+project, and published. It is deliberately close to empty — see the file itself
+for the bar a rule has to clear before it goes in.
 
 | Command | What it does |
 |---------|--------------|

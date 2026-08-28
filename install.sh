@@ -381,7 +381,35 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 11. Symlink Claude Code slash commands
+# 11. Install GitHub CLI
+# -----------------------------------------------------------------------------
+# The binary is `gh` everywhere, but Arch names the package `github-cli` — so
+# the guard checks the command and each branch uses the distro's own name.
+# Mirrors ensure_gh() in aliases.sh; keep the two in step.
+section "GitHub CLI"
+
+if command -v gh &>/dev/null; then
+    success "gh already installed — $(gh --version | head -1)"
+else
+    info "Installing gh..."
+    if command -v paru &>/dev/null;    then paru -S --noconfirm github-cli
+    elif command -v apt &>/dev/null;   then sudo apt install -y gh
+    elif command -v dnf &>/dev/null;   then sudo dnf install -y gh
+    fi
+    if command -v gh &>/dev/null; then
+        success "gh installed"
+    else
+        warn "gh unavailable in this distro's repos — install it manually"
+    fi
+fi
+
+if command -v gh &>/dev/null && ! gh auth status &>/dev/null; then
+    warn "gh is installed but not authenticated — run: gh auth login"
+    echo "    GitHub.com → SSH. Skip the key upload if your key is already on the account."
+fi
+
+# -----------------------------------------------------------------------------
+# 12. Symlink Claude Code slash commands
 # -----------------------------------------------------------------------------
 # Unlike claude-statusline.sh, these need no settings.json edit — a file in
 # ~/.claude/commands/ is picked up by its name alone — so there is no reason to
@@ -411,6 +439,27 @@ if [ -d "$CLAUDE_CMD_SRC" ]; then
     done
 else
     warn "claude-commands/ not found in dotfiles — skipping"
+fi
+
+# Global CLAUDE.md — loaded in every project, on every machine. Symlinked for
+# the same reason as the commands: no settings.json edit needed, so there is no
+# reason to keep it manual.
+CLAUDE_GLOBAL_SRC="$DOTFILES_DIR/claude-global.md"
+CLAUDE_GLOBAL_LINK="$HOME/.claude/CLAUDE.md"
+
+if [ -f "$CLAUDE_GLOBAL_SRC" ]; then
+    mkdir -p "$HOME/.claude"
+    if [ -L "$CLAUDE_GLOBAL_LINK" ]; then
+        warn "CLAUDE.md symlink already exists — skipping"
+    elif [ -f "$CLAUDE_GLOBAL_LINK" ]; then
+        warn "Existing ~/.claude/CLAUDE.md found — backing up to CLAUDE.md.bak"
+        mv "$CLAUDE_GLOBAL_LINK" "$CLAUDE_GLOBAL_LINK.bak"
+        ln -s "$CLAUDE_GLOBAL_SRC" "$CLAUDE_GLOBAL_LINK"
+        success "global CLAUDE.md symlinked from dotfiles"
+    else
+        ln -s "$CLAUDE_GLOBAL_SRC" "$CLAUDE_GLOBAL_LINK"
+        success "global CLAUDE.md symlinked from dotfiles"
+    fi
 fi
 
 # -----------------------------------------------------------------------------

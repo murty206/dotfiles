@@ -66,8 +66,16 @@ function update() {
         unset _cmd _target
     fi
 
+    if [ -f "$DOTFILES_DIR/claude-global.md" ] \
+       && [ ! -L "$HOME/.claude/CLAUDE.md" ] && [ ! -f "$HOME/.claude/CLAUDE.md" ]; then
+        mkdir -p "$HOME/.claude"
+        ln -s "$DOTFILES_DIR/claude-global.md" "$HOME/.claude/CLAUDE.md"
+        echo "→ global CLAUDE.md symlinked"
+    fi
+
     # Pull in anything install.sh would have set up but this machine is missing
     ensure_tty_clock
+    ensure_gh
 
     source "$DOTFILES_DIR/aliases.sh"
     echo "✓ Aliases updated and reloaded."
@@ -89,6 +97,25 @@ function ensure_tty_clock() {
         echo "! No supported package manager — install tty-clock manually."
         return 1
     fi
+}
+
+# GitHub CLI. Note the package name is NOT the command name on Arch — the
+# binary is `gh`, the package is `github-cli`, so the guard checks the command
+# and the install uses the distro's own name for it.
+function ensure_gh() {
+    command -v gh &>/dev/null && return 0
+
+    echo "→ gh not found — installing GitHub CLI..."
+    if command -v paru &>/dev/null;    then paru -S --noconfirm github-cli
+    elif command -v apt &>/dev/null;   then sudo apt install -y gh
+    elif command -v dnf &>/dev/null;   then sudo dnf install -y gh
+    else
+        echo "! No supported package manager — install gh manually."
+        return 1
+    fi
+
+    echo "→ gh installed. Authenticate once with:  gh auth login"
+    echo "  (choose GitHub.com → SSH; skip the key upload if your key is already on the account)"
 }
 
 # -----------------------------------------------------------------------------
