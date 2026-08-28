@@ -48,6 +48,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `STATUSLINE.md` | Full status line reference: segments, toggles, fonts, Windows, troubleshooting |
 | `claude-commands/` | Claude Code slash commands — symlinked into `~/.claude/commands/` (see below) |
 | `claude-session-context.sh` | `SessionStart` hook — says whether the context is fresh, counts compactions |
+| `WINDOWS.md` | Setting up the Claude Code pieces on Windows — by hand, and why |
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `starship.toml` | Starship prompt config (Tokyo Night) |
 | `install.sh` | One-command installer |
@@ -159,6 +160,11 @@ ln -sf ~/.dotfiles/claude-session-context.sh ~/.claude/session-context.sh
     "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh compact" }] }
 ]
 ```
+
+On **Windows** none of this is automatic — `install.sh` and `update` are not run
+there, because `ln -s` quietly copies instead of linking and the automation would
+stop working without saying so. **[WINDOWS.md](WINDOWS.md)** is the by-hand
+setup: the status line, these commands, the hook, and how to keep them current.
 
 A project can define its own `/acilis` or `/kapanis` in its `.claude/commands/`,
 and that copy wins. The ones here are the generic fallback: they search for a

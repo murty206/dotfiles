@@ -54,8 +54,10 @@ function update() {
             elif [ -f "$_target" ]; then
                 # Never clobber a hand-written command, but do not fail quietly
                 # either: a real file here means this machine stopped receiving
-                # updates for that command, and nothing else would say so.
-                echo "! $(basename "$_cmd") exists as a real file — not linked, not updating"
+                # updates for that command, and nothing else would say so. On a
+                # Windows box installed by copy this is the normal state and the
+                # line is the cue to re-copy — see WINDOWS.md.
+                echo "! $(basename "$_cmd") exists as a real file — not linked, not updating (see WINDOWS.md)"
             else
                 ln -s "$_cmd" "$_target"
                 echo "→ $(basename "$_cmd") symlinked"
