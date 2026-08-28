@@ -138,9 +138,13 @@ Claude reads:
 | `session-context: COMPACTED — compaction N` | `compact`, with a running count |
 
 On the second compaction it adds an `ACTION` line telling the agent to say,
-unprompted and once, that the session has run long enough to close. The count
-resets on the next `FRESH`. State lives in `.claude/compact-count` next to
-`.claude/session-start`; gitignore both.
+unprompted and once, that the session has outgrown its question — and to
+**split** it rather than simply close it: name the finished part, close that
+with `/kapanis`, queue the rest, then `/clear` and `/acilis`. Closing without
+splitting writes a half-entry into the log, which is the failure the warning
+exists to prevent rather than a milder form of it. The count resets on the next
+`FRESH`. State lives in `.claude/compact-count` next to `.claude/session-start`;
+gitignore both.
 
 It takes the kind of start as an argument rather than reading stdin — the
 matcher values are documented, a `source` field in the payload is not. Wire it

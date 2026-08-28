@@ -41,6 +41,12 @@ COUNTER="$STATE_DIR/compact-count"
 # How many compactions before the session is called too long. Two, because one
 # is normal on a working afternoon and the second is the one that says the
 # session stopped being a question and started being a container.
+#
+# What it asks for is "split", not "close", and the difference is the whole
+# point: a session that closes with its question still open writes a half-entry
+# into the log, and a log of half-entries is worth less than no log. The
+# compaction count is not a new rule, it is an existing one becoming visible —
+# a question that will not close in one session was scoped too big.
 COMPACT_LIMIT=2
 
 mkdir -p "$STATE_DIR" 2>/dev/null || true
@@ -65,7 +71,7 @@ case "$KIND" in
 
         printf 'session-context: COMPACTED — compaction %d of this session; NOT a fresh context\n' "$n"
         if [ "$n" -ge "$COMPACT_LIMIT" ]; then
-            printf 'session-context: ACTION — %d compactions. Tell the user, unprompted and before continuing, that this session has run long enough to close: /kapanis to write the log and commit, then /clear, then /acilis. Say it once, plainly, and do not repeat it every turn.\n' "$n"
+            printf 'session-context: ACTION — %d compactions. Say this to the user unprompted, before continuing, once, plainly, and do not repeat it every turn: the session has outgrown its question, so SPLIT THE QUESTION rather than just closing. Name the part that is finished and the part that is not; close the finished part with /kapanis, put the rest on the queue as its own item, then /clear and /acilis. Closing without splitting writes a half-entry into the log, which is the failure this is meant to prevent, not a smaller version of it.\n' "$n"
         fi
         ;;
 
