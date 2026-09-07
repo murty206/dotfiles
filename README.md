@@ -14,6 +14,7 @@ My portable shell environment. One command sets up everything on any Linux machi
 | Kitty | GPU-accelerated terminal, 1984 Dark colors, config synced via dotfiles |
 | tty-clock | Full-screen terminal clock, run with `clock` |
 | GitHub CLI (`gh`) | Repos, PRs and issues from the terminal. Needs one `gh auth login` per machine |
+| speedtest-cli | Ookla speed test, run with `speed` |
 | Claude Code | Slash commands and the global `CLAUDE.md`, symlinked from this repo |
 | aliases.sh | Portable aliases and functions, auto-detects distro |
 
@@ -309,6 +310,7 @@ UP_KEEP='python3\.11|libav|libvpx'
 | `myip` | Show public IP |
 | `pingg` | Ping Google DNS 4 times |
 | `flushdns` | Flush DNS cache |
+| `speed` | Internet speed test (~30s); `speed --simple` for numbers only |
 
 ---
 

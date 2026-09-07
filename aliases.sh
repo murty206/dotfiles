@@ -76,6 +76,7 @@ function update() {
     # Pull in anything install.sh would have set up but this machine is missing
     ensure_tty_clock
     ensure_gh
+    ensure_speedtest
 
     source "$DOTFILES_DIR/aliases.sh"
     echo "✓ Aliases updated and reloaded."
@@ -116,6 +117,21 @@ function ensure_gh() {
 
     echo "→ gh installed. Authenticate once with:  gh auth login"
     echo "  (choose GitHub.com → SSH; skip the key upload if your key is already on the account)"
+}
+
+# speedtest-cli backs the `speed` alias. Same package name on all three
+# distros, so unlike ensure_gh every branch installs the same string.
+function ensure_speedtest() {
+    command -v speedtest-cli &>/dev/null && return 0
+
+    echo "→ speedtest-cli not found — installing (needed by 'speed')..."
+    if command -v paru &>/dev/null;    then paru -S --noconfirm speedtest-cli
+    elif command -v apt &>/dev/null;   then sudo apt install -y speedtest-cli
+    elif command -v dnf &>/dev/null;   then sudo dnf install -y speedtest-cli
+    else
+        echo "! No supported package manager — install speedtest-cli manually."
+        return 1
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -320,6 +336,10 @@ function canstat() {
 # -----------------------------------------------------------------------------
 alias pingg='ping -c 4 8.8.8.8'
 alias flushdns='resolvectl flush-caches 2>/dev/null || sudo systemd-resolve --flush-caches'
+# Ping / download / upload against the nearest Ookla server, ~30s. Left bare so
+# the progress dots show while it runs; append flags as usual — `speed --simple`
+# prints the three numbers and nothing else.
+alias speed='speedtest-cli'
 
 
 # -----------------------------------------------------------------------------

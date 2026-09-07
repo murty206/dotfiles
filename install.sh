@@ -409,7 +409,24 @@ if command -v gh &>/dev/null && ! gh auth status &>/dev/null; then
 fi
 
 # -----------------------------------------------------------------------------
-# 12. Symlink Claude Code slash commands
+# 12. Install speedtest-cli (backs the `speed` alias)
+# -----------------------------------------------------------------------------
+# Mirrors ensure_speedtest() in aliases.sh; keep the two in step.
+section "speedtest-cli"
+
+if command -v speedtest-cli &>/dev/null; then
+    success "speedtest-cli already installed"
+else
+    info "Installing speedtest-cli..."
+    if $PKG_INSTALL speedtest-cli; then
+        success "speedtest-cli installed"
+    else
+        warn "speedtest-cli unavailable in this distro's repos — 'speed' alias will not work until it is installed manually"
+    fi
+fi
+
+# -----------------------------------------------------------------------------
+# 13. Symlink Claude Code slash commands
 # -----------------------------------------------------------------------------
 # Unlike claude-statusline.sh, these need no settings.json edit — a file in
 # ~/.claude/commands/ is picked up by its name alone — so there is no reason to
