@@ -2,3 +2,9 @@
 # Put anything host-specific (absolute paths, project shortcuts) in local.sh;
 # aliases.sh sources it automatically if it exists.
 local.sh
+
+# Claude Code writes this one itself, per machine — it collects the permission
+# rules approved in a session, so it fills up with absolute paths and whatever
+# MCP servers that box has disabled. `settings.json` (no `.local`) stays
+# committable if a shared setting is ever wanted; this half never is.
+.claude/settings.local.json
