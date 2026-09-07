@@ -6,11 +6,16 @@ next pull.
 
 **This file is deliberately almost empty**, and it is meant to stay that way for
 a while. Its transport was settled on 2026-08-26; its *content* is still an open
-item in the private workspace where these decisions are made. Twenty-one of the
+item in the private workspace where these decisions are made. Ten of the
 twenty-four general rules harvested from five months of feedback remain
-unreviewed, and the two that were reviewed one by one both turned out to be
-misclassified in the harvest summary. Writing the rest of this file from that
+unreviewed — and of the fourteen read one by one so far, **the harvest's summary
+was wrong or incomplete about twelve.** Writing the rest of this file from that
 summary would install its errors into every project at once.
+
+The review keeps finding the same shape: the summary is not a lie, it is a
+*compression*, and what it drops is the part that made the rule work — an escape
+clause, a named check, a scope trigger, the sentence that says what to do instead
+of the forbidden thing. That is why nothing arrives here by summary.
 
 **So the bar for adding a line here is high, and it is not "this seems like a
 good rule":** either it came directly from murty in his own words, or it has
@@ -20,6 +25,33 @@ summary.
 Every line also costs context in every session everywhere, and the repo is
 public — no host paths, no project names, no client names. Machine-specific
 rules belong in that machine's or that project's own `CLAUDE.md`.
+
+---
+
+## What survives a session
+
+**The conversation is temporary. Files are permanent.**
+Adopted 2026-09-07, from murty, in his own words — and he stated the scope
+himself: *not one workspace's convention, but the rule he works by with an agent
+everywhere.*
+
+So a decision, a rationale or an open question that exists **only** in the
+conversation does not exist. Write it into a file at the moment it is made, not
+at the end — an interrupted session loses whatever was still waiting to be
+written down, and the rationale is the expensive half. "X because Y" — Y is what
+evaporates first and costs the most to reconstruct.
+
+Two things follow, and they are the practical half of the rule:
+
+- **Do not ask the user to re-supply what a file already holds.** If it is
+  retrievable, retrieve it.
+- **When something new surfaces mid-work, write it down and leave it.** Filing it
+  is not the same as doing it; it waits its turn. Chasing it is how the current
+  question stops closing.
+
+The counterpart is that conversation is *disposable on purpose* — it is working
+memory. Nothing is lost by ending a session, provided the writing happened while
+it ran.
 
 ---
 
