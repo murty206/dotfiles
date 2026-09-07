@@ -119,19 +119,76 @@ function ensure_gh() {
     echo "  (choose GitHub.com → SSH; skip the key upload if your key is already on the account)"
 }
 
-# speedtest-cli backs the `speed` alias. Same package name on all three
-# distros, so unlike ensure_gh every branch installs the same string.
+# Ookla's official speedtest client backs the `speed` alias. It is in no
+# distro's repos, so this fetches the vendor's static binary — the same route
+# install.sh already takes for Starship and fastfetch, and one code path for all
+# three distros instead of three package branches.
+#
+# The distro-packaged `speedtest-cli` (sivel's) was the first choice and is the
+# wrong one: upstream archived it after v2.1.3 in 2021, and the legacy endpoint
+# it still calls now geolocates this connection ~2200 km away, so it picks a
+# French server and reports a 512 ms ping on a link that measures 102 ms to
+# Ankara. Ookla's own client is frozen at 1.2.0 too, but it is first-party
+# against the backend Ookla actually operates, and it resolves correctly.
+#
+# Installed as `ookla-speedtest`, NOT `speedtest`: Debian's speedtest-cli
+# package also ships /usr/bin/speedtest, and ~/.local/bin comes first in PATH,
+# so the short name would silently shadow it and neither would be obvious.
+#
+# Ookla publishes no checksums or signatures, so the tarball is pinned to a
+# sha256 taken from a verified download. A mismatch aborts this one install and
+# says so rather than running an unexpected binary; `update` carries on.
+# Mirrors the speedtest-cli section in install.sh; keep the two in step —
+# including the version, the architecture map and the hash.
 function ensure_speedtest() {
-    command -v speedtest-cli &>/dev/null && return 0
+    command -v ookla-speedtest &>/dev/null && return 0
 
-    echo "→ speedtest-cli not found — installing (needed by 'speed')..."
-    if command -v paru &>/dev/null;    then paru -S --noconfirm speedtest-cli
-    elif command -v apt &>/dev/null;   then sudo apt install -y speedtest-cli
-    elif command -v dnf &>/dev/null;   then sudo dnf install -y speedtest-cli
-    else
-        echo "! No supported package manager — install speedtest-cli manually."
-        return 1
+    local ver="1.2.0" arch sum url tmp
+    case "$(uname -m)" in
+        x86_64)  arch="x86_64"
+                 sum="5690596c54ff9bed63fa3732f818a05dbc2db19ad36ed68f21ca5f64d5cfeeb7" ;;
+        # Ookla builds these too, but no hash has been verified for them here —
+        # add one the first time such a machine appears rather than guessing.
+        aarch64) arch="aarch64"; sum="" ;;
+        armv7l)  arch="armhf";   sum="" ;;
+        i686)    arch="i386";    sum="" ;;
+        *) echo "! No Ookla build for $(uname -m) — 'speed' will not work."; return 1 ;;
+    esac
+
+    echo "→ ookla-speedtest not found — downloading (needed by 'speed')..."
+    url="https://install.speedtest.net/app/cli/ookla-speedtest-${ver}-linux-${arch}.tgz"
+    tmp=$(mktemp -d) || return 1
+
+    if ! curl -fsSL "$url" -o "$tmp/ookla.tgz"; then
+        echo "! Download failed: $url"
+        rm -rf "$tmp"; return 1
     fi
+
+    if [ -n "$sum" ]; then
+        if ! printf '%s  %s\n' "$sum" "$tmp/ookla.tgz" | sha256sum -c --status -; then
+            echo "! Checksum mismatch — not installing. Expected $sum"
+            echo "  If Ookla rebuilt $ver, verify the download by hand and update the hash."
+            rm -rf "$tmp"; return 1
+        fi
+    else
+        echo "  (no pinned checksum for $arch — skipping verification)"
+    fi
+
+    if ! tar xzf "$tmp/ookla.tgz" -C "$tmp" speedtest 2>/dev/null; then
+        echo "! Tarball did not contain the expected binary."
+        rm -rf "$tmp"; return 1
+    fi
+
+    mkdir -p "$HOME/.local/bin"
+    mv "$tmp/speedtest" "$HOME/.local/bin/ookla-speedtest"
+    chmod +x "$HOME/.local/bin/ookla-speedtest"
+    rm -rf "$tmp"
+    echo "→ ookla-speedtest installed to ~/.local/bin"
+
+    case ":$PATH:" in
+        *":$HOME/.local/bin:"*) ;;
+        *) echo "! ~/.local/bin is not on PATH — 'speed' will not find it." ;;
+    esac
 }
 
 # -----------------------------------------------------------------------------
@@ -336,10 +393,12 @@ function canstat() {
 # -----------------------------------------------------------------------------
 alias pingg='ping -c 4 8.8.8.8'
 alias flushdns='resolvectl flush-caches 2>/dev/null || sudo systemd-resolve --flush-caches'
-# Ping / download / upload against the nearest Ookla server, ~30s. Left bare so
-# the progress dots show while it runs; append flags as usual — `speed --simple`
-# prints the three numbers and nothing else.
-alias speed='speedtest-cli'
+# Ping / download / upload against the nearest Ookla server, ~30s. The two
+# accept flags only matter on a machine's first run — Ookla's client blocks on a
+# licence prompt otherwise, which would hang `speed` with no explanation. Append
+# flags as usual: `speed -f json` for machine-readable output, `speed -L` to
+# list nearby servers, `speed -s <id>` to pin one.
+alias speed='ookla-speedtest --accept-license --accept-gdpr'
 
 
 # -----------------------------------------------------------------------------

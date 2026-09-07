@@ -409,20 +409,56 @@ if command -v gh &>/dev/null && ! gh auth status &>/dev/null; then
 fi
 
 # -----------------------------------------------------------------------------
-# 12. Install speedtest-cli (backs the `speed` alias)
+# 12. Install Ookla Speedtest CLI (backs the `speed` alias)
 # -----------------------------------------------------------------------------
-# Mirrors ensure_speedtest() in aliases.sh; keep the two in step.
-section "speedtest-cli"
+# In no distro's repos, so the vendor's static binary is fetched directly — same
+# route as Starship and fastfetch above. Installed as `ookla-speedtest` because
+# Debian's speedtest-cli package also ships /usr/bin/speedtest and ~/.local/bin
+# wins the PATH, so the short name would shadow it silently. Ookla publishes no
+# checksum, hence the pinned hash. Mirrors ensure_speedtest() in aliases.sh;
+# keep the two in step — version, architecture map and hash alike.
+section "Ookla Speedtest CLI"
 
-if command -v speedtest-cli &>/dev/null; then
-    success "speedtest-cli already installed"
+if command -v ookla-speedtest &>/dev/null; then
+    success "ookla-speedtest already installed — $(ookla-speedtest --version | head -1)"
 else
-    info "Installing speedtest-cli..."
-    if $PKG_INSTALL speedtest-cli; then
-        success "speedtest-cli installed"
+    SPEEDTEST_VER="1.2.0"
+    case "$(uname -m)" in
+        x86_64)  ST_ARCH="x86_64"
+                 ST_SUM="5690596c54ff9bed63fa3732f818a05dbc2db19ad36ed68f21ca5f64d5cfeeb7" ;;
+        aarch64) ST_ARCH="aarch64"; ST_SUM="" ;;
+        armv7l)  ST_ARCH="armhf";   ST_SUM="" ;;
+        i686)    ST_ARCH="i386";    ST_SUM="" ;;
+        *)       ST_ARCH="" ;;
+    esac
+
+    if [ -z "$ST_ARCH" ]; then
+        warn "No Ookla build for $(uname -m) — 'speed' alias will not work"
     else
-        warn "speedtest-cli unavailable in this distro's repos — 'speed' alias will not work until it is installed manually"
+        info "Downloading Ookla Speedtest CLI $SPEEDTEST_VER ($ST_ARCH)..."
+        TMP_ST=$(mktemp -d)
+        ST_URL="https://install.speedtest.net/app/cli/ookla-speedtest-${SPEEDTEST_VER}-linux-${ST_ARCH}.tgz"
+
+        if ! curl -fsSL "$ST_URL" -o "$TMP_ST/ookla.tgz"; then
+            warn "Download failed — 'speed' alias will not work until it is installed manually"
+        elif [ -n "$ST_SUM" ] && ! printf '%s  %s\n' "$ST_SUM" "$TMP_ST/ookla.tgz" | sha256sum -c --status -; then
+            warn "Checksum mismatch — not installing. Verify the download by hand before trusting it"
+        elif ! tar xzf "$TMP_ST/ookla.tgz" -C "$TMP_ST" speedtest 2>/dev/null; then
+            warn "Tarball did not contain the expected binary — not installing"
+        else
+            [ -z "$ST_SUM" ] && warn "No pinned checksum for $ST_ARCH — skipped verification"
+            mkdir -p "$HOME/.local/bin"
+            mv "$TMP_ST/speedtest" "$HOME/.local/bin/ookla-speedtest"
+            chmod +x "$HOME/.local/bin/ookla-speedtest"
+            success "ookla-speedtest installed to ~/.local/bin"
+        fi
+        rm -rf "$TMP_ST"
     fi
+
+    case ":$PATH:" in
+        *":$HOME/.local/bin:"*) ;;
+        *) warn "~/.local/bin is not on PATH — add it or 'speed' will not find the binary" ;;
+    esac
 fi
 
 # -----------------------------------------------------------------------------
