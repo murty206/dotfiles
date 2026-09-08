@@ -128,6 +128,18 @@ extract, select the `.ttf` files, right-click → **Install for all users**. The
 point your terminal at it — in Windows Terminal, Settings → your profile →
 Appearance → Font face → `JetBrainsMono Nerd Font Mono`.
 
+Take that zip from **nerd-fonts**, not from JetBrains. JetBrains publishes its
+own `JetBrainsMono-2.304.zip`: the same typeface without the patched glyphs. It
+installs cleanly and the icons stay missing, which reads as a broken font rather
+than the wrong one.
+
+`winget install --id DEVCOM.JetBrainsMonoNerdFont` is the one-line alternative,
+with one catch worth knowing before you go hunting for a font that is already
+installed: it registers **different family names**. `JetBrainsMono NF`, `NFM`
+(the mono one — what the face named above is called here) and `NFP`, plus the
+`JetBrainsMonoNL` no-ligature set. Windows Terminal does not complain about a
+font face it cannot find; it quietly draws the default instead.
+
 **macOS:** `brew install --cask font-jetbrains-mono-nerd-font`.
 
 If a glyph still renders as a box:

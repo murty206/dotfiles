@@ -48,12 +48,26 @@ like the Linux ones: pull and you are done, forever.
 2. In Git Bash, add to `~/.bashrc`:
 
    ```bash
-   export MSYS=winsymlinks:nativestrict
+   export MSYS="winsymlinks:nativestrict${MSYS:+ $MSYS}"
    ```
 
    `nativestrict` makes `ln -s` **fail loudly** if it cannot create a real
    symlink, which is the point — the silent copy is the problem, not the copy.
-3. Re-run the test above. Expect an arrow.
+
+   Appended rather than assigned, because `MSYS` may already carry something:
+   Claude Code exports `MSYS=disable_pcon` into the shells it spawns, and a bare
+   assignment throws that away.
+3. **Make sure `~/.bash_profile` exists and sources `~/.bashrc`.** Git Bash
+   starts a *login* shell, and neither `/etc/profile` nor `/etc/bash.bashrc`
+   sources `~/.bashrc` — so on a machine that never had one, the export above is
+   never read and Route A stays off while looking set up. If the file is
+   missing:
+
+   ```bash
+   echo '[ -f ~/.bashrc ] && . ~/.bashrc' >> ~/.bash_profile
+   ```
+4. Re-run the test above, in a **new** Git Bash window so the profile is read.
+   Expect an arrow.
 
 Then follow the setup below using the `ln -s` lines as written.
 
@@ -129,18 +143,26 @@ ln -s ~/.dotfiles/claude-session-context.sh ~/.claude/session-context.sh
 ```
 
 Then add to `~/.claude/settings.json`, merging into any `SessionStart` block that
-is already there rather than replacing it:
+is already there rather than replacing it. **`SessionStart` belongs inside the
+top-level `"hooks"` object**, not beside it — a `"SessionStart"` key at the top
+level is still valid JSON, and is ignored without a word:
 
 ```json
-"SessionStart": [
-  { "matcher": "startup|clear",
-    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh startup-or-clear" }] },
-  { "matcher": "resume|fork",
-    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh carried-over" }] },
-  { "matcher": "compact",
-    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh compact" }] }
-]
+"hooks": {
+  "SessionStart": [
+    { "matcher": "startup|clear",
+      "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh startup-or-clear" }] },
+    { "matcher": "resume|fork",
+      "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh carried-over" }] },
+    { "matcher": "compact",
+      "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh compact" }] }
+  ]
+}
 ```
+
+The only symptom of getting that wrong is the missing `session-context:` line at
+the top of the next session — same shape as the rest of this page. `/hooks`
+inside Claude Code lists what actually registered.
 
 Do **not** copy `settings.json` between machines. The script and the command
 files are the shared part; that file holds your permission rules, project paths

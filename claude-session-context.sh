@@ -5,17 +5,23 @@
 #
 # Install: see README. Nothing here is host-specific; safe on a shared machine.
 #
-#   "SessionStart": [
-#     { "matcher": "startup|clear",
-#       "hooks": [{ "type": "command",
-#                   "command": "bash ~/.claude/session-context.sh startup-or-clear" }] },
-#     { "matcher": "resume|fork",
-#       "hooks": [{ "type": "command",
-#                   "command": "bash ~/.claude/session-context.sh carried-over" }] },
-#     { "matcher": "compact",
-#       "hooks": [{ "type": "command",
-#                   "command": "bash ~/.claude/session-context.sh compact" }] }
-#   ]
+#   "hooks": {
+#     "SessionStart": [
+#       { "matcher": "startup|clear",
+#         "hooks": [{ "type": "command",
+#                     "command": "bash ~/.claude/session-context.sh startup-or-clear" }] },
+#       { "matcher": "resume|fork",
+#         "hooks": [{ "type": "command",
+#                     "command": "bash ~/.claude/session-context.sh carried-over" }] },
+#       { "matcher": "compact",
+#         "hooks": [{ "type": "command",
+#                     "command": "bash ~/.claude/session-context.sh compact" }] }
+#     ]
+#   }
+#
+# The "hooks" wrapper is load-bearing: a "SessionStart" key at the top level of
+# settings.json parses fine and is ignored, and the only symptom is this script
+# never running.
 #
 # The kind of start arrives as $1 rather than being read from stdin. The matcher
 # values are documented; a "source" field in the SessionStart payload is not, and

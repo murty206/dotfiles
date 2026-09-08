@@ -165,15 +165,20 @@ up by hand, like the status line, since `settings.json` is personal:
 ln -sf ~/.dotfiles/claude-session-context.sh ~/.claude/session-context.sh
 ```
 
+`SessionStart` goes inside the top-level `"hooks"` object — beside it, it is
+still valid JSON and is ignored silently:
+
 ```json
-"SessionStart": [
-  { "matcher": "startup|clear",
-    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh startup-or-clear" }] },
-  { "matcher": "resume|fork",
-    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh carried-over" }] },
-  { "matcher": "compact",
-    "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh compact" }] }
-]
+"hooks": {
+  "SessionStart": [
+    { "matcher": "startup|clear",
+      "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh startup-or-clear" }] },
+    { "matcher": "resume|fork",
+      "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh carried-over" }] },
+    { "matcher": "compact",
+      "hooks": [{ "type": "command", "command": "bash ~/.claude/session-context.sh compact" }] }
+  ]
+}
 ```
 
 On **Windows** none of this is automatic — `install.sh` and `update` are not run
