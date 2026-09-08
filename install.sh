@@ -2,7 +2,13 @@
 # =============================================================================
 # install.sh — Murty's dotfiles installer
 # Run once on any new machine:
-#   curl -fsSL https://raw.githubusercontent.com/murty206/dotfiles/main/install.sh | bash
+#   bash <(curl -fsSL https://raw.githubusercontent.com/murty206/dotfiles/main/install.sh)
+#
+# Process substitution, not `curl … | bash`. The two are not interchangeable
+# here: piping makes the script itself stdin, so anything that reads from the
+# terminal — the gh login prompt, a sudo password — consumes the script instead
+# and runs half an installer. README.md and aliases.sh already used this form;
+# this line was the odd one out.
 #
 # What it does:
 #   1. Installs git if missing, and sets one identity if none is configured
@@ -16,7 +22,10 @@
 #   7. Installs Kitty terminal, symlinks kitty.conf from dotfiles
 #   8. Installs fastfetch, hooks into shell
 #   9. Installs tty-clock (backs the `clock` alias)
-#  10. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
+#  10. Installs GitHub CLI, then offers to run `gh auth login`
+#  11. Installs Ookla Speedtest CLI (backs the `speed` alias)
+#  12. Symlinks the Claude Code slash commands and the global CLAUDE.md
+#  13. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
 # =============================================================================
 
 set -e
@@ -616,15 +625,34 @@ echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}  Install complete!${NC}"
 echo -e "${GREEN}============================================${NC}"
 echo ""
+# Reports what is actually on the machine, not what the script attempted.
+# Several steps above end in a warning rather than an install — gh and
+# speedtest have "not in this distro's repos" paths — and a summary that ticks
+# them anyway is worse than no summary: it is the one screen that gets believed.
+have() {  # a binary on PATH
+    if command -v "$1" &>/dev/null; then echo "    ✓ $2"
+    else                                 echo "    · $2 — NOT installed"
+    fi
+}
+present() {  # a path that should exist
+    if [ -e "$1" ]; then echo "    ✓ $2"
+    else                 echo "    · $2 — NOT installed"
+    fi
+}
+
 echo "  What was set up:"
-echo "    ✓ zsh (default shell)"
-echo "    ✓ zsh-autosuggestions + zsh-syntax-highlighting"
-echo "    ✓ Starship prompt (symlinked from dotfiles)"
-echo "    ✓ JetBrains Mono Nerd Font"
-echo "    ✓ Kitty terminal (Tokyo Night, symlinked config)"
-echo "    ✓ Fastfetch (system overview on launch)
-    ✓ tty-clock (terminal clock — run 'clock')
-    ✓ Dotfiles aliases"
+echo "    ✓ git identity + mailmap (one contributor across every repo)"
+have    zsh                                        "zsh (default shell)"
+present "${ZSH_CUSTOM:-$HOME/.zsh}/zsh-autosuggestions" "zsh-autosuggestions + zsh-syntax-highlighting"
+have    starship                                   "Starship prompt (symlinked from dotfiles)"
+present "$HOME/.local/share/fonts"                 "JetBrains Mono Nerd Font"
+have    kitty                                      "Kitty terminal (Tokyo Night, symlinked config)"
+have    fastfetch                                  "Fastfetch (system overview on launch)"
+have    tty-clock                                  "tty-clock (terminal clock — run 'clock')"
+have    gh                                         "GitHub CLI"
+have    ookla-speedtest                            "Ookla Speedtest CLI (run 'speed')"
+present "$HOME/.claude/CLAUDE.md"                  "Claude Code slash commands + global CLAUDE.md"
+present "$DOTFILES_DIR/aliases.sh"                 "Dotfiles aliases"
 echo ""
 echo "  Next steps:"
 echo "    1. Log out and back in to start using zsh + Kitty"
