@@ -54,6 +54,15 @@ GIT_NAME="..." GIT_EMAIL="..." bash <(curl -fsSL https://raw.githubusercontent.c
 `.mailmap` changes no commit — it is read at display time by `log`, `shortlog`
 and `blame`. GitHub's own interface does not read it.
 
+### The one step that stays manual
+
+`gh auth login` needs a device code and a browser, so no installer can do it.
+What the installer does instead: it notices, **asks whether to run it now**, and
+if you decline it says so again in the closing summary. `update` repeats the
+line on every run until the machine is logged in — the same nag mechanism as the
+identity warning above, for the same reason: a reminder that fires once is a
+reminder you miss once.
+
 ## Update on any machine
 
 ```bash

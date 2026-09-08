@@ -452,8 +452,31 @@ else
 fi
 
 if command -v gh &>/dev/null && ! gh auth status &>/dev/null; then
-    warn "gh is installed but not authenticated — run: gh auth login"
+    warn "gh is installed but not authenticated."
     echo "    GitHub.com → SSH. Skip the key upload if your key is already on the account."
+
+    # Ask rather than only advise. This is the one step in the whole installer
+    # that cannot be automated — it needs a device code and a browser — and a
+    # line printed here scrolls off before the run finishes.
+    #
+    # Read from /dev/tty, never stdin: under `curl … | bash` stdin *is* the
+    # script, and a plain `read` would swallow the rest of it and run half an
+    # installer. Both reads are guarded because `set -e` is on and `read`
+    # returns non-zero on EOF.
+    if [ -r /dev/tty ]; then
+        printf "    Log in now? [Y/n] " > /dev/tty
+        read -r gh_answer < /dev/tty || gh_answer="n"
+        case "${gh_answer:-y}" in
+            [Nn]*)
+                warn "Skipped — run 'gh auth login' when you are ready."
+                ;;
+            *)
+                gh auth login < /dev/tty || warn "gh auth login did not finish — run it again later."
+                ;;
+        esac
+    else
+        warn "No terminal to ask on — run: gh auth login"
+    fi
 fi
 
 # -----------------------------------------------------------------------------
@@ -613,3 +636,13 @@ echo "    ssh-keygen -t ed25519 -C \"your@email.com\""
 echo "    cat ~/.ssh/id_ed25519.pub"
 echo "    → paste into: GitHub → Settings → SSH and GPG keys"
 echo ""
+
+# Re-checked here rather than trusted from section 11: the offer up there can be
+# declined, or the login can be started and abandoned. This is the last thing on
+# screen when the installer ends, which is the only place a reminder survives.
+if command -v gh &>/dev/null && ! gh auth status &>/dev/null; then
+    warn "Still to do — gh is installed but not logged in:"
+    echo "    gh auth login"
+    echo "    → GitHub.com → SSH; 'update' will keep saying so until it is done"
+    echo ""
+fi

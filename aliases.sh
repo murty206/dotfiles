@@ -130,19 +130,27 @@ function ensure_tty_clock() {
 # binary is `gh`, the package is `github-cli`, so the guard checks the command
 # and the install uses the distro's own name for it.
 function ensure_gh() {
-    command -v gh &>/dev/null && return 0
-
-    echo "→ gh not found — installing GitHub CLI..."
-    if command -v paru &>/dev/null;    then paru -S --noconfirm github-cli
-    elif command -v apt &>/dev/null;   then sudo apt install -y gh
-    elif command -v dnf &>/dev/null;   then sudo dnf install -y gh
-    else
-        echo "! No supported package manager — install gh manually."
-        return 1
+    if ! command -v gh &>/dev/null; then
+        echo "→ gh not found — installing GitHub CLI..."
+        if command -v paru &>/dev/null;    then paru -S --noconfirm github-cli
+        elif command -v apt &>/dev/null;   then sudo apt install -y gh
+        elif command -v dnf &>/dev/null;   then sudo dnf install -y gh
+        else
+            echo "! No supported package manager — install gh manually."
+            return 1
+        fi
+        echo "→ gh installed."
     fi
 
-    echo "→ gh installed. Authenticate once with:  gh auth login"
-    echo "  (choose GitHub.com → SSH; skip the key upload if your key is already on the account)"
+    # Checked whether or not gh was just installed. The previous version
+    # returned early the moment the binary existed, so the common case — gh
+    # present, never logged in — was the one case it could not report. Login is
+    # per machine and travels with nothing, so nagging is all `update` can do
+    # about it; the nag repeats until it is done, same as the identity warning.
+    if ! gh auth status &>/dev/null; then
+        echo "! gh is not authenticated — run:  gh auth login"
+        echo "  (GitHub.com → SSH; skip the key upload if your key is already on the account)"
+    fi
 }
 
 # Ookla's official speedtest client backs the `speed` alias. It is in no
