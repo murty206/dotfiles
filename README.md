@@ -87,6 +87,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `starship.toml` | Starship prompt config (Tokyo Night) |
 | `install.sh` | One-command installer |
 | `.mailmap` | Collapses four accumulated git identities into one, for `log`/`shortlog`/`blame` (see below) |
+| `next_steps.md` | The queue — open items with the reason each is open |
 | `local.sh` | Machine-local aliases — gitignored, never pushed (see below) |
 | `README.md` | This file |
 
