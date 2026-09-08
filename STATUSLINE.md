@@ -158,18 +158,19 @@ Three cases, and only the last one needs work.
 **WSL** — it is Linux. Follow the Linux install above and you are done. This is
 the option that actually gives you one identical status line everywhere.
 
-**Native Windows + Git Bash** — works unmodified. It did not always. Three
-things differ from Linux, all three are now handled in the script, and **not one
+**Native Windows + Git Bash** — works unmodified. It did not always. Four
+things differ from Linux, all four are now handled in the script, and **not one
 of them announced itself**: the script exited 0 and drew a line every time, with
-pieces quietly missing. They are written down because the symptoms are the only
-way to recognise them, and because anyone running a copy from before this was
-fixed will see exactly these.
+pieces quietly missing or quietly wrong. They are written down because the
+symptoms are the only way to recognise them, and because anyone running a copy
+from before this was fixed will see exactly these.
 
 | What differs on Windows | Symptom | Handled by |
 |---|---|---|
 | Git Bash finds `python`, not `python3` | nothing renders at all | `command -v python3` picks the name — a builtin, so no extra process per redraw |
 | Native Windows python writes `\r\n` on stdout | context and quota segments vanish; `·no-think` sticks on permanently | `sys.stdout.reconfigure(newline="\n")`, behind a `hasattr` guard for python < 3.7 |
 | Claude Code passes `C:\Users\...` | the entire path prints instead of the basename | backslashes folded to `/`, gated on a drive letter or UNC prefix so Unix paths keep theirs |
+| bash `$HOME` is `/c/Users/x`, the payload says `C:\Users\x` | a session opened on the home directory prefixes it: `Y.URGEN/.dotfiles` instead of `.dotfiles` | `wproj()` settles "is this project root actually home?" inside python, where both sides are native paths |
 
 The middle one is worth understanding rather than copying. `mapfile` splits the
 python output on `\n`, so a producer emitting `\r\n` leaves a trailing `\r` on
@@ -179,9 +180,18 @@ marker on. The directory and the model name still render perfectly — that is
 what makes it hard to see. If you ever meet a status line that has a directory
 and a model and nothing else, suspect line endings before anything else.
 
-All three changes are inert on Linux: the interpreter check finds `python3`, the
-reconfigure call is a no-op on a stream that already uses `\n`, and the path
-fold never fires without a drive letter. Verified by running the fixture set on
+The fourth is the quietest of the lot, because it draws a plausible line rather
+than a broken one. The shell already declines to prefix the project name when
+the project root is `$HOME` — a home directory is not a project, and its name is
+your username. That test is a string compare, and on Windows it is handed two
+spellings of the same directory, so it never fires. Nothing is missing from the
+line; the root is just wrong, which is why it survived three rounds of looking
+at it.
+
+All four changes are inert on Linux: the interpreter check finds `python3`, the
+reconfigure call is a no-op on a stream that already uses `\n`, the path fold
+never fires without a drive letter, and `wproj()` reaches the same verdict the
+shell's own `$HOME` test already reached. Verified by running the fixture set on
 both.
 
 **Anything else** — hand the script to an agent. It is public, so give the URL
@@ -204,12 +214,15 @@ A prompt that produces a usable port:
 > here, whether Git Bash is available, and whether the interpreter is `python3`
 > or `python`. Prefer the smallest change that works over a rewrite.
 >
-> Three platform differences already bit me once on native Windows, and none of
-> them produced an error — the script exited 0 with pieces of the line missing.
-> Check all three explicitly rather than trusting that it looks fine:
+> Four platform differences already bit me once on native Windows, and none of
+> them produced an error — the script exited 0 with pieces of the line missing
+> or wrong. Check all four explicitly rather than trusting that it looks fine:
 > the interpreter name; whether python writes `\r\n` on stdout (`mapfile` splits
-> on `\n`, so a trailing `\r` makes every numeric test fail); and the path
-> separator in `current_dir` (the script strips to a basename with `/`).
+> on `\n`, so a trailing `\r` makes every numeric test fail); the path
+> separator in `current_dir` (the script strips to a basename with `/`); and
+> whether bash's `$HOME` is spelled the same way as `project_dir` in the payload
+> (if not, the "project root is home" test never fires and your username is
+> prefixed onto the line).
 > Fix these in the producer, not by adding a `tr` or `sed` to the pipeline —
 > the script is built around exactly one python process and no other forks.
 >

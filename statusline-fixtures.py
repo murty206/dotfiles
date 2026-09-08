@@ -17,14 +17,24 @@ Cases 9-12 use Windows-shaped paths. On Linux they are not paths at all, just
 strings with backslashes in them, and the script is expected to leave them
 alone — which is the same thing case 13 checks from the other direction. Run
 this on both platforms; every case except 9-12 must render identically.
+
+Case 14 is built from the running machine's own home directory instead of a
+literal, because what it checks only fires when the payload and the shell agree
+about where home is. They do not on native Windows: the payload says
+"C:\\Users\\x" and bash says "/c/Users/x". It must render ".dotfiles" on every
+platform — a leading home-directory name means the project prefix is being
+applied to a root that is not a project.
 """
 import json
+import os
 import re
 import subprocess
 import sys
 
 BS = chr(92)
 WINROOT = "C:" + BS + "Users" + BS + "murty" + BS + "projects" + BS + "myproject"
+HOME = os.path.expanduser("~")
+HOMESUB = os.path.join(HOME, ".dotfiles")
 ANSI = re.compile(rb"\x1b\[[0-9;]*m")
 
 BASE = {
@@ -78,6 +88,7 @@ CASES = [
     ("12 win UNC share", merge(at(BS + BS + "server" + BS + "share" + BS + "proj"),
                                BASE)),
     ("13 backslash in unix path", merge(at("/tmp/odd" + BS + "name"), BASE)),
+    ("14 project root is $HOME", merge(at(HOMESUB, HOME), BASE)),
 ]
 
 

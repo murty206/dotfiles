@@ -37,7 +37,7 @@ if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi
 # the reset time pre-formatted, so bash never touches a float — that keeps the
 # output identical under a locale with a comma decimal separator.
 mapfile -t F < <(printf '%s' "$input" | "$PY" -c '
-import sys, json, re, time
+import sys, json, re, time, os
 from datetime import datetime
 
 # Native Windows python opens stdout in text mode and rewrites "\n" as "\r\n".
@@ -105,9 +105,29 @@ def wp(v):
         return v.replace("\\", "/")
     return v
 
+def wproj(v):
+    # The shell below prefixes the project name only when the project root says
+    # something, and drops it when that root is $HOME. On native Windows that
+    # test cannot fire: the payload spells home "C:\Users\x" while bash sees
+    # "/c/Users/x", so the compare is between two spellings of one directory and
+    # never matches. A session opened on the home directory then renders as
+    # "Y.URGEN/.dotfiles" instead of ".dotfiles" — right line, wrong root, no
+    # error. Settled here, where both sides are native paths and normcase also
+    # takes care of the drive letter. Returning "" is what the shell already
+    # reads as "no project".
+    if not v:
+        return ""
+    try:
+        if os.path.normcase(os.path.abspath(v)) == \
+           os.path.normcase(os.path.abspath(os.path.expanduser("~"))):
+            return ""
+    except Exception:
+        pass
+    return wp(v)
+
 print("\n".join([
     wp(ws.get("current_dir") or d.get("cwd") or ""),
-    wp(ws.get("project_dir") or ""),
+    wproj(ws.get("project_dir") or ""),
     name,
     mid,
     pct(cw),

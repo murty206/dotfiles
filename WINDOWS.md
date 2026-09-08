@@ -109,11 +109,12 @@ Then add to `~/.claude/settings.json`:
 "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" }
 ```
 
-The script itself runs on native Windows unmodified. Three platform differences
+The script itself runs on native Windows unmodified. Four platform differences
 were found and fixed inside it, all of which failed with **exit status 0 and a
-partly-drawn line** — see [STATUSLINE.md](STATUSLINE.md) → Windows for what they
-were and which symptom each produces. Worth reading before you debug anything
-here, because none of them looks like an error.
+line that was partly drawn or quietly wrong** — see
+[STATUSLINE.md](STATUSLINE.md) → Windows for what they were and which symptom
+each produces. Worth reading before you debug anything here, because none of
+them looks like an error.
 
 ### 2. Slash commands
 
