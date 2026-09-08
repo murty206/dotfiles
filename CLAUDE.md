@@ -38,9 +38,25 @@ Three moving parts, plus the installer that wires them together:
 
 5. **`claude-session-context.sh`** — `SessionStart` hook, symlinked to `~/.claude/session-context.sh` and wired by three `SessionStart` entries in `~/.claude/settings.json`. Manual like the statusline, and for the same reason: `settings.json` is personal. Prints one `session-context:` line that lands in Claude's context (`SessionStart` is one of the three events whose stdout does), which is how `/acilis` knows whether the context is fresh. Two design constraints that look arbitrary until they bite: the kind of start arrives as **`$1`, not from stdin** — the matcher values are documented, a `source` field in the payload is not, and a hook that reads an undocumented field breaks silently the day it moves; and the script **always exits 0** and never blocks, because a hook that fails at session start makes every launch wrong. It also counts compactions in `.claude/compact-count`, resetting on the next fresh start, and emits an `ACTION` line at two — the threshold is a variable at the top, and changing it means changing `README.md` too.
 
-6. **`install.sh`** — bootstrap-only. Detects the package manager once at the top, then walks through numbered sections: git, clone repo, zsh + plugins (zsh-autosuggestions, zsh-syntax-highlighting cloned to `$ZSH_CUSTOM` = `~/.zsh`), Starship, JetBrains Mono Nerd Font, Kitty, fastfetch, and the aliases hook. Each section is guarded so re-runs are safe.
+6. **`install.sh`** — bootstrap-only. Detects the package manager once at the top, then walks through numbered sections: git **plus the one git identity and the `mailmap.file` wiring**, clone repo, zsh + plugins (zsh-autosuggestions, zsh-syntax-highlighting cloned to `$ZSH_CUSTOM` = `~/.zsh`), Starship, JetBrains Mono Nerd Font, Kitty, fastfetch, tty-clock, **GitHub CLI, Ookla Speedtest, the Claude Code command symlinks**, and the aliases hook. Each section is guarded so re-runs are safe. Note the section numbers in the file are not in reading order — 13 sits above 8 — so add to the list by outcome rather than renumbering.
+
+   **Two rules the identity block encodes, and both are load-bearing.** `git config --get` exits 1 on an unset key while `set -e` is on, so every read is guarded with `|| true` — an unguarded read kills the installer on exactly the fresh machine it exists for. And an identity that is already set and *different* is reported, **never overwritten**: a host that deliberately commits under a work name is the mirror image of the bug this prevents. Same shape as the `update` warning for an unlinked command — the nag is the mechanism, repeated until a human acts.
+
+   The gh step **asks** rather than advises, because `gh auth login` needs a device code and a browser and no installer can do it. It reads from `/dev/tty`, never stdin: under `curl … | bash` stdin *is* the script, and a plain `read` swallows the rest of it and runs half an installer. That is also why the invocation everywhere is `bash <(curl …)` and not a pipe.
+
+   The closing summary **checks every row** rather than asserting it — binaries with `command -v`, the rest by path. Several steps above end in a warning instead of an install, and the summary is the one screen that gets believed.
 
    Note: `install.sh` contains an embedded fallback `kitty.conf` heredoc that only triggers if the repo's `kitty.conf` is missing. Keep it in sync with the real `kitty.conf` (currently 1984 Dark with customizations) so fresh installs get the same colors as `update`d machines.
+
+7. **`dev_log.md`** and **`next_steps.md`** — opened 2026-09-09, at the repo root. Fixed names and root-first search, the convention settled in `becoming_power_user` on 2026-09-08; this repo was the control case in that decision, the one with a `CLAUDE.md` and neither document.
+
+   `dev_log.md` is history, newest at the top: what a session decided **and why**, what it **refuted**, and what it left **unverified**. `next_steps.md` is the queue. Neither is a place for a rule that is still in force — that belongs here, in this file. The test for promoting something out of the log and into `CLAUDE.md`: *would an agent in a future session do the wrong thing without it?*
+
+   **Write to them during the session, not at its close.** An interrupted session loses whatever was still waiting to be written, and the rationale is the expensive half.
+
+8. **`.mailmap`** — collapses the four git identities in this repo's history (`Muharrem ARLI`, `Murty`, `murty`, `Shalafi`) into one, for `log`, `shortlog` and `blame`. Mapping is **by email**, so no name appears in the file. It changes no commit, and GitHub's own interface does not read it. History was deliberately not rewritten: `dev_log` and `next_steps` in the other repos cite commit hashes.
+
+   It has no extension, so `.gitattributes` names it explicitly — git parses this file itself and a CRLF checkout puts a trailing `\r` inside the email being matched, at which point nothing maps and nothing says so.
 
 ## Editing workflow
 
