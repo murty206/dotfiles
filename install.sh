@@ -5,8 +5,10 @@
 #   curl -fsSL https://raw.githubusercontent.com/murty206/dotfiles/main/install.sh | bash
 #
 # What it does:
-#   1. Installs git if missing
-#   2. Clones your dotfiles repo to ~/.dotfiles
+#   1. Installs git if missing, and sets one identity if none is configured
+#      (an identity that differs is reported, never overwritten)
+#   2. Clones your dotfiles repo to ~/.dotfiles, and points git's mailmap.file
+#      at .mailmap so every repo on the machine reads one contributor
 #   3. Installs zsh and sets it as default shell
 #   4. Installs zsh plugins (autosuggestions, syntax-highlighting)
 #   5. Installs Starship, symlinks starship.toml from dotfiles
@@ -21,6 +23,14 @@ set -e
 
 REPO_URL="git@github.com:murty206/dotfiles.git"
 DOTFILES_DIR="$HOME/.dotfiles"
+
+# One git identity on every machine. Four accumulated here because each host was
+# configured by hand at a different time, and `git log --format=%an` is what
+# tells my commits from a collaborator's — a check no better than the name being
+# one name. Override on a host that legitimately needs another:
+#   GIT_NAME="..." GIT_EMAIL="..." bash install.sh
+GIT_NAME="${GIT_NAME:-murty}"
+GIT_EMAIL="${GIT_EMAIL:-murty206@gmail.com}"
 ALIAS_LINE="[ -f \"\$HOME/.dotfiles/aliases.sh\" ] && source \"\$HOME/.dotfiles/aliases.sh\""
 
 # Colors
@@ -44,7 +54,7 @@ else error "No supported package manager found (paru/apt/dnf)."
 fi
 
 # -----------------------------------------------------------------------------
-# 1. Ensure git is installed
+# 1. Ensure git is installed, and that it commits under one identity
 # -----------------------------------------------------------------------------
 section "Git"
 if ! command -v git &>/dev/null; then
@@ -52,6 +62,26 @@ if ! command -v git &>/dev/null; then
     $PKG_INSTALL git
 fi
 success "git available"
+
+# `git config --get` exits 1 when the key is unset, and `set -e` is on — so the
+# reads are guarded or the whole installer dies on a fresh machine.
+current_name="$(git config --global user.name  2>/dev/null || true)"
+current_email="$(git config --global user.email 2>/dev/null || true)"
+
+if [ -z "$current_name" ] && [ -z "$current_email" ]; then
+    git config --global user.name  "$GIT_NAME"
+    git config --global user.email "$GIT_EMAIL"
+    success "git identity set to $GIT_NAME <$GIT_EMAIL>"
+elif [ "$current_name" = "$GIT_NAME" ] && [ "$current_email" = "$GIT_EMAIL" ]; then
+    success "git identity already $GIT_NAME <$GIT_EMAIL>"
+else
+    # Deliberately not overwritten. A host with a deliberate work identity is
+    # the mirror image of the bug this is here to prevent, and silently
+    # rewriting it would be the worse failure of the two. Say it and move on.
+    warn "git identity is ${current_name:-<unset>} <${current_email:-<unset>}>, expected $GIT_NAME <$GIT_EMAIL>"
+    warn "  not changed — if this host should use the standard identity, run:"
+    warn "    git config --global user.name \"$GIT_NAME\" && git config --global user.email \"$GIT_EMAIL\""
+fi
 
 # -----------------------------------------------------------------------------
 # 2. Clone or update dotfiles repo
@@ -65,6 +95,24 @@ else
     git clone "$REPO_URL" "$DOTFILES_DIR"
 fi
 success "Dotfiles ready at $DOTFILES_DIR"
+
+# Point git's mailmap at the repo's copy, globally. Wired here rather than in
+# section 1 because the file only exists once the clone above has run.
+#
+# This is the half that reaches the *other* repos: the four identities are
+# already in their histories and rewriting those is off the table, so the
+# mapping is applied at read time instead — every repo on this machine, no
+# commits in any of them.
+if [ -f "$DOTFILES_DIR/.mailmap" ]; then
+    current_mailmap="$(git config --global mailmap.file 2>/dev/null || true)"
+    if [ "$current_mailmap" = "$DOTFILES_DIR/.mailmap" ]; then
+        success "git mailmap already pointed at dotfiles"
+    else
+        [ -n "$current_mailmap" ] && warn "replacing mailmap.file — was $current_mailmap"
+        git config --global mailmap.file "$DOTFILES_DIR/.mailmap"
+        success "git mailmap pointed at $DOTFILES_DIR/.mailmap"
+    fi
+fi
 
 # -----------------------------------------------------------------------------
 # 3. Install zsh

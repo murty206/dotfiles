@@ -1,0 +1,23 @@
+# One person, four git identities — collapsed for git's reading tools.
+#
+# Machines got configured at different times and drifted: this repo alone
+# carries commits under `murty`, `Murty`, `Shalafi` and a work identity, and
+# `git shortlog -sne` counts them as four contributors. Worse, the trick used
+# elsewhere to tell my commits from a colleague's is `git log --format=%an` —
+# see factory-backend — and that check is only as good as the name being one
+# name.
+#
+# This changes no commit. It is read at display time by log, shortlog, blame
+# and friends; the commit objects keep whatever they were authored with, and
+# GitHub's own UI does not read this file at all.
+#
+# Mapping is by **email**, which is the stable half — so no name needs to be
+# written here, and the first line normalises `murty` vs `Murty` on its own.
+#
+# install.sh also points `mailmap.file` at this file globally, so the same
+# mapping applies in every repo on the machine without committing anything
+# into them.
+
+murty <murty206@gmail.com> <murty206@gmail.com>
+murty <murty206@gmail.com> <muharrem.arli@nurolmakina.com.tr>
+murty <murty206@gmail.com> <46678064+murty206@users.noreply.github.com>

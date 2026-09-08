@@ -169,6 +169,35 @@ Do **not** copy `settings.json` between machines. The script and the command
 files are the shared part; that file holds your permission rules, project paths
 and model choice, and is personal to each host.
 
+### 4. Git identity and mailmap
+
+`install.sh` does both of these on Linux and never runs here, so they are the
+one part of this page that has nothing to do with Claude Code — it is here
+because otherwise this machine simply never gets them.
+
+```bash
+git config --global user.name  murty
+git config --global user.email murty206@gmail.com
+git config --global mailmap.file ~/.dotfiles/.mailmap
+```
+
+Check the first two before running them — if this host already commits under a
+deliberate work identity, set only the mailmap:
+
+```bash
+git config --global user.name; git config --global user.email
+```
+
+The mailmap line is the one that matters most on a machine that has been in use
+for a while: it collapses every identity in the repos already on this disk,
+without touching a single commit. Verify with
+
+```bash
+git -C ~/.dotfiles shortlog -sne
+```
+
+which should print **one** contributor line, not four.
+
 ---
 
 ## Check it worked

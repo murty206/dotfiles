@@ -33,6 +33,27 @@ The installer skips anything already set up, so it's safe to run multiple times.
 > # paste into: GitHub → Settings → SSH and GPG keys
 > ```
 
+### One identity per machine
+
+The installer sets `user.name` / `user.email` **only if git has none**, and
+points `mailmap.file` at this repo's `.mailmap` so every repo on the machine
+reads one contributor instead of four.
+
+An identity that is already set and *different* is reported and **left alone** —
+a work machine that deliberately commits under another name is the mirror image
+of the problem this prevents, and silently rewriting it would be the worse of
+the two failures. The line repeats on every `update` until the machine is fixed
+by hand, which is the same nudge the unlinked-command warning uses.
+
+To install under a different identity on purpose:
+
+```bash
+GIT_NAME="..." GIT_EMAIL="..." bash <(curl -fsSL https://raw.githubusercontent.com/murty206/dotfiles/main/install.sh)
+```
+
+`.mailmap` changes no commit — it is read at display time by `log`, `shortlog`
+and `blame`. GitHub's own interface does not read it.
+
 ## Update on any machine
 
 ```bash
@@ -56,6 +77,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `starship.toml` | Starship prompt config (Tokyo Night) |
 | `install.sh` | One-command installer |
+| `.mailmap` | Collapses four accumulated git identities into one, for `log`/`shortlog`/`blame` (see below) |
 | `local.sh` | Machine-local aliases — gitignored, never pushed (see below) |
 | `README.md` | This file |
 

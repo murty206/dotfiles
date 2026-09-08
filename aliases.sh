@@ -73,6 +73,32 @@ function update() {
         echo "→ global CLAUDE.md symlinked"
     fi
 
+    # Git identity and mailmap — the same two things install.sh sets, re-checked
+    # here so a machine configured before they existed catches up.
+    #
+    # Quiet when correct, and it never rewrites an identity: a host that
+    # deliberately commits under a work name is the mirror image of the problem
+    # this guards against. Like the "exists as a real file" line above, the
+    # warning is the whole mechanism — it repeats every `update` until the
+    # machine is fixed by hand.
+    if [ -f "$DOTFILES_DIR/.mailmap" ] \
+       && [ "$(git config --global mailmap.file 2>/dev/null)" != "$DOTFILES_DIR/.mailmap" ]; then
+        git config --global mailmap.file "$DOTFILES_DIR/.mailmap"
+        echo "→ git mailmap pointed at dotfiles"
+    fi
+
+    _gn="$(git config --global user.name 2>/dev/null)"
+    _ge="$(git config --global user.email 2>/dev/null)"
+    if [ -z "$_gn" ] && [ -z "$_ge" ]; then
+        git config --global user.name  "murty"
+        git config --global user.email "murty206@gmail.com"
+        echo "→ git identity set to murty <murty206@gmail.com>"
+    elif [ "$_gn" != "murty" ] || [ "$_ge" != "murty206@gmail.com" ]; then
+        echo "! git identity is ${_gn:-<unset>} <${_ge:-<unset>}>, not murty <murty206@gmail.com> — not changed"
+        echo "  git config --global user.name murty && git config --global user.email murty206@gmail.com"
+    fi
+    unset _gn _ge
+
     # Pull in anything install.sh would have set up but this machine is missing
     ensure_tty_clock
     ensure_gh
