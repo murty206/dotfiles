@@ -9,6 +9,75 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-09-09 — `countdown.sh`: what the screen does after zero
+
+**The question:** a finished countdown sat on a blinking `00:00` until someone
+killed it. What should be on the screen instead, and how do restart / auto-exit /
+run-a-command get offered without turning the script into a flag farm?
+
+### What was decided, and why
+
+**A key menu at zero, not command-line flags.** The firm requirement was "after a
+timeout, show a normal clock", and a *timeout* only means anything if something is
+waiting for input that never came. So zero is a state change, not an ending:
+`count → menu → clock`, with `[r]` sending it back to `count` from either of the
+other two. Flags were the alternative and lost — the behaviour is chosen after the
+countdown is already running, which is exactly when a flag is no longer reachable.
+
+**The clock is drawn in-process, not handed to `tty-clock`.** The header promises
+pure bash and no dependencies, and the screensaver case has to survive; the big
+digits are already there, so clock mode is the same `print_digits` with `$now` and
+`COLOR_CLOCK`. It also drops the half-scale clock that normally sits on top —
+two copies of the same time is the one layout worth vetoing.
+
+**The command runs from `[x]`, not automatically at zero.** murty's call. It comes
+from `$COUNTDOWN_CMD` because a keypress cannot supply command text, and the key
+is hidden when the variable is empty rather than offered and inert.
+
+**`resolve_target()` is a function now**, which is the only reason `[r]` can work:
+a duration restarts from now, and a wall-clock target has to resolve to its *next*
+occurrence instead of firing again the instant it is restarted. Verified — a
+restart at the target minute comes back as `(tomorrow) · 23h 59m left`.
+
+**Any keypress restarts the fallback timer.** The timeout is a test for whether
+anybody is present, and a keypress answers it — without the reset, pressing `[x]`
+at second 25 of a 30-second window loses the menu five seconds later, with the
+command's own confirmation still on screen. One line, and it is the only reason
+`[x]` is usable at the end of the window as well as the start.
+
+**The menu is skipped where `COUNTDOWN_NO_HINT` is set or stdin is not a tty**,
+and the clock still takes over on the same timer. That half needs nobody present;
+the keys do. Same escape clause the hint already had, reused rather than reinvented.
+
+### What bit, and would have shipped silently
+
+**Ctrl+C left the terminal with echo off.** Echo is disabled for the whole run
+(otherwise anything typed at the countdown prints on top of the digits), so the
+settings have to be handed back. Restoring inside the `INT` trap looks right and
+is not: `read` is waiting for a menu key when the signal lands, and bash puts back
+the settings *it* saved when `read` started — ours, with echo already off — after
+the trap has run. The restore had to move to a separate `EXIT` trap, which runs
+last. Caught only by comparing `stty -g` before and after inside one pty; the
+symptom is a shell with a dead keyboard, and nothing on screen says so.
+
+**Buffered keystrokes.** Without a flush at the transition, the menu opens and
+instantly eats a key pressed minutes earlier — and one of the keys it can land on
+is `[q]`.
+
+**The key line is a row, and rows are budgeted.** It had to go into both the
+scale-fit loop and the `base` centering sum, or it pushes the footer off a short
+screen. On a narrow one the footer wraps instead, which costs an unbudgeted row
+with the same result — so both footer and key line shorten when they would not
+fit (`[r] restart` → `r=restart`). Checked at 80x24, 60x12, 40x14 and 30x9.
+
+### Unverified
+
+Only tested on this Linux box. The `stty` save/restore and `read -rsn1 -t` are
+POSIX-ish but the Git Bash behaviour on Windows is untested, and `WINDOWS.md` does
+not cover `countdown.sh` at all — it is not one of the five Claude Code artefacts.
+
+---
+
 ## 2026-09-08 21:42 → 2026-09-09 00:24 (2h42, 0 compactions)
 
 **The question:** does this repo's Windows story actually hold on a Windows

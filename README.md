@@ -401,6 +401,10 @@ countdown                        # prints usage
 COUNTDOWN_NO_HINT=1 countdown 17:00   # drop the "Ctrl+C to quit" hint from the
                                  # footer — for places the keyboard never reaches
                                  # this process, e.g. behind a locked screensaver
+COUNTDOWN_MENU_TIMEOUT=90 countdown 25m    # seconds on 00:00 before the clock
+                                 # takes over; 0 stays on 00:00 for good
+COUNTDOWN_CMD='mpv ~/alarm.mp3' countdown 25m   # command offered under [x] in
+                                 # the menu at zero; unset hides the key
 # The rule is one character: an argument containing ":" is a wall-clock time,
 # anything else is a duration. So "1:30" is half past one on the clock, not
 # one and a half hours — write 1h30m for that. The footer always shows the
@@ -420,6 +424,16 @@ COUNTDOWN_NO_HINT=1 countdown 17:00   # drop the "Ctrl+C to quit" hint from the
 # terminal bell (PC-speaker buzzer in a bare TTY, window urgency hint in
 # kitty), a notify-send desktop notification, and a sound through the sound
 # server. Toggle them with ALERT_* at the top of countdown.sh.
+# Zero is not the end of the screen — the footer turns into a menu:
+#   r  restart, same duration from now or the target's next occurrence
+#   c  switch to the clock now
+#   x  run $COUNTDOWN_CMD, shown only if one is set
+#   q  quit
+# Left alone it falls back to a full-screen clock after 30 seconds, so a
+# finished countdown leaves something useful on the monitor rather than a
+# blinking 00:00. The menu needs a keyboard, so it is skipped where
+# COUNTDOWN_NO_HINT is set or stdin is not a terminal — there the clock takes
+# over on the same timer.
 # Target already passed today means tomorrow.
 # The remaining time is mirrored into the terminal title. Ctrl+C to quit.
 
