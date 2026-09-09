@@ -101,6 +101,16 @@ recorded because each cost time and would cost it again:
   fixture file's own docstring asks for both platforms. The check that settles
   it: `python3 statusline-fixtures.py ./claude-statusline.sh` on the Linux box,
   expecting 14/14 with case 14 printing `.dotfiles`.
+  **RUN 2026-09-09 on the Linux box, and it passes: 14 cases, `cases that exited
+  non-zero: 0`, and case 14 prints `.dotfiles [main] | …` — no `$HOME` prefix,
+  which is the Windows bug `3723a7d` fixed, confirmed not to have cost anything
+  on Linux.** Run by the `becoming_power_user` session immediately after
+  fast-forwarding this repo, because the check was written down here rather than
+  left in a conversation — which is the only reason it was findable at all.
+  **This settles the fixture half and only that half.** `install.sh`'s new
+  sections and `update`'s new blocks were **not** run; the two remaining bullets
+  below are also untouched. Case 8's `642640h33m` is not a defect — the fixture
+  hard-codes `resets_at: 4102444800`, which is 2100-01-01.
 - **The session's start time** came from the transcript's first record, not from
   `.claude/session-start` — the session was opened without `/acilis`. Read, not
   invented, but weaker than a stamp.
