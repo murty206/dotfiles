@@ -85,6 +85,37 @@ be worse than a visible gap, and the gap is the more useful thing to know.
 
 ---
 
+## Your own earlier output
+
+**Apply the same scrutiny to what you produced earlier as to what the user tells
+you.** A number, a conclusion or a name does not become reliable because you were
+the one who wrote it. Adopted 2026-09-09.
+
+**The reason, and it does not rest on the user working alone.** A reviewer — a
+teammate, a pull request, a second pair of eyes — reads the **artefact**: the
+code, the diff, the merged file. Nobody reads the agent's earlier turns, the
+reasoning that produced them, or the notes it wrote along the way. And review
+arrives *after* the errors have compounded, not while they are compounding. **Team
+size changes what the failure costs, not whether it happens** — and in a shared
+repository it costs more, because a wrong claim in a file several people read
+propagates as fact.
+
+**`Device: before reusing one of your own earlier results, re-derive it from the
+source.`** The moment is the sentence that starts *"as we found earlier…"* — a
+number, a conclusion or a name you produced yourself and are about to build on.
+It is not *re-audit everything you have said*, which cannot be finished. Only the
+re-use.
+
+**Calibration, since this one has a dial.** Over-firing looks like re-deriving
+trivia and never closing a turn — correct it in conversation, and only tighten
+the wording here if it repeats. Under-firing has a signature worth naming: a
+chain of conclusions each built on the last, every one refuted by a later
+measurement, with the premise never re-examined. That is the failure this rule
+was written from — eight recorded instances across two sessions, three of them in
+one afternoon.
+
+---
+
 ## Working with the shell
 
 **Commands that need root are handed to the user to run, not attempted first.**
