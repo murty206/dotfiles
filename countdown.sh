@@ -7,8 +7,11 @@
 # An argument containing ":" is read as a wall-clock time, anything else as a
 # duration from now. Current time is shown above at half scale. Ctrl+C quits.
 #
+# [x] arms a command while the countdown runs; anything armed before zero — by
+# [x] or by $COUNTDOWN_CMD — fires at zero, alongside the alert.
+#
 # Once it hits zero the screen becomes a waiting state: a key menu in the footer
-# ([r]estart, [c]lock, [x] run a command, [q]uit) and, if nobody presses
+# ([r]estart, [c]lock, [x] run it again, [q]uit) and, if nobody presses
 # anything, a plain full-screen clock after COUNTDOWN_MENU_TIMEOUT seconds.
 #
 # Pure bash + coreutils — no dependencies, works in a bare TTY.
@@ -35,21 +38,31 @@ target and the time left appear in the footer from the first frame, and a
 target that landed on the next day is marked "(tomorrow)", so a misread shows
 up immediately rather than an hour later.
 
-When time is up the footer turns into a menu:
+One rule for the command: anything set before zero runs at zero. [x] is on
+screen for the whole countdown and arms rather than runs — it opens a prompt,
+pre-filled with whatever is already set, and clearing the line takes it back
+off. The armed command is named under the footer so it is never a surprise.
+
+When time is up it fires by itself with the alert, and the footer turns into a
+menu:
 
   r   restart — same duration from now, or the target's next occurrence
   c   switch to the clock now
-  x   run $COUNTDOWN_CMD, if one was set
+  x   run the armed command again by hand, or type one now
   q   quit
 
 Left alone it falls back to a full-screen clock after 30 seconds, so a finished
-countdown leaves something useful on the monitor. Two environment variables:
+countdown leaves something useful on the monitor. Any keypress restarts that
+timer. Two environment variables:
 
   COUNTDOWN_MENU_TIMEOUT=90   seconds before the clock takes over; 0 stays on 00:00
-  COUNTDOWN_CMD='mpv ~/a.mp3' command offered under [x]; unset hides the key
+  COUNTDOWN_CMD='mpv ~/a.mp3' arms a command up front, same as typing it at [x]
 
-The menu needs a keyboard, so it is skipped where COUNTDOWN_NO_HINT is set or
-stdin is not a terminal — there the clock simply takes over on the same timer.
+The keys need a keyboard, so they are skipped where COUNTDOWN_NO_HINT is set or
+stdin is not a terminal — there the clock still takes over on the same timer and
+an armed command still fires at zero, which is the case it was armed for.
+Quitting is Ctrl+C while the countdown runs: [q] belongs to the states after
+zero, where there is nothing left to interrupt.
 USAGE
 }
 
@@ -174,7 +187,13 @@ trap tty_restore EXIT
 
 cleanup() {
     set_title "${SHELL##*/}"        # hand the title back to the shell
-    printf '\e[?25h\e[0m\n'         # cursor on, attributes reset
+    # Cursor on, attributes reset, then back to the normal screen — which puts
+    # the terminal back exactly as it was found, scrollback included, instead of
+    # leaving a screenful of digits behind. The newline goes *before* the switch
+    # so it is discarded with the alternate screen; on a terminal without one
+    # (the bare Linux console) nothing switches and the newline does its old job
+    # of keeping the shell prompt off the last drawn row.
+    printf '\e[?25h\e[0m\n\e[?1049l'
     exit 0
 }
 trap cleanup INT TERM
@@ -189,7 +208,7 @@ if [[ "$MENU" -eq 1 ]] && command -v stty >/dev/null 2>&1; then
     [[ -n "$TTY_STATE" ]] && stty -echo 2>/dev/null
 fi
 
-printf '\e[?25l\e[2J'
+printf '\e[?1049h\e[?25l\e[2J'
 
 pad() { printf '%*s' "$1" ''; }
 
@@ -236,6 +255,29 @@ flush_keys() {
 # child cannot eat the keystrokes meant for the menu, and both output streams go
 # nowhere: anything it printed would land in the middle of the drawn screen.
 notice=""; notice_until=0
+
+# [x] with nothing configured asks for the command rather than hiding the key —
+# the whole point of the menu is that the choice is made once the countdown is
+# already running, and a command that has to be set before it starts is exactly
+# the thing this was not supposed to be. The terminal goes back to its original
+# settings for the duration: readline needs echo and canonical mode, and typing
+# blind onto a full-screen countdown is not a prompt anybody can use. An empty
+# line cancels — ESC cannot, because readline takes it as the start of a meta
+# sequence rather than a keystroke. What is typed is kept for the session, so a
+# second [x] repeats it instead of asking again.
+prompt_cmd() {
+    local line=""
+    [[ -n "$TTY_STATE" ]] && stty "$TTY_STATE" 2>/dev/null
+    printf '\e[%d;1H\e[K\e[?25h' "$rows"
+    # Pre-filled with what is already set, so the prompt edits rather than
+    # replaces — and clearing the line is how a command gets taken back off.
+    IFS= read -r -e -i "$MENU_CMD" -p "$1" line
+    printf '\e[?25l'
+    [[ -n "$TTY_STATE" ]] && stty -echo 2>/dev/null
+    MENU_CMD="$line"
+    flush_keys
+}
+
 run_cmd() {
     ( eval "$MENU_CMD" ) </dev/null >/dev/null 2>&1 &
     notice="ran: $MENU_CMD"
@@ -310,6 +352,13 @@ while :; do
         expired_at="$now_epoch"
         mode=menu
         alert "$TARGET reached."
+        # Anything armed before zero fires at zero — that is the whole rule, and
+        # it is the same whether it came from $COUNTDOWN_CMD or from [x] during
+        # the countdown. A command set before the end is set by somebody who
+        # expects to be elsewhere when it arrives; one that waited for a keypress
+        # would do nothing in exactly the case it was set for. [x] in the menu
+        # then runs it again by hand.
+        [[ -n "$MENU_CMD" ]] && run_cmd
         flush_keys
     fi
     # The menu is a waiting state, and waiting states need an end: with nobody
@@ -321,8 +370,10 @@ while :; do
     fi
 
     # The key line is a real row and has to be paid for out of the same vertical
-    # budget as everything else, or it pushes the footer off a short screen.
-    menu_h=0; [[ "$MENU" -eq 1 && "$mode" != count ]] && menu_h=1
+    # budget as everything else, or it pushes the footer off a short screen. It
+    # is up in every state now, including the countdown, because [x] has to be
+    # reachable before zero — that is when arming a command is worth anything.
+    menu_h=$MENU
 
     cols="$(tput cols  2>/dev/null || echo 80)"
     rows="$(tput lines 2>/dev/null || echo 24)"
@@ -384,7 +435,7 @@ while :; do
         [[ "$MENU_TIMEOUT" -gt 0 ]] && \
             footer+="  ·  clock in $(( MENU_TIMEOUT - (now_epoch - expired_at) ))s"
         if [[ "$MENU" -eq 1 ]]; then
-            keys="[r] restart   [c] clock${MENU_CMD:+   [x] run}   [q] quit"
+            keys="[r] restart   [c] clock   [x] run   [q] quit"
         else
             footer+="$HINT"
         fi
@@ -410,6 +461,17 @@ while :; do
         else                                   color=$COLOR_NORMAL
         fi
         footer="target $TARGET$TOMORROW  ·  $remaining$HINT"
+        # Narrow screen: the word "target" and the hint go before the line wraps
+        # and costs the key line its row. This footer was already wider than a
+        # 30-column terminal before there was a key line under it to lose.
+        [[ "${#footer}" -gt "$cols" ]] && footer="$TARGET$TOMORROW  ·  $remaining"
+        # An armed command is named on screen for the whole countdown. One of
+        # these suspends the machine; being able to see that it is set — and
+        # what it is — is the difference between a feature and a surprise.
+        if [[ "$MENU" -eq 1 ]]; then
+            [[ -n "$MENU_CMD" ]] && keys="[x] at zero: $MENU_CMD" \
+                                 || keys="[x] set a command to run at zero"
+        fi
         set_title "${LABEL:+$LABEL — }$remaining -> $TARGET"
     fi
 
@@ -417,6 +479,9 @@ while :; do
     # part that can go, and only once it would not fit as it stands.
     if [[ -n "$keys" && "${#keys}" -gt "$cols" ]]; then
         keys="${keys//\[/}"; keys="${keys//] /=}"; keys="${keys//   / }"
+        # An armed command is arbitrary text and can outrun any screen on its
+        # own, so the line is cut rather than left to wrap.
+        [[ "${#keys}" -gt "$cols" ]] && keys="${keys:0:cols-1}…"
     fi
 
     # [x] gets its confirmation in the footer for three seconds — a detached
@@ -435,6 +500,12 @@ while :; do
     # vertical centering; the date is the first thing dropped on a short screen
     label_h=$LABEL_H
     base=$(( clock_h * (5 * vs_s + 1) + label_h + 5 * vs + 1 + 2 + menu_h ))
+    # Third and last thing to go on a shrinking window, after the date and the
+    # clock: the key line. Only the line — the keys keep working unlabelled,
+    # which is the right way round, since the countdown itself is the point.
+    if [[ "$base" -gt "$rows" && "$menu_h" -eq 1 ]]; then
+        menu_h=0; base=$(( base - 1 ))
+    fi
     date_h=1; [[ $(( base + date_h )) -gt "$rows" ]] && date_h=0
     total=$(( base + date_h ))
     top=$(( (rows - total) / 2 )); [[ "$top" -lt 0 ]] && top=0
@@ -469,23 +540,36 @@ while :; do
     rem=$(( 1000000000 - 10#$(date +%N) ))
     nap="$(printf '%d.%09d' "$(( rem / 1000000000 ))" "$(( rem % 1000000000 ))")"
 
-    # While the menu is up the wait *is* the keyboard read — same fractional
-    # deadline, so the frame still lands on the second whether a key arrives or
-    # not. Only the states after zero listen: a key pressed at the countdown
-    # would be an easy way to lose one by accident, and Ctrl+C already quits.
-    if [[ "$menu_h" -eq 1 ]]; then
+    # The wait *is* the keyboard read — same fractional deadline, so the frame
+    # still lands on the second whether a key arrives or not. Every state listens
+    # now that [x] has to be reachable before zero; which keys mean anything is
+    # decided per state below, not by refusing to listen. Gated on MENU rather
+    # than menu_h: a screen too short to print the key line still takes the keys.
+    if [[ "$MENU" -eq 1 ]]; then
         key=""
         IFS= read -rsn1 -t "$nap" key
+        # Every key is gated on the states whose key line actually offers it. A
+        # key that fires from a screen carrying no label for it is a trap, and
+        # [q] during the countdown is the one that would cost the most: quitting
+        # stays Ctrl+C until the countdown is over, which is murty's call —
+        # a stray keystroke should not be able to end a two-hour timer.
         case "$key" in
-            q|Q) cleanup ;;
-            c|C) mode=clock ;;
-            r|R) resolve_target; expired=0; mode=count; notice="" ;;
-            x|X) [[ -n "$MENU_CMD" ]] && run_cmd ;;
+            q|Q) [[ "$mode" != count ]] && cleanup ;;
+            r|R) [[ "$mode" != count ]] && { resolve_target; expired=0; mode=count; notice=""; } ;;
+            c|C) [[ "$mode" == menu ]] && mode=clock ;;
+            x|X) if [[ "$mode" == count ]]; then
+                     prompt_cmd "run at zero (empty clears): "   # arm, never run now
+                 elif [[ "$mode" == menu ]]; then                # not clock: no [x] there
+                     [[ -n "$MENU_CMD" ]] || prompt_cmd "run now (empty cancels): "
+                     [[ -n "$MENU_CMD" ]] && run_cmd
+                 fi ;;
         esac
         # A keypress is proof somebody is here, which is the one thing the
         # timeout is testing for — so it starts over rather than pulling the
-        # menu out from under a hand that is still using it.
-        [[ -n "$key" && "$mode" == menu ]] && expired_at="$now_epoch"
+        # menu out from under a hand that is still using it. Read fresh rather
+        # than reusing this frame's clock: [x] can sit at a prompt for a minute,
+        # and a stale stamp would drop the answer straight onto the clock.
+        [[ -n "$key" && "$mode" == menu ]] && expired_at="$(date +%s)"
     else
         sleep "$nap"
     fi

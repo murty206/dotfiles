@@ -403,8 +403,9 @@ COUNTDOWN_NO_HINT=1 countdown 17:00   # drop the "Ctrl+C to quit" hint from the
                                  # this process, e.g. behind a locked screensaver
 COUNTDOWN_MENU_TIMEOUT=90 countdown 25m    # seconds on 00:00 before the clock
                                  # takes over; 0 stays on 00:00 for good
-COUNTDOWN_CMD='mpv ~/alarm.mp3' countdown 25m   # command offered under [x] in
-                                 # the menu at zero; unset hides the key
+COUNTDOWN_CMD='systemctl suspend' countdown 45m   # arms a command up front; it
+                                 # fires by itself at zero, same as typing it
+                                 # into [x] while the countdown is running
 # The rule is one character: an argument containing ":" is a wall-clock time,
 # anything else is a duration. So "1:30" is half past one on the clock, not
 # one and a half hours — write 1h30m for that. The footer always shows the
@@ -413,8 +414,9 @@ COUNTDOWN_CMD='mpv ~/alarm.mp3' countdown 25m   # command offered under [x] in
 # Current time sits above the countdown at half scale, with the date in plain
 # text above that. The digits scale to whichever axis runs out first, so the
 # same script fills a 1024x768 panel and a 1920x1080 one; on a window too short
-# for everything it drops the date first, then the clock, and keeps the
-# countdown and footer down to a 30x9 terminal.
+# for everything it drops the date first, then the clock, then the key line
+# (the keys still work unlabelled), and keeps the countdown and footer down to
+# a 30x9 terminal. A label needs one more row than that.
 # Precision adapts — always the two most significant units, so seconds
 # only show up once under an hour:
 #   05:24  hours : minutes      (more than an hour to go)
@@ -424,18 +426,31 @@ COUNTDOWN_CMD='mpv ~/alarm.mp3' countdown 25m   # command offered under [x] in
 # terminal bell (PC-speaker buzzer in a bare TTY, window urgency hint in
 # kitty), a notify-send desktop notification, and a sound through the sound
 # server. Toggle them with ALERT_* at the top of countdown.sh.
-# Zero is not the end of the screen — the footer turns into a menu:
+# One rule for the command: anything set before zero runs at zero. [x] sits
+# under the footer for the whole countdown and there it *arms* rather than
+# runs — it opens a prompt, pre-filled with whatever is already set, and
+# clearing the line takes the command back off. The armed command is named on
+# screen (`[x] at zero: systemctl suspend`), so a machine about to suspend
+# itself says so first.
+# Zero is not the end of the screen — the armed command fires with the alert
+# and the footer turns into a menu:
 #   r  restart, same duration from now or the target's next occurrence
 #   c  switch to the clock now
-#   x  run $COUNTDOWN_CMD, shown only if one is set
+#   x  run the armed command again by hand, or type one now
 #   q  quit
 # Left alone it falls back to a full-screen clock after 30 seconds, so a
 # finished countdown leaves something useful on the monitor rather than a
-# blinking 00:00. The menu needs a keyboard, so it is skipped where
-# COUNTDOWN_NO_HINT is set or stdin is not a terminal — there the clock takes
-# over on the same timer.
+# blinking 00:00. Any keypress restarts that timer. The keys need a keyboard,
+# so they are skipped where COUNTDOWN_NO_HINT is set or stdin is not a
+# terminal — there the clock still takes over on the same timer and an armed
+# command still fires at zero, which is the case it was armed for.
+# Quitting is Ctrl+C while the countdown runs and [q] after zero: two ways on
+# purpose, since a stray key should not be able to end a two-hour countdown,
+# and once it is over there is nothing left to interrupt.
+# It runs on the alternate screen, so quitting hands the terminal back exactly
+# as it was found, scrollback included.
 # Target already passed today means tomorrow.
-# The remaining time is mirrored into the terminal title. Ctrl+C to quit.
+# The remaining time is mirrored into the terminal title.
 
 # Quick file backup
 bak <file>         # creates file.bak

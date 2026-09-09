@@ -30,9 +30,70 @@ digits are already there, so clock mode is the same `print_digits` with `$now` a
 `COLOR_CLOCK`. It also drops the half-scale clock that normally sits on top —
 two copies of the same time is the one layout worth vetoing.
 
-**The command runs from `[x]`, not automatically at zero.** murty's call. It comes
-from `$COUNTDOWN_CMD` because a keypress cannot supply command text, and the key
-is hidden when the variable is empty rather than offered and inert.
+**The command runs from `[x]`, not automatically at zero.** murty's call.
+
+*Revised the same day, after review:* the first version took the command only
+from `$COUNTDOWN_CMD` and hid the key when it was unset — which contradicted the
+reason the menu exists at all. The argument against flags was that the choice is
+made *after* the countdown is already running; a command that has to be exported
+before it starts is the same flag wearing a different hat. `[x]` is now always
+offered and opens a prompt when nothing is configured, keeping what is typed for
+the rest of the session. The env var survives as the "don't ask me" path.
+
+The prompt puts the terminal back to its saved settings while it runs — readline
+needs echo and canonical mode — and an empty line cancels. Not ESC: readline
+reads ESC as the start of a meta sequence, not a keystroke. It also forced the
+fallback timer to re-stamp from a *fresh* `date` rather than the frame's clock,
+because a prompt can sit open for a minute and the stale stamp dropped the
+answer straight onto the clock. Verified with an 8-second prompt against a
+3-second timeout.
+
+`[c]` and `[x]` are gated on the menu state. The clock screen's key line offers
+only `[r]` and `[q]`, and a key that still fires from a screen carrying no label
+for it is a trap — doubly so for the one that runs a command.
+
+**Then the same question came back one level up, and it moved the whole design:
+`[x]` is now on screen during the countdown too, and anything armed before zero
+fires at zero.** murty's point was that the command had to be settable while the
+countdown ran — otherwise a thought at minute 10 of a 25-minute timer costs you
+the timer. And once it is settable *before* zero, making it wait for a keypress
+*after* zero is incoherent: a command armed before the end is armed by somebody
+who expects to be elsewhere when it arrives. It would do nothing in exactly the
+case it was set for.
+
+So one rule replaced two: **anything set before zero runs at zero.** `[x]` before
+zero arms (prompt pre-filled with what is set; clearing the line disarms) and
+never runs now; `[x]` after zero runs it again by hand. `$COUNTDOWN_CMD` is the
+same thing set from the shell and fires the same way — including where there is
+no keyboard at all, which is the case it was made for.
+
+*This reverses the first decision of the session*, taken before the prompt
+existed: "run when picked from the menu, not at zero with the alert." What
+changed is that arming and alerting stopped being two different things. Recorded
+as a reversal rather than quietly rewritten, because the earlier reasoning is
+still sound on its own terms and the next session should see why it stopped
+applying.
+
+Three consequences, all paid for:
+
+- **The key line is up in every state**, so it comes out of the vertical budget
+  always, and it became the third thing sacrificed on a shrinking window — after
+  the date and the clock. Only the line goes; the keys keep working unlabelled.
+- **The countdown footer needed the same narrow-screen trim as the other two.**
+  It was already wider than 30 columns before today (`target 16:45 · 0m 1s left
+  · Ctrl+C to quit`, 46 characters), but until there was a key line under it,
+  wrapping cost nothing visible. A labelled countdown still needs ten rows and
+  overflows a 9-row terminal — checked against HEAD, it did that before this
+  change too.
+- **The armed command is named on screen** for the whole countdown
+  (`[x] at zero: systemctl suspend`), truncated to the width rather than left to
+  wrap. A key that can suspend the machine should not be silently armed.
+
+**`[r]` re-arms, deliberately.** A restart keeps the command and fires it again
+at the new zero — the rule is "anything set before zero runs at zero", and a
+restart makes a new zero. It is visible for the whole restarted countdown on the
+key line, so a repeated `systemctl suspend` announces itself rather than
+ambushing. Verified: arm, fire, `[r]`, fire again — two runs.
 
 **`resolve_target()` is a function now**, which is the only reason `[r]` can work:
 a duration restarts from now, and a wall-clock target has to resolve to its *next*
@@ -48,6 +109,23 @@ command's own confirmation still on screen. One line, and it is the only reason
 **The menu is skipped where `COUNTDOWN_NO_HINT` is set or stdin is not a tty**,
 and the clock still takes over on the same timer. That half needs nobody present;
 the keys do. Same escape clause the hint already had, reused rather than reinvented.
+
+**Two quit mechanisms, kept on purpose.** Ctrl+C while the countdown runs, `[q]`
+after zero — and that means `[q]` stops working again after `[r]`. Raised as an
+inconsistency and settled by murty: *"tutarsızlık kabul edilir, countdown
+tamamlandıysa çıkış kolaylaşır."* Quitting is supposed to get cheaper once the
+thing is over, and while it is still running a single stray keystroke should not
+be able to end a two-hour countdown. Recorded here because the next session will
+otherwise read it as an oversight and "fix" it.
+
+**The alternate screen, not a clear on exit** (`\e[?1049h` / `\e[?1049l`). The
+script used to leave its last frame behind, so the shell came back under a
+screenful of digits. `\e[2J` at exit would remove those and the user's own screen
+with them; the alternate screen restores what was there before, scrollback
+included, for both `[q]` and Ctrl+C. A terminal without one — the bare Linux
+console — ignores the sequence and gets exactly today's behaviour, which is why
+the trailing newline in `cleanup` moved *ahead* of the switch: discarded with the
+alternate screen, still doing its old job without one.
 
 ### What bit, and would have shipped silently
 
@@ -69,6 +147,17 @@ scale-fit loop and the `base` centering sum, or it pushes the footer off a short
 screen. On a narrow one the footer wraps instead, which costs an unbudgeted row
 with the same result — so both footer and key line shorten when they would not
 fit (`[r] restart` → `r=restart`). Checked at 80x24, 60x12, 40x14 and 30x9.
+
+### Run on the machine, not just under a pty
+
+Everything above was verified with `script(1)` ptys, which is not what this repo
+trusts — validation here is "run it on a machine and see". murty ran the whole
+rule end to end in his own terminal: armed a command mid-countdown, let zero fire
+it with nobody touching the keyboard, ran it again by hand from the menu, then
+pressed `[x]` on the clock screen. `/tmp/x-test.log` came back with exactly two
+timestamps nine seconds apart — automatic, then manual, and nothing from the
+clock. The timestamps were real rather than frozen at prompt time, which is the
+`eval` path proving itself. The `notify-send` layer fired both times.
 
 ### Unverified
 
