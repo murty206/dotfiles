@@ -31,6 +31,21 @@ good rule":** either it came directly from murty in his own words, or it has
 survived the rule-by-rule review. Nothing arrives here by inference from a
 summary.
 
+**Every line also names its device — or says it has none.** Adopted 2026-09-09.
+Being *followable* and being *noticeable* are different properties: every rule
+ever written is followable, and the ones that survive a long session are the ones
+that fire **while the mistake is being made** — a sentence you catch yourself
+typing, a command that has to run before you speak, a word from the user that
+means a dial is mis-set. So each rule below carries a `Device:` line naming that
+trigger.
+
+**A rule with no device still gets in — it says `Device: none` instead.** That is
+information, not a demerit. A bar that rejected undeviced rules would filter for
+*catchability* rather than for truth, and some true rules have no nameable
+moment. Writing the absence down costs nothing and buys the question that matters
+later: are the undeviced rules the ones that get broken? That is answerable by
+counting, and the counting has started.
+
 Every line also costs context in every session everywhere, and the repo is
 public — no host paths, no project names, no client names. Machine-specific
 rules belong in that machine's or that project's own `CLAUDE.md`.
@@ -62,6 +77,12 @@ The counterpart is that conversation is *disposable on purpose* — it is workin
 memory. Nothing is lost by ending a session, provided the writing happened while
 it ran.
 
+**`Device: none.`** This rule describes how to behave generally and names no
+instant at which it fires. **It is also the only rule in this file that has been
+broken since anyone started counting** — the agent asked the user for something
+the files already held. Recorded rather than patched: an invented trigger would
+be worse than a visible gap, and the gap is the more useful thing to know.
+
 ---
 
 ## Working with the shell
@@ -76,6 +97,11 @@ needs running and why, and let the user run it.
 The same holds for anything else the agent cannot complete on its own:
 interactive logins, browser confirmations, hardware that has to be power-cycled.
 Name the step, hand it over, and say what happens next — do not probe first.
+
+**`Device: a command class, checked before the command runs.`** `sudo`, a package
+install, an interactive login, a browser confirmation, hardware that has to be
+power-cycled. If what you are about to run belongs to that class, it is handed
+over — there is nothing to evaluate and nothing to try first.
 
 ---
 
@@ -93,3 +119,7 @@ trailer from its system instructions and nobody notices.
 **The preference is for the line to be absent, not corrected.** It was recorded
 on 2026-08-19, when he noticed the agent had stopped adding it: *"eklemeyi
 bırakman iyi oldu"* — the version he approved of was the one with no line at all.
+
+**`Device: a forbidden string.`** `Co-Authored-By`, and "generated with". If
+either one is in a commit message you are composing, the rule is already broken.
+Literal, and checkable after the fact with `git log --grep`.
