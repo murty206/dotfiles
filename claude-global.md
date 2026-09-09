@@ -6,11 +6,20 @@ next pull.
 
 **This file is deliberately almost empty**, and it is meant to stay that way for
 a while. Its transport was settled on 2026-08-26; its *content* is still an open
-item in the private workspace where these decisions are made. Ten of the
-twenty-four general rules harvested from five months of feedback remain
-unreviewed — and of the fourteen read one by one so far, **the harvest's summary
-was wrong or incomplete about twelve.** Writing the rest of this file from that
-summary would install its errors into every project at once.
+item in the private workspace where these decisions are made.
+
+*Status corrected 2026-09-09. This paragraph used to say ten of the twenty-four
+general rules were unreviewed and that the harvest's summary was wrong about
+twelve of the fourteen read. Both are stale: the review finished on 2026-09-08 at
+**24 of 24**, and the "12 of 14" figure was **retracted** the same day — it could
+not be re-derived and it counted verdict entries where another count read files.
+A withdrawn number should not have been sitting in the one file every project
+loads. The qualitative statement survives and is the reason for the bar below:
+of the rules read one by one, the harvest's disposition survived in only a small
+minority. A second corpus of 33 rules, from another machine, is still unread.*
+
+Writing this file from an unreviewed summary would install its errors into every
+project at once.
 
 The review keeps finding the same shape: the summary is not a lie, it is a
 *compression*, and what it drops is the part that made the rule work — an escape
@@ -67,3 +76,20 @@ needs running and why, and let the user run it.
 The same holds for anything else the agent cannot complete on its own:
 interactive logins, browser confirmations, hardware that has to be power-cycled.
 Name the step, hand it over, and say what happens next — do not probe first.
+
+---
+
+## Git
+
+**Commit messages carry no attribution trailer.** No `Co-Authored-By`, no
+"generated with" line. Adopted 2026-09-09, from murty, in his own words — and he
+stated the scope himself when asked whether it was one project's preference or
+general: *"tercihim genel tabii ki."*
+
+**This overrides the tool's own default**, which asks for the trailer, and that
+is the only reason the line has to exist: without it every agent re-adds the
+trailer from its system instructions and nobody notices.
+
+**The preference is for the line to be absent, not corrected.** It was recorded
+on 2026-08-19, when he noticed the agent had stopped adding it: *"eklemeyi
+bırakman iyi oldu"* — the version he approved of was the one with no line at all.
