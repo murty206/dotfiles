@@ -79,11 +79,44 @@ an issue tracker), move closed items out, number anything newly opened, and if
 you reordered the priorities write **why**.
 
 **4. Promote anything permanent.** The test: would an agent in a future session
-do the wrong thing without this? If yes it belongs in `CLAUDE.md`, not in the
+do the wrong thing without this? If yes it belongs in a `CLAUDE.md`, not in the
 log. The log is history; `CLAUDE.md` is the rule in force.
 
-**5. Commit.** Follow the repository's existing message style — read
+**Then say *which* `CLAUDE.md`, because they are not one file.** A second test
+separates them: would an agent in **another project** do the wrong thing without
+it? If yes the rule is general and its home is `~/.claude/CLAUDE.md`. If it is
+only true here, it belongs in this project's own `CLAUDE.md`. Getting this wrong
+is not symmetric — a project rule kept local costs one project a repetition,
+while a local rule promoted by mistake is loaded everywhere until someone
+notices.
+
+**Never edit the global file silently.** Say what you propose adding and let the
+user decide.
+
+**5. Commit, then push.** Follow the repository's existing message style — read
 `git log --oneline -10` first rather than assuming one.
+
+**Commit what this session touched. Do not sweep the rest in.** Before staging,
+run `git status` and compare it against what actually happened here. Anything
+this session did not touch is **named and asked about** — never staged blind, and
+never left out silently either.
+
+The reason is the log's own truthfulness. A working tree can be made dirty by a
+*different project's* session writing into this repository, and `git` records no
+author for an uncommitted file. Swept in, that work enters history under **this**
+session's message and date — so the record says a thing happened here that did
+not, which is more expensive than leaving it uncommitted, because the log is
+trusted later. `/acilis` names such files at open; this step is where the cost
+would otherwise land.
+
+**Push is part of the close, not an optional extra.** A commit that never left
+the machine is not a backup — the remote is. It is also how a second machine
+receives this session's work, so an unpushed close blocks whoever opens next
+there as well as risking this one.
+
+If the repository has **no remote**, say so in the closing summary instead of
+passing over it silently. If the push **fails**, say that too, plainly. Never
+let a session read as closed while its record is still only local.
 
 **6. Delete `.claude/session-start` and `.claude/compact-count`.** See above.
 This is the step that closes the session — and do not delete the counter until

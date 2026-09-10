@@ -66,8 +66,8 @@ own, exactly as injected. Create `.claude/` if it is missing. Add the file to
 the project's `.gitignore` if it is not there already — it is state, not history.
 
 **If the file already exists, do not overwrite it.** A session is open. Read it,
-report the start time that is standing, and go on to step 2. A `/clear` or a
-restart does not begin a new session — it continues the one the stamp names.
+report the start time that is standing, and go on to the next step. A `/clear` or
+a restart does not begin a new session — it continues the one the stamp names.
 
 The one case that needs a question: the stamp is from a **previous day** and
 nothing suggests work ran overnight. Then the last session was never closed. Say
@@ -75,24 +75,63 @@ so plainly and ask whether to overwrite it or to run `/kapanis` for that session
 first. Do not decide this alone — an overwritten stamp is a session whose length
 can no longer be reconstructed.
 
-## 2. Read the queue
+## 2. The repository's state
+
+**Run `git fetch` first, then report three things.** Not one "the repo is fine" —
+three, because they fail independently:
+
+1. **Is there a remote at all?** `git remote`. A project with no remote has no
+   backup, and `/kapanis` needs to know before it promises a push.
+2. **Ahead or behind?** `git status -sb`, **after** the fetch.
+3. **Is the working tree clean?** Same command. If it is not, **name the files**.
+
+**Why the fetch is not optional.** `git status`'s *ahead / behind* is computed
+against the **local** `origin/*` ref and makes **no network call** — it is only as
+fresh as the last fetch. Without one, work pushed from another machine is
+reported as *"0 behind"*: a silent wrong answer, which is worse than no answer.
+
+**The offline objection does not survive contact.** An agent runs over the
+network, so a session able to execute this command already has one. The narrow
+residual is that the host could be unreachable while the model API is not — then
+the fetch fails **visibly** and the pre-fetch answer still stands. Say so and go
+on.
+
+**A dirty tree is reported, not refused, and the files are named.** This is
+deliberately weaker than the freshness check above, and the asymmetry is the
+point: a carried-over context **poisons the session that is starting**, while
+uncommitted work is someone else's unfinished business that this session may have
+no business touching. `/acilis` cannot commit for the user either way.
+
+**The real damage is at close, not at open** — which is why naming the files
+matters more than blocking. If `/kapanis` later commits files this session never
+touched, another project's work goes into the record under this session's
+message, and the log stops being true. The counterpart rule lives in `/kapanis`.
+
+**Do not assume the dirt is the user's own.** A tree can go dirty **after** the
+ritual that pronounced it clean, and the writer can be a *different project's*
+session writing into this repository — the one case no single project's
+discipline catches, and the reason this check belongs at open and not only at
+close.
+
+## 3. Read the queue
 
 `next_steps.md`, `TODO.md`, or whatever this project keeps. Name the item at the
 top — by its number if the project numbers them, and by the reason it is at the
 top if that reason is written down. The queue usually explains its own ordering;
 quote it rather than re-deriving it.
 
-## 3. Read the top entry of the log
+## 4. Read the top entry of the log
 
 `dev_log.md`, `docs/dev_log.md`, `CHANGELOG.md`, `NOTES.md` — the first that
 exists. One or two lines on where the last session stopped, so the thread is
 picked up instead of re-derived.
 
-## 4. Open with that item
+## 5. Open with that item
 
-Report in four lines:
+Report in five lines:
 
 - Start time
+- The repository's state — remote, ahead/behind, working tree
 - The top item, and why it is top
 - Where the last session left off
 - The first concrete step
