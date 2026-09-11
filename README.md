@@ -416,7 +416,9 @@ COUNTDOWN_CMD='systemctl suspend' countdown 45m   # arms a command up front; it
 # same script fills a 1024x768 panel and a 1920x1080 one; on a window too short
 # for everything it drops the date first, then the clock, then the key line
 # (the keys still work unlabelled), and keeps the countdown and footer down to
-# a 30x9 terminal. A label needs one more row than that.
+# a 30x9 terminal. A label needs one more row than that. Too narrow rather than
+# too short, the key line drops [c] and [x] rather than cutting a word — [q]
+# has to stay legible, and the two it drops still work.
 # Precision adapts — always the two most significant units, so seconds
 # only show up once under an hour:
 #   05:24  hours : minutes      (more than an hour to go)
@@ -435,6 +437,10 @@ COUNTDOWN_CMD='systemctl suspend' countdown 45m   # arms a command up front; it
 # Zero is not the end of the screen — the armed command fires with the alert
 # and the footer turns into a menu:
 #   r  restart, same duration from now or the target's next occurrence
+#   t  point it somewhere else — a prompt taking any spec the command line
+#      takes (16:45, 25m, 1h30m), pre-filled with the current one; the new
+#      spec is what a later [r] restarts. Bad input says so in the footer and
+#      leaves the target alone; an empty line cancels
 #   c  switch to the clock now
 #   x  run the armed command again by hand, or type one now
 #   q  quit

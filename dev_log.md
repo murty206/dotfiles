@@ -148,6 +148,46 @@ screen. On a narrow one the footer wraps instead, which costs an unbudgeted row
 with the same result — so both footer and key line shorten when they would not
 fit (`[r] restart` → `r=restart`). Checked at 80x24, 60x12, 40x14 and 30x9.
 
+### `[t]` — point it somewhere else
+
+Asked for next to `[r]` and `[q]`: `[r]` restarts the *same* target, and the
+thing missing was a different one. `[t]` opens a prompt taking any spec the
+command line takes, pre-filled with the current one.
+
+**It forced `resolve_target` to stop exiting.** Bad input from the command line
+is fatal and should be; bad input typed into a menu must not be able to kill the
+program. The message cannot go to stderr either — by then the screen belongs to
+the alternate buffer, and a stray line scrolls the layout out from under itself.
+So the function returns 1 and leaves its complaint in `RESOLVE_ERR`, and the
+caller decides whether that is an exit or three seconds in the footer.
+
+The same change fixed a bug that was already there and had never fired:
+`if ! TARGET_EPOCH="$(date -d …)"` empties the global on failure. Harmless while
+the only caller exited immediately after; with `[t]` a mistyped time would have
+taken the running target with it. Everything is computed into locals now and the
+globals are assigned together, once it has all worked.
+
+**`[t]` replaces `SPEC`, so a later `[r]` restarts the new target, not the one
+the command line started with.** Verified: start 3s → `[c]` → `[t] 6s` → expire
+→ `[r]` → 6s again.
+
+**Narrow screens got a third trim level, and the reason is the point.** Five
+keys do not fit 30 columns, and cutting the line by characters loses whichever
+key sits at the end — which was `[q]`, the way out, invisible on exactly the
+screen where the Ctrl+C hint is also suppressed. So the fallback drops whole
+keys instead: `[c]` happens by itself after the timeout and `[x]` is a bonus,
+while `r`, `t` and `q` stay. Cutting is now the last resort, for an armed
+command that outruns any screen.
+
+Both prompts went through one `prompt_line`. The restore-settings / position /
+`read -e` / re-disable / flush sequence is the one that already produced the
+EXIT-trap bug this session; writing it a second time by hand was not worth the
+risk.
+
+`[t]` is offered wherever `[r]` is — the menu and the clock — and not during the
+countdown. Retargeting a running countdown ("make it fifteen minutes more") is a
+different feature and was not asked for.
+
 ### Run on the machine, not just under a pty
 
 Everything above was verified with `script(1)` ptys, which is not what this repo

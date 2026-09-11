@@ -11,8 +11,9 @@
 # [x] or by $COUNTDOWN_CMD — fires at zero, alongside the alert.
 #
 # Once it hits zero the screen becomes a waiting state: a key menu in the footer
-# ([r]estart, [c]lock, [x] run it again, [q]uit) and, if nobody presses
-# anything, a plain full-screen clock after COUNTDOWN_MENU_TIMEOUT seconds.
+# ([r]estart, [t]arget elsewhere, [c]lock, [x] run it again, [q]uit) and, if
+# nobody presses anything, a plain full-screen clock after
+# COUNTDOWN_MENU_TIMEOUT seconds.
 #
 # Pure bash + coreutils — no dependencies, works in a bare TTY.
 # Run with bash explicitly; it uses bash arrays and is not zsh-compatible.
@@ -47,6 +48,8 @@ When time is up it fires by itself with the alert, and the footer turns into a
 menu:
 
   r   restart — same duration from now, or the target's next occurrence
+  t   point it somewhere else — takes any spec the command line takes, and
+      that new spec is what a later [r] restarts
   c   switch to the clock now
   x   run the armed command again by hand, or type one now
   q   quit
@@ -123,25 +126,37 @@ SEG[:]="0 1 0 1 0"
 
 # ---- resolve target: ":" means a clock time, anything else a duration
 # A function rather than a straight run, because [r] restarts the countdown and
-# has to go through exactly this path again: a duration restarts from now, and a
-# wall-clock target resolves to its *next* occurrence instead of firing at once.
-# Sets TARGET_EPOCH, TOMORROW and TARGET; exits on bad input, which can only
-# happen on the first call.
+# [t] points it somewhere else, and both have to go through exactly this path: a
+# duration restarts from now, and a wall-clock target resolves to its *next*
+# occurrence instead of firing at once.
+#
+# It takes an optional spec and **returns** 1 on bad input rather than exiting.
+# Two reasons, both learned the hard way. A menu that can kill the program when
+# the user mistypes is not a menu; and the message cannot go to stderr either,
+# because by then the screen belongs to the alternate buffer and a stray line
+# scrolls the layout out from under itself. So the complaint goes in
+# RESOLVE_ERR, and the caller decides whether that is an exit or a footer.
+#
+# Everything is computed into locals and the globals are assigned only once it
+# has all worked. `if ! TARGET_EPOCH="$(date …)"` looks equivalent and is not:
+# on failure it leaves the global empty, so a mistyped time at the menu would
+# take the running target with it.
+RESOLVE_ERR=""
 resolve_target() {
-    local secs rest ok
-    TOMORROW=""
+    local spec="${1:-$SPEC}" secs rest ok epoch tomorrow=""
+    RESOLVE_ERR=""
 
-    if [[ "$SPEC" == *:* ]]; then
-        if ! TARGET_EPOCH="$(date -d "$SPEC" +%s 2>/dev/null)"; then
-            echo "Invalid time: $SPEC   (example: 16:45)" >&2
-            exit 1
+    if [[ "$spec" == *:* ]]; then
+        if ! epoch="$(date -d "$spec" +%s 2>/dev/null)"; then
+            RESOLVE_ERR="not a time: $spec   (example: 16:45)"
+            return 1
         fi
-        if [[ "$TARGET_EPOCH" -le "$(date +%s)" ]]; then
-            TARGET_EPOCH="$(date -d "tomorrow $SPEC" +%s)"
-            TOMORROW=" (tomorrow)"
+        if [[ "$epoch" -le "$(date +%s)" ]]; then
+            epoch="$(date -d "tomorrow $spec" +%s)"
+            tomorrow=" (tomorrow)"
         fi
     else
-        secs=0; rest="$SPEC"; ok=0
+        secs=0; rest="$spec"; ok=0
         if [[ "$rest" =~ ^[0-9]+$ ]]; then
             secs=$(( rest * 60 )); ok=1                     # bare number = minutes
         else
@@ -156,19 +171,26 @@ resolve_target() {
             [[ -n "$rest" ]] && ok=0                        # trailing junk
         fi
         if [[ "$ok" -ne 1 || "$secs" -le 0 ]]; then
-            echo "Invalid duration: $SPEC   (examples: 25m, 1h30m, 90s, 25)" >&2
-            exit 1
+            RESOLVE_ERR="not a duration: $spec   (examples: 25m, 1h30m, 90s, 25)"
+            return 1
         fi
-        TARGET_EPOCH=$(( $(date +%s) + secs ))
-        [[ "$(date -d "@$TARGET_EPOCH" +%F)" != "$(date +%F)" ]] && TOMORROW=" (tomorrow)"
+        epoch=$(( $(date +%s) + secs ))
+        [[ "$(date -d "@$epoch" +%F)" != "$(date +%F)" ]] && tomorrow=" (tomorrow)"
     fi
 
+    # Committed together, and SPEC with them: a new target typed at [t] is what
+    # a later [r] restarts, not the one the command line started with.
+    SPEC="$spec"
+    TARGET_EPOCH="$epoch"
+    TOMORROW="$tomorrow"
     # What the footer and title call the target — always a clock time, so a
     # duration shows you the wall-clock moment it resolved to.
-    TARGET="$(date -d "@$TARGET_EPOCH" '+%H:%M')"
+    TARGET="$(date -d "@$epoch" '+%H:%M')"
 }
 
-resolve_target
+# The one caller that does exit: bad input from the command line is fatal, and
+# this runs before the alternate screen, so stderr is still the terminal's.
+resolve_target || { echo "$RESOLVE_ERR" >&2; exit 1; }
 
 # ---- terminal title: without this the tab just shows "bash countdown.sh"
 # Terminated with ST (ESC \), not BEL — a BEL-terminated OSC would emit a
@@ -256,26 +278,51 @@ flush_keys() {
 # nowhere: anything it printed would land in the middle of the drawn screen.
 notice=""; notice_until=0
 
+# One line of typed input, on the bottom row, answer left in REPLY_LINE. Both
+# prompts ([x] for a command, [t] for a new target) go through here: the same
+# four steps in the same order every time, because writing this sequence twice
+# is how the terminal ends up half-restored.
+#
+# The terminal goes back to its original settings for the duration — readline
+# needs echo and canonical mode, and typing blind onto a full-screen countdown
+# is not a prompt anybody can use. The field is pre-filled with what is already
+# set, so the prompt edits rather than replaces, and clearing the line (Ctrl+U)
+# is how a value gets taken back off. An empty answer cancels; ESC cannot,
+# because readline takes it as the start of a meta sequence, not a keystroke.
+REPLY_LINE=""
+prompt_line() {
+    REPLY_LINE=""
+    [[ -n "$TTY_STATE" ]] && stty "$TTY_STATE" 2>/dev/null
+    printf '\e[%d;1H\e[K\e[?25h' "$rows"
+    IFS= read -r -e -i "$2" -p "$1" REPLY_LINE
+    printf '\e[?25l'
+    [[ -n "$TTY_STATE" ]] && stty -echo 2>/dev/null
+    flush_keys
+}
+
 # [x] with nothing configured asks for the command rather than hiding the key —
 # the whole point of the menu is that the choice is made once the countdown is
 # already running, and a command that has to be set before it starts is exactly
-# the thing this was not supposed to be. The terminal goes back to its original
-# settings for the duration: readline needs echo and canonical mode, and typing
-# blind onto a full-screen countdown is not a prompt anybody can use. An empty
-# line cancels — ESC cannot, because readline takes it as the start of a meta
-# sequence rather than a keystroke. What is typed is kept for the session, so a
-# second [x] repeats it instead of asking again.
+# the thing this was not supposed to be. What is typed is kept for the session,
+# so a second [x] repeats it instead of asking again.
 prompt_cmd() {
-    local line=""
-    [[ -n "$TTY_STATE" ]] && stty "$TTY_STATE" 2>/dev/null
-    printf '\e[%d;1H\e[K\e[?25h' "$rows"
-    # Pre-filled with what is already set, so the prompt edits rather than
-    # replaces — and clearing the line is how a command gets taken back off.
-    IFS= read -r -e -i "$MENU_CMD" -p "$1" line
-    printf '\e[?25l'
-    [[ -n "$TTY_STATE" ]] && stty -echo 2>/dev/null
-    MENU_CMD="$line"
-    flush_keys
+    prompt_line "$1" "$MENU_CMD"
+    MENU_CMD="$REPLY_LINE"
+}
+
+# [t] — point the countdown at something else. An empty answer is a cancel and
+# must not be read as an error; a bad one leaves the running target alone and
+# says so in the footer, which is the whole reason resolve_target returns
+# instead of exiting.
+prompt_target() {
+    prompt_line "new target (empty cancels): " "$SPEC"
+    [[ -z "$REPLY_LINE" ]] && return
+    if resolve_target "$REPLY_LINE"; then
+        expired=0; mode=count; notice=""
+    else
+        notice="$RESOLVE_ERR"
+        notice_until=$(( $(date +%s) + 3 ))
+    fi
 }
 
 run_cmd() {
@@ -328,6 +375,12 @@ print_digits() {
     draw "$text" "$hs" "$vs" "$color" | while IFS= read -r l; do
         printf '\e[K%*s%b\n' "$left" '' "$l"
     done
+}
+
+# "[r] restart   [q] quit" -> "r=restart q=quit", in place. Its own function
+# because the narrow-screen path applies it twice, to two different strings.
+shorten_keys() {
+    keys="${keys//\[/}"; keys="${keys//] /=}"; keys="${keys//   / }"
 }
 
 print_text() {
@@ -407,7 +460,7 @@ while :; do
 
     today="$(date '+%A, %-d %B %Y')"     # follows LC_TIME
     now="$(date '+%H:%M')"
-    keys=""
+    keys=""; keys_min=""
 
     # Adaptive precision: always the two most significant units. Seconds are
     # noise while hours remain, so they only appear inside the last hour.
@@ -420,7 +473,7 @@ while :; do
         clock_h=0
         footer="target $TARGET reached"
         if [[ "$MENU" -eq 1 ]]; then
-            keys="[r] restart   [q] quit"
+            keys="[r] restart   [t] target   [q] quit"
         else
             footer+="$HINT"
         fi
@@ -435,7 +488,8 @@ while :; do
         [[ "$MENU_TIMEOUT" -gt 0 ]] && \
             footer+="  ·  clock in $(( MENU_TIMEOUT - (now_epoch - expired_at) ))s"
         if [[ "$MENU" -eq 1 ]]; then
-            keys="[r] restart   [c] clock   [x] run   [q] quit"
+            keys="[r] restart   [t] target   [c] clock   [x] run   [q] quit"
+            keys_min="[r] restart   [t] target   [q] quit"
         else
             footer+="$HINT"
         fi
@@ -475,12 +529,17 @@ while :; do
         set_title "${LABEL:+$LABEL — }$remaining -> $TARGET"
     fi
 
-    # Same reasoning for the key line: the brackets and the wide gaps are the
-    # part that can go, and only once it would not fit as it stands.
+    # Same reasoning for the key line, in three steps. First the brackets and
+    # the wide gaps go. Then whole keys, not letters: a line cut mid-word loses
+    # whichever key sits at the end, and with five of them that was [q] on a
+    # 30-column screen — the way out, invisible. keys_min names the ones worth
+    # keeping; [c] happens by itself after the timeout and [x] is a bonus.
+    # Cutting is the last resort, for an armed command that outruns any screen.
     if [[ -n "$keys" && "${#keys}" -gt "$cols" ]]; then
-        keys="${keys//\[/}"; keys="${keys//] /=}"; keys="${keys//   / }"
-        # An armed command is arbitrary text and can outrun any screen on its
-        # own, so the line is cut rather than left to wrap.
+        shorten_keys
+        if [[ "${#keys}" -gt "$cols" && -n "$keys_min" ]]; then
+            keys="$keys_min"; shorten_keys
+        fi
         [[ "${#keys}" -gt "$cols" ]] && keys="${keys:0:cols-1}…"
     fi
 
@@ -556,6 +615,7 @@ while :; do
         case "$key" in
             q|Q) [[ "$mode" != count ]] && cleanup ;;
             r|R) [[ "$mode" != count ]] && { resolve_target; expired=0; mode=count; notice=""; } ;;
+            t|T) [[ "$mode" != count ]] && prompt_target ;;
             c|C) [[ "$mode" == menu ]] && mode=clock ;;
             x|X) if [[ "$mode" == count ]]; then
                      prompt_cmd "run at zero (empty clears): "   # arm, never run now
