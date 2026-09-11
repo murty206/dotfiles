@@ -137,6 +137,44 @@ message can only name one of them.
 
 ---
 
+## Numbers
+
+**A number you will cite later goes into a file when you take it — with its
+method, and dated.** Adopted 2026-09-11, at murty's direction, and the reason is
+that the alternative has already happened more than once: a figure quoted in a
+document, nobody able to re-derive it, and no way to tell whether it was wrong or
+just stale.
+
+**What has to be in the file, because the number alone is not enough:**
+
+- **The raw result**, not the rounded conclusion.
+- **How it was taken** — the command, the source, the sample.
+- **Anything that was *chosen* rather than *observed***. This is the part that
+  gets dropped and the part that decides whether the number means anything: a
+  threshold, a cut-off, a window, an exclusion. Mark it as a definition, not a
+  measurement.
+- **What was NOT measured**, if the number invites a conclusion it cannot carry.
+
+**The file's name and location are the project's business** — a dedicated
+directory, a section of the log, whatever the project already does. **What is not
+optional is that the number is traceable to something dated.**
+
+**And the rule has teeth in the other direction: no source, no claim.** If a
+figure cannot be pointed at, it does not get used — not softened, not hedged,
+**not used.** A retracted number is not a small error: it was quoted somewhere,
+and everything built on it is now suspect.
+
+**Scope.** This is about numbers that leave the moment they were taken in — cited
+in a document, used in an argument, compared against next month. It is **not** a
+rule about every intermediate value: a count you print, read and discard needs no
+file.
+
+**`Device: a number about to be written into a document.`** The moment is typing
+a figure into a file or a message — if it is not yet recorded anywhere with its
+method, the rule is firing. Cheap to check, and the check is the fix.
+
+---
+
 ## Your own earlier output
 
 **Apply the same scrutiny to what you produced earlier as to what the user tells
