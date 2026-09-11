@@ -9,6 +9,62 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-09-11 — `countdown.sh`: the stall at zero, which nobody had fixed
+
+**The question:** murty noticed a momentary stall at zero before this round's
+changes and said it appeared to be gone. Was it?
+
+**No. It was still there, unchanged, and the credit was wrong.** `alert()` is
+byte-identical between `17fe1ac` and the working tree — `diff` on the two copies
+of the function returns nothing. The stall was measured on a pty, both versions,
+3-second target, frame timestamps taken off the master fd:
+
+```
+eski (17fe1ac)                yeni (çalışma kopyası)
+1.91  last countdown frame    1.88  last countdown frame
+2.82  \a \a \a \a \a          2.79  \a \a \a \a \a
+3.83  zero screen             3.80  zero screen
+```
+
+Identical to within noise. **What changed was not the timing but the reading of
+it:** the wait used to end on `00:00`, a screen that looks like the one already
+up, so it read as a hang; it now ends on a different screen with bells ringing
+through the gap, so the same 1.9 seconds read as "the alarm went off". Worth
+recording because a perceived fix is the kind of thing that gets built on.
+
+**The cause is one line.** `for _ in 1 2 3 4 5; do printf '\a'; sleep 0.2; done`
+— five beeps 0.2s apart is a full second of blocking, and `alert()` runs *before*
+the frame is drawn, so the last countdown frame sits on screen for ~1.9s instead
+of 1.0s. At exactly the moment the screen is being watched.
+
+**Fixed by backgrounding the bell**, murty's choice between that and deferring
+`alert()` until after the draw. Deferring keeps the process count flat but leaves
+keys unread for that second; backgrounding makes both the screen and the keyboard
+answer immediately, and costs one fork, once, at zero. Re-measured: the zero
+screen now lands in the same 10ms as the first beep, and the remaining four ring
+against an already-drawn menu.
+
+### What would have shipped silently
+
+**A background job in a non-interactive shell starts with SIGINT ignored.** So
+Ctrl+C takes the script down and leaves the beeping running in the terminal it
+just handed back — a beep arriving after the alternate screen is gone, with
+nothing on screen to explain it. The kill lives in the `EXIT` trap for the same
+reason the `stty` restore does: it is the only handler that covers both the `q`
+path and the signal path. `tty_restore` became `on_exit` to say so.
+
+Verified on a pty: a full run rings 5 times, quitting 0.3s after zero rings 2
+(`q`) and 3 (Ctrl+C), with EOF arriving in the same instant as the quit — a
+surviving subshell would hold the slave open and delay it. `stty -g` compared
+before and after in one pty on both paths: restored.
+
+### Unverified
+
+The bell is the only alert layer that was ever synchronous; `notify-send` and the
+sound players were already backgrounded and were not re-measured this round.
+
+---
+
 ## 2026-09-09 — `countdown.sh`: what the screen does after zero
 
 **The question:** a finished countdown sat on a blinking `00:00` until someone

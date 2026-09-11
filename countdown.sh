@@ -198,14 +198,24 @@ resolve_target || { echo "$RESOLVE_ERR" >&2; exit 1; }
 set_title() { [[ -t 1 ]] && printf '\e]0;%s\e\\' "$1"; }
 
 TTY_STATE=""                        # non-empty means the terminal owes a restore
+BELL_PID=""                         # non-empty means a beeping job is owed a kill
 
 # On EXIT, not inside cleanup: a Ctrl+C lands while `read` is waiting for a menu
 # key, and bash puts back the settings *it* saved when read started — which are
 # ours with echo already off — after the INT trap has run. Restoring from the
 # trap therefore gets silently undone and the shell comes back with a dead
 # keyboard. The EXIT trap runs last, which is the only place this holds.
-tty_restore() { [[ -n "$TTY_STATE" ]] && stty "$TTY_STATE" 2>/dev/null; }
-trap tty_restore EXIT
+#
+# The bell is killed here for a different reason, and it has to be here too: a
+# background job in a *non-interactive* shell is started with SIGINT ignored, so
+# Ctrl+C takes the script down and leaves the beeping running in the terminal it
+# just handed back.
+on_exit() {
+    [[ -n "$BELL_PID" ]] && kill "$BELL_PID" 2>/dev/null
+    [[ -n "$TTY_STATE" ]] && stty "$TTY_STATE" 2>/dev/null
+    return 0
+}
+trap on_exit EXIT
 
 cleanup() {
     set_title "${SHELL##*/}"        # hand the title back to the shell
@@ -239,8 +249,14 @@ pad() { printf '%*s' "$1" ''; }
 alert() {
     local msg="$1" f
 
+    # Backgrounded, and that is the whole point: five beeps 0.2s apart is a full
+    # second, and alert() runs *before* the frame is drawn. In the foreground it
+    # left the last countdown frame on screen for ~1.9s instead of 1.0s — a
+    # visible stall at exactly the moment the screen is being watched. Measured
+    # on a pty, both before and after. It costs one fork, once, at zero.
     if [[ "$ALERT_BELL" == 1 ]]; then
-        for _ in 1 2 3 4 5; do printf '\a'; sleep 0.2; done
+        { for _ in 1 2 3 4 5; do printf '\a'; sleep 0.2; done; } &
+        BELL_PID=$!
     fi
 
     if [[ "$ALERT_NOTIFY" == 1 ]] && command -v notify-send >/dev/null 2>&1 \
