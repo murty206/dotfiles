@@ -58,10 +58,44 @@ Verified on a pty: a full run rings 5 times, quitting 0.3s after zero rings 2
 surviving subshell would hold the slave open and delay it. `stty -g` compared
 before and after in one pty on both paths: restored.
 
+### Is the count itself trustworthy? Measured, because it had not been
+
+Asked directly, and the honest first answer was that only the zero *transition*
+had ever been measured, never the counting. So it was measured: an exact
+`HH:MM:SS` target — which makes `TARGET_EPOCH` known to the harness rather than
+inferred — with every frame's arrival stamped off the pty master.
+
+```
+                        idle(44s)   50 keys/s   full load(24 loops, loadavg 14)
+frames drawn / expected   44/44       24/24       29/29
+repeated or skipped       0           0           0
+mean period               1.0000s     1.0007s     1.0000s
+phase spread              0.001s      0.085s      0.056s
+zero vs target epoch      +0.010s     +0.099s     +0.031s
+```
+
+**Accumulating drift is impossible by construction**, which is the part worth
+keeping: every frame recomputes `TARGET_EPOCH - $(date +%s)` from the absolute
+epoch and re-phases its own sleep off `date +%N`. Nothing is added up, so nothing
+accumulates — a late frame is absorbed by the next sleep instead of pushing the
+error forward. The key-storm column is the interesting one: `read -t` doubles as
+the frame delay, so 50 keys a second return it early 50 times a second, and the
+re-phasing still put every frame on its own second.
+
 ### Unverified
 
 The bell is the only alert layer that was ever synchronous; `notify-send` and the
 sound players were already backgrounded and were not re-measured this round.
+
+Not measured, and each derivable from the code rather than from a run: a **clock
+step** (NTP, manual set) shifts a duration target by the size of the step, since
+the target is an absolute epoch — for an `HH:MM` target that is the right answer,
+for `25m` it is not; **suspend/resume** is handled in the sense that the first
+frame after waking shows the true remaining time and a target passed while asleep
+fires immediately, but it fires *late*, not at the moment it was due; and `date
++%N` is assumed to work — a `date` without it makes `10#$(date +%N)` an
+arithmetic error, `nap` zero, and the loop a busy spin. GNU coreutils is the
+stated target, so this last one is a portability note, not a live risk.
 
 ---
 
