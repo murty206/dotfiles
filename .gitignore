@@ -8,3 +8,12 @@ local.sh
 # MCP servers that box has disabled. `settings.json` (no `.local`) stays
 # committable if a shared setting is ever wanted; this half never is.
 .claude/settings.local.json
+
+# Session state, written by this repo's own hook and commands into whatever
+# project is open: `compact-count` by claude-session-context.sh, `session-start`
+# by /acilis and deleted by /kapanis. Both describe one running session on one
+# machine, so committing either is meaningless at best — a stale `session-start`
+# arriving by `git pull` would read as "a session is open here" and give
+# /kapanis a start time from another box.
+.claude/compact-count
+.claude/session-start
