@@ -78,6 +78,28 @@ there. Do not invent a new format for an existing file.
 an issue tracker), move closed items out, number anything newly opened, and if
 you reordered the priorities write **why**.
 
+**3b. Ask whether the user has a plan for the next session.**
+
+**Asking is mandatory; guessing is not.** If the answer is **yes**, write that
+work at the **very top** of the queue file — above whatever ordering the file
+already has, under its own heading, **in the user's own words**. If the answer is
+**no**, write nothing: an invented plan is worse than no plan.
+
+**Why the top, and not inside an item.** The failure this prevents is recorded:
+an item carried the sentence *"open the next session on this"* **in its own body**
+for thirteen days across at least four sessions, and no session opened on it. The
+opening ritual reads the **head of the queue**; the item was not there, so the
+instruction was invisible at exactly the moment it was meant to fire. **A sentence
+in an item's body is not a queue position.**
+
+**And a plan that stays in the conversation is not a plan.** The same item's owner
+had things to say about it and, fifteen days later, could not remember them —
+nothing had been written down. *The conversation is temporary, files are
+permanent* applies to the user as well; this step does the writing for them.
+
+**The block consumes itself:** the session that opens on it deletes those lines
+once that work is done.
+
 **4. Promote anything permanent.** The test: would an agent in a future session
 do the wrong thing without this? If yes it belongs in a `CLAUDE.md`, not in the
 log. The log is history; `CLAUDE.md` is the rule in force.
