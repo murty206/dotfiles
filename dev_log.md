@@ -186,6 +186,45 @@ reads **stdin**, so it printed nothing and briefly looked like the mailmap had
 broken. `HEAD` is what makes it answer. The `%an` vs `%aN` pair is the test that
 actually discriminates, which the 2026-09-09 entry already had to learn once.
 
+### The last pass: three places still telling the old story
+
+Prompted by murty asking whether already-finished work had been redone. It had
+not — the answer is in the next section — but looking for it turned up three
+files still describing a Windows install that no longer exists. A repo holding
+two stories about the same thing is the failure this session spent its whole
+`WINDOWS.md` edit avoiding, so:
+
+- **`README.md`** said *"`install.sh` and `update` are not run there"*. Rewritten
+  to say what runs and what is left, keeping the reason — it is handled now,
+  not gone.
+- **`install.sh`'s own header** listed thirteen steps and no Windows branch. This
+  file has a refuted-claim entry against it already, from the session where its
+  comment said two things were kept in step and they were not. Six lines added.
+- **The Windows summary listed Developer Mode under "Still by hand"**, when the
+  preflight refuses to run without it — so by the time that line prints it is
+  necessarily already on. Reporting settled work as outstanding is the mirror of
+  ticking work that failed, and `f2f1e67` is the commit that decided which side
+  of that this installer is on. Replaced with a statement of fact.
+
+A fourth, outside the repo: the comment written into this machine's `~/.bashrc`
+earlier in the session said *"install.sh never runs on Windows"* — true when it
+was written that afternoon and false two hours later, by this session's own
+doing.
+
+### Nothing on this machine was redone, and it was checked rather than asserted
+
+```
+~/.claude symlinks       2026-09-08 21:53, untouched — installer said "skipping"
+MSYS export in .bashrc   1 occurrence
+aliases.sh hook          1 occurrence
+~/.bash_profile          1 source line
+mailmap.file             C:/Users/Y.URGEN/.dotfiles/.mailmap, before and after
+```
+
+The one thing the installer did change on a real run was `mailmap.file`, and it
+rewrote it to a value git normalised straight back — net zero, and the false
+warning that exposed it is the fix recorded above.
+
 ### Filed, not done
 
 `#1c` — `update` has never been run on Windows. Reachable for the first time

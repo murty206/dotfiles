@@ -26,6 +26,17 @@
 #  11. Installs Ookla Speedtest CLI (backs the `speed` alias)
 #  12. Symlinks the Claude Code slash commands and the global CLAUDE.md
 #  13. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
+#
+# On Windows (MSYS / Git Bash) it runs a subset, and says so as it goes:
+#   - probes for native symlinks first and REFUSES TO START without them,
+#     because ln -s falls back to a silent copy there and returns 0
+#   - runs 1, 2, 12 and 13, plus Route A: winsymlinks:nativestrict into
+#     ~/.bashrc, and ~/.bash_profile created so a login shell reads it
+#   - skips 3-11, all of which need a package manager, and reports them as
+#     "Not attempted" rather than "NOT installed" - different claims
+#   - clones over HTTPS, since the SSH clone would need a key registered first
+# See WINDOWS.md. The status line and the session-context hook are not done on
+# any platform: both need a settings.json edit, and that file is per-host.
 # =============================================================================
 
 set -e
@@ -841,7 +852,11 @@ if [ -n "$IS_MSYS" ]; then
     echo "    1. Status line: link claude-statusline.sh, add the statusLine"
     echo "       entry to ~/.claude/settings.json"
     echo "    2. Session-context hook: the SessionStart block in the same file"
-    echo "    3. Developer Mode on, for real symlinks (WINDOWS.md Route A)"
+    echo ""
+    # Not listed as a to-do: the preflight at the top refuses to run without it,
+    # so by the time this prints it is necessarily already on. Reporting settled
+    # work as outstanding is the same misreport as ticking work that failed.
+    echo "  Real symlinks: on — verified by the preflight, not assumed."
     echo ""
     echo "  Of 53 aliases, 35 resolve under Git Bash — measured 2026-09-09. The"
     echo "  18 that do not are systemd, Linux-only tools, and two absent packages."

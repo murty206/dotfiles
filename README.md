@@ -82,7 +82,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `claude-commands/` | Claude Code slash commands — symlinked into `~/.claude/commands/` (see below) |
 | `claude-session-context.sh` | `SessionStart` hook — says whether the context is fresh, counts compactions |
 | `claude-global.md` | Global `CLAUDE.md` — symlinked to `~/.claude/CLAUDE.md`, loaded in every project |
-| `WINDOWS.md` | Setting up the Claude Code pieces on Windows — by hand, and why |
+| `WINDOWS.md` | Setting up the Claude Code pieces on Windows — what `install.sh` does there, and what is left by hand |
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `starship.toml` | Starship prompt config (Tokyo Night) |
 | `install.sh` | One-command installer |
@@ -214,10 +214,17 @@ still valid JSON and is ignored silently:
 }
 ```
 
-On **Windows** none of this is automatic — `install.sh` and `update` are not run
-there, because `ln -s` quietly copies instead of linking and the automation would
-stop working without saying so. **[WINDOWS.md](WINDOWS.md)** is the by-hand
-setup: the status line, these commands, the hook, and how to keep them current.
+On **Windows** `install.sh` runs and does most of it: the commands above, the
+global `CLAUDE.md`, the aliases hook, git identity and the mailmap. The status
+line and the session-context hook stay by hand, because both need an edit to
+`settings.json` — a file the installer touches on no platform.
+
+The reason it used to be by hand still holds and is now handled rather than
+avoided: `ln -s` quietly copies instead of linking on Windows, and returns 0
+while doing it. The installer **probes for the privilege and refuses to start**
+without it, so the failure it could once cause silently is the one thing it can
+no longer do. **[WINDOWS.md](WINDOWS.md)** has the detail, including what is
+skipped there and how to keep it current.
 
 A project can define its own `/acilis` or `/kapanis` in its `.claude/commands/`,
 and that copy wins. The ones here are the generic fallback: they search for a
