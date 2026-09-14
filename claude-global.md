@@ -289,6 +289,43 @@ over — there is nothing to evaluate and nothing to try first.
 
 ---
 
+## What is written, and what was written
+
+**A rule about what gets written applies forward. Pushed history is not rewritten
+to satisfy it.** Adopted 2026-09-14, from murty, in his own words — and by the
+first route with more evidence than it usually asks for: **four independent
+statements, three repositories, two machines, none aware of the others.**
+
+- On an attribution trailer, 2026-08-19 — *"geçmişi yeniden yazma kararı
+  verilmedi, olduğu gibi bırakıldı."*
+- On person attribution inside a repository, 2026-09-08 — *"geçmiş olduğu gibi
+  kalsın, bundan sonrasına dikkat et."*
+- On an address already in 33 public commits, 2026-09-09 — leave it, stop the
+  bleeding.
+- On nine commits carrying a forbidden trailer, 2026-09-14 — the same again.
+
+**The trade is identical every time, and it is his:** the gain is small and the
+force-push risk is real. It is larger in a repository other people pull, where a
+rewrite lands on everyone who has already fetched.
+
+**What this is not, because the two are easy to confuse and the confusion is
+expensive in both directions.** This governs **conventions** — a trailer, a
+phrasing, a name that should not have been written. **A leaked credential is not
+a convention.** Rotate the secret; treat the exposure as real whatever the log
+looks like afterwards. Rewriting history does not un-leak anything, and leaving a
+convention in place costs nothing.
+
+**`Device: the sentence "should I clean up the old ones?"`** If you are composing
+it, the answer is already no — say what changes from here instead.
+
+**Why it is written down at all**, since four people agreeing is usually a sign a
+rule is unnecessary: on 2026-09-14 the question was re-derived for the fourth
+time, from a precedent in a different repository, **while the answer had been
+sitting in a file for twenty-six days and nobody looked.** The cost of this line
+not existing is the one thing here that was measured rather than argued.
+
+---
+
 ## Git
 
 **Commit messages carry no attribution trailer.** No `Co-Authored-By`, no
