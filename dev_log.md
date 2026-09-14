@@ -9,6 +9,160 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-09-14 — `install.sh` learns Windows, and catches itself lying on the way
+
+**The question:** `next_steps.md` #1 reserved a decision — *"not whether to add
+the line, it is where"* — between a step in `WINDOWS.md` and a guarded MSYS
+branch in `install.sh`. Put to murty, who **chose the branch.**
+
+The argument against the page is the page's own: a step nothing enforces is a
+step the next machine misses, and item #1 *was* that — a Windows box running
+with zero aliases for as long as nobody checked. The argument against the branch
+was `WINDOWS.md`'s opening sentence, *"this is a by-hand install, on purpose"*.
+That sentence is now edited rather than ignored, because a repo holding two
+stories about how Windows installs is worse than either story.
+
+### It used to die at line 62
+
+MSYS has none of `paru`/`apt`/`dnf`, so the package-manager detection reached
+its `error` and exited 1 **before a single step ran**. Not "install.sh is not
+run on Windows" as a policy — it could not run.
+
+### The shape of the change: one guard, not 420 edited lines
+
+Sections 3-12 are contiguous, so they sit inside one
+`if [ -z "$IS_MSYS" ]; then ... fi`, and the body is **left at its original
+indentation on purpose**. Re-indenting 420 lines would have produced a diff in
+which every line of the installer changed and none of it was reviewable, to
+express a change that is two lines. The whole commit is 121 insertions and zero
+deletions.
+
+Checked before wrapping, because a self-contained region is what makes it safe:
+
+```
+functions defined in 126-544      : none
+variables assigned there          : 16
+of those, read after the region   : ZSH_CUSTOM, once, as ${ZSH_CUSTOM:-$HOME/.zsh}
+```
+
+That default is why an unset value is already handled — the summary prints "NOT
+installed", which is true. The **Aliases** hook has to stay after the `fi`, and
+that is not cosmetic: it appends to `~/.zshrc`, and `~/.zshrc` is created inside
+the guarded region. Moving it earlier would have broken Linux on a fresh machine.
+
+### The find: the automation reproduced the exact failure it was replacing
+
+The first working version printed
+
+```
+✓ acilis.md symlinked from dotfiles
+✓ kapanis.md symlinked from dotfiles
+✓ global CLAUDE.md symlinked from dotfiles
+```
+
+and produced **three plain copies**. `[ -L ]` on all three: not links. The
+shell running it carried `MSYS=disable_pcon` and not
+`winsymlinks:nativestrict`, so `ln -s` fell back to copying and returned 0.
+
+This is the failure `WINDOWS.md` was written about, reproduced by the automation
+written to replace the by-hand install that page recommends *because* of it. It
+is also the argument for the branch rather than against it: the by-hand route
+never prevented this, it only told you to go and check. A probe can refuse.
+
+So the branch now:
+
+1. **Exports `nativestrict` for its own process**, making `ln -s` fail loudly.
+2. **Probes before touching anything** — creates a target, links it, tests
+   `-L`. Failing at the probe costs nothing; failing at section 13 leaves a
+   half-installed machine.
+3. **Stops with the Developer Mode instruction** if it cannot link, because that
+   is a Windows setting only the user can change. Named and handed over, not
+   attempted around.
+4. **Appends the export to `~/.bashrc`** — the second gap, found on review.
+   Covering only its own process leaves the installer's links real and the
+   *user's* next `ln -s` silently copying, which is a half-configured machine
+   with no tell.
+
+### Also on this platform, each for a stated reason
+
+- **HTTPS clone, not SSH.** The SSH clone needs a key registered on GitHub
+  before it runs, and the closing summary only says so *after* the clone has
+  had to succeed. Git for Windows ships Git Credential Manager, so HTTPS pushes.
+- **`~/.bashrc` and `~/.bash_profile` created when absent.** `hook_shell` is a
+  deliberate no-op on a missing file, so without this a fresh box gets a clean
+  successful run and no aliases. `~/.bash_profile` is the less obvious one: Git
+  Bash opens a *login* shell and nothing in `/etc` sources `~/.bashrc`.
+- **A separate closing summary.** The shared one would print "NOT installed" for
+  eight things nothing tried to install. `f2f1e67` is the commit that made this
+  summary check instead of assert; reporting a skipped step as a failed one is
+  the same error one step on. The Windows summary says **"Not attempted"**.
+- **The alias line is checked, not asserted.** `present` on the repo's own
+  `aliases.sh` proves the clone worked. The claim being made is that the *hook*
+  landed, so it greps the file the hook goes into.
+
+### Verified, and the limits of it
+
+On Windows 11 / Git Bash, with `HOME` redirected to a sandbox:
+
+| run | result |
+|---|---|
+| fresh | exit 0, **three real symlinks**, one export line, hook added |
+| second, same HOME | every step warns and skips, exit 0, export line still 1 |
+| stub `ln` that cannot link | refuses at the probe, exit 1, **sandbox empty** |
+| login shell in that HOME | `MSYS=[winsymlinks:nativestrict disable_pcon]`, 54 aliases |
+
+**A correction to `de32b66`'s own message.** It says "the Linux path is
+textually unchanged". The Linux-only *sections* are, but Linux now **executes**
+lines it did not before: the `case` detection, the extra `elif`, and the guard
+test. `OSTYPE=linux-gnu` and `uname -s`=`Linux` match none of the patterns, so
+it is inert — but only `bash -n` has been run against it. **Nobody has run
+`install.sh` on Linux since this change.** That is in the handoff.
+
+The summary's "NOT hooked" arm is also **unreachable by a real Windows run** —
+the hook step re-adds the line before the summary reads it. Its three cases were
+verified in isolation instead. Recorded because a first attempt at a negative
+test "passed" for that reason and proved nothing.
+
+### `WINDOWS.md` — and a documented check that was broken
+
+The page is edited rather than contradicted. Its opening reason was **answered,
+not wrong**: Windows still copies silently, and what changed is that the
+installer now refuses to start when it cannot link. Sections 2, 2b and 4 are
+marked as the installer's job and kept as things to check against; the status
+line and the session-context hook stay by hand, because both need a
+`settings.json` edit the installer does not make on any platform.
+
+**Its symlink test was broken, and it cost this session time at 17:16.**
+
+```bash
+ln -s /etc/hostname /tmp/lntest    # documented
+# ln: failed to create symbolic link '/tmp/lntest': No such file or directory
+```
+
+There is no `/etc/hostname` on Git Bash, and MSYS needs the target to exist to
+decide between a file link and a directory link. So the page's capability check
+**failed on a machine where the capability works** — read for a moment as a
+Route A regression. Replaced with the self-contained probe `install.sh` uses,
+which makes its own target, and which demonstrates both outcomes here:
+
+```
+without nativestrict : -rw-r--r--  link              (the silent copy)
+with nativestrict    : lrwxrwxrwx  link -> target    (real)
+```
+
+A fourth check was added to *Check it worked*: `alias | wc -l` prints about 54
+in a new window. It is the cheapest check on the page and the one that would
+have caught item #1 on the day it happened.
+
+### Filed, not done
+
+`#1c` — `update` has never been run on Windows. Reachable for the first time
+now that the aliases load, but it does more than pull: it re-checks symlinks and
+warns about copies, none of it exercised under MSYS. `WINDOWS.md` says to use
+`git pull` here until someone runs it and writes down what happened.
+
+---
+
 ## 2026-09-14 — `aliases.sh`: `activate` on both platforms, and why it stopped being an alias
 
 **The question:** `next_steps.md` #2 said `activate` and `venv()` hardcode

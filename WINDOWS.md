@@ -4,11 +4,24 @@ Setting up the three Claude Code pieces of this repo — the status line, the
 `/acilis` and `/kapanis` commands, and the session-context hook — on a Windows
 box you use occasionally.
 
-**This is a by-hand install, on purpose.** `install.sh` and `update` are not run
-here. The reason is the one fact on this page that changes everything else:
-Windows does not reliably do symlinks, so the automation those two provide would
-be lying to you. Doing it by hand once, knowingly, is better than automation
-that silently stops working.
+**`install.sh` runs here now, and does most of this page for you.** Start at
+[Run the installer](#run-the-installer). What is left by hand is the status line
+and the session-context hook, and only because both need an edit to
+`settings.json` — a file the installer does not touch on any platform, because it
+holds your permission rules and model choice and is personal to each host.
+
+**This page used to say the install was by hand on purpose, and that reason was
+not wrong — it was answered.** The fact it rested on still holds: Windows does
+not reliably do symlinks, `ln -s` falls back to a plain copy, and it returns 0
+while doing it, so the automation genuinely would have been lying to you. What
+changed on 2026-09-14 is that the installer now **refuses to start** unless it
+can create a real symlink. The one thing it used to be able to do silently is
+the one thing it can no longer do at all.
+
+It is worth knowing what the by-hand route cost while it stood, because it is
+the argument for the change: `next_steps.md` #1 was a Windows machine running
+with **zero aliases**, for as long as nobody happened to check. A step that
+nothing enforces is a step the next machine misses.
 
 If you use **WSL**, stop reading. WSL is Linux: run `install.sh` there and every
 part of this repo works exactly as it does on the Linux machines.
@@ -32,20 +45,36 @@ repo file changes, and the live file does not. Nothing reports this.
 **Find out which one you have** before choosing a route:
 
 ```bash
-ln -s /etc/hostname /tmp/lntest && ls -la /tmp/lntest && rm /tmp/lntest
+d=$(mktemp -d) && : > "$d/target" && ln -s "$d/target" "$d/link" && ls -la "$d/link"; rm -rf "$d"
 ```
 
-An arrow (`lntest -> /etc/hostname`) means real symlinks. A plain file means it
+An arrow (`link -> /tmp/…/target`) means real symlinks. A plain file means it
 copied.
+
+**The probe makes its own target, and that is not tidiness.** This check used to
+read `ln -s /etc/hostname /tmp/lntest`, which fails on Git Bash for a reason that
+has nothing to do with symlinks: there is no `/etc/hostname` there. MSYS needs
+the target to exist to decide whether to create a file link or a directory link,
+so a missing target fails with `No such file or directory` — on a machine where
+real symlinks work perfectly. It looked like a failed capability check and was a
+failed *command*, which is the same trap as everything else on this page.
+`install.sh` uses this same self-contained form for its own preflight.
 
 ### Route A — turn real symlinks on (recommended, one-time)
 
 Costs one Windows setting and one shell export, and then this machine behaves
 like the Linux ones: pull and you are done, forever.
 
+**Step 1 is yours and the installer cannot do it** — it is a Windows setting, not
+a file. Steps 2 and 3 are done for you by `install.sh`; they are written out here
+because you need to be able to check them, and because a machine set up before
+2026-09-14 has them by hand.
+
 1. **Settings → Privacy & security → For developers → Developer Mode: On.**
    This grants the symlink privilege without needing an administrator shell.
-2. In Git Bash, add to `~/.bashrc`:
+   **Do this before running the installer** — it probes for the privilege and
+   stops with this instruction if it is missing.
+2. In Git Bash, add to `~/.bashrc` (**`install.sh` does this**):
 
    ```bash
    export MSYS="winsymlinks:nativestrict${MSYS:+ $MSYS}"
@@ -57,7 +86,8 @@ like the Linux ones: pull and you are done, forever.
    Appended rather than assigned, because `MSYS` may already carry something:
    Claude Code exports `MSYS=disable_pcon` into the shells it spawns, and a bare
    assignment throws that away.
-3. **Make sure `~/.bash_profile` exists and sources `~/.bashrc`.** Git Bash
+3. **Make sure `~/.bash_profile` exists and sources `~/.bashrc`** (**`install.sh`
+   does this too**). Git Bash
    starts a *login* shell, and neither `/etc/profile` nor `/etc/bash.bashrc`
    sources `~/.bashrc` — so on a machine that never had one, the export above is
    never read and Route A stays off while looking set up. If the file is
@@ -95,7 +125,46 @@ uses.
 
 ---
 
-## Setup
+## Run the installer
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/murty206/dotfiles/main/install.sh)
+```
+
+Process substitution, not `curl … | bash` — piping makes the script itself
+stdin, so anything that reads from the terminal consumes the script instead and
+runs half an installer.
+
+It recognises MSYS and **stops short of the sections that need a package
+manager**: zsh and its plugins, Starship, the Nerd Font, Kitty, fastfetch,
+tty-clock, `gh` and speedtest are skipped. Its closing summary lists them under
+*"Not attempted"* rather than *"NOT installed"*, because those are different
+claims and only one of them is true here.
+
+What it does do on this platform:
+
+| | |
+|---|---|
+| Symlink preflight | Probes for the privilege and **refuses to start** without it |
+| Route A | Appends `winsymlinks:nativestrict` to `~/.bashrc`, creates `~/.bash_profile` |
+| Git identity | Sets it if unset; **reports and never overwrites** a different one |
+| Mailmap | Points `mailmap.file` at this repo's `.mailmap` |
+| Clone | Over **HTTPS** here, not SSH — no key needs to exist first |
+| Slash commands | Symlinks `acilis.md` and `kapanis.md` |
+| Global `CLAUDE.md` | Symlinks it |
+| Aliases | Hooks `aliases.sh` into `~/.bashrc` |
+
+Every step is idempotent — a second run warns and skips rather than duplicating.
+
+**Two things it deliberately leaves to you**, both below: the status line and the
+session-context hook. Both need an entry in `~/.claude/settings.json`, and that
+file is not the installer's business on any platform — it carries your
+permission rules, project paths and model choice, and is personal to each host.
+Do not copy it between machines.
+
+---
+
+## Setup — the part the installer does not do
 
 ### 1. Status line
 
@@ -116,7 +185,9 @@ line that was partly drawn or quietly wrong** — see
 each produces. Worth reading before you debug anything here, because none of
 them looks like an error.
 
-### 2. Slash commands
+### 2. Slash commands — **done by `install.sh`**
+
+Kept here to check against, and for a machine set up before 2026-09-14.
 
 ```bash
 mkdir -p ~/.claude/commands
@@ -125,9 +196,9 @@ ln -s ~/.dotfiles/claude-commands/kapanis.md ~/.claude/commands/kapanis.md
 ```
 
 No `settings.json` entry — a file in `~/.claude/commands/` is picked up by its
-name alone.
+name alone, which is why the installer can do this one and not the two above.
 
-### 2b. Global CLAUDE.md
+### 2b. Global CLAUDE.md — **done by `install.sh`**
 
 ```bash
 ln -s ~/.dotfiles/claude-global.md ~/.claude/CLAUDE.md
@@ -135,7 +206,8 @@ ln -s ~/.dotfiles/claude-global.md ~/.claude/CLAUDE.md
 
 Loaded in every project on the machine. Also no `settings.json` entry. If a real
 file already exists there, move it aside first — the link is what keeps this
-machine in step with the others.
+machine in step with the others. The installer backs it up to `CLAUDE.md.bak`
+rather than deciding for you.
 
 ### 3. Session-context hook
 
@@ -169,11 +241,14 @@ Do **not** copy `settings.json` between machines. The script and the command
 files are the shared part; that file holds your permission rules, project paths
 and model choice, and is personal to each host.
 
-### 4. Git identity and mailmap
+### 4. Git identity and mailmap — **done by `install.sh`**
 
-`install.sh` does both of these on Linux and never runs here, so they are the
-one part of this page that has nothing to do with Claude Code — it is here
-because otherwise this machine simply never gets them.
+This was the one part of the page with nothing to do with Claude Code. It was
+here because `install.sh` never ran on Windows, so without doing it by hand the
+machine simply never got it. That is no longer the reason it is here — it is
+here so you can check it, and because the installer **never overwrites** an
+identity that differs from the standard one: it reports it and moves on, which
+is deliberate and means a work identity survives.
 
 ```bash
 git config --global user.name  murty
@@ -213,9 +288,18 @@ Open Claude Code in any directory and, in order:
    the context is clean.
 3. **Type `/acilis`.** It should print a real date and time. If you instead see
    the literal text `` !`date ...` ``, bash was not available to run it.
+4. **In a new Git Bash window, `alias | wc -l` prints around 54**, not 2. Two
+   of those are Git Bash's own (`node`, `winget`); the rest are this repo's.
+   `echo $MSYS` should contain `winsymlinks:nativestrict`.
 
-That third check is the one that matters most, because it tests the only
-mechanism these commands cannot work without.
+The third check is the one that matters most, because it tests the only
+mechanism these commands cannot work without. The fourth is the cheapest, and it
+is the one that would have caught `next_steps.md` #1 on the day it happened.
+
+**Of 53 aliases, 35 resolve here** — measured 2026-09-09. The 18 that do not are
+twelve systemd tools, three Linux-only utilities (`free`, `ss`, `watch`), two
+packages not installed on this box, and `py3`, because Git Bash has `python` and
+no `python3`. That is expected, not a broken install.
 
 ### One cosmetic difference
 
@@ -230,6 +314,12 @@ bothers you.
 
 **Route A (real symlinks):** `git -C ~/.dotfiles pull` and you are done. The
 live files are the repo files.
+
+The `update` function from `aliases.sh` is now *reachable* here — the aliases
+load, so the name resolves. **It has not been exercised on Windows**, and it
+does more than pull: it also re-checks the symlinks and warns about files that
+are copies. Treat `git pull` as the supported route on this platform until
+someone runs `update` here and writes down what happened — `next_steps.md` #1c.
 
 **Route B (copies):** a pull updates the repo and **not** the live files. After
 any pull that touched them, copy again:

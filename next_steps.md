@@ -11,7 +11,9 @@ a priority call.
 
 ---
 
-## 1 — Nothing sources `aliases.sh` on Windows
+## 1 — Nothing sources `aliases.sh` on Windows — **DONE 2026-09-14**
+
+The measurement below is kept as the record. What it was buying is now bought.
 
 `install.sh` appends the hook line to `~/.zshrc` and `~/.bashrc`, and it never
 runs on Windows. The `~/.bashrc` created on this machine 2026-09-08 carries only
@@ -41,11 +43,50 @@ Functions: `cs`, `bak`, `mkcd` fine; `extract` partial (`tar`/`unzip`/`gunzip`/
 `bunzip2` present, `7z`/`unrar` not); the four CAN bus helpers are dead, which
 is expected — they need `ip` and `candump`.
 
-**The open question is not whether to add the line, it is where.** Doing it by
-hand repeats the `WINDOWS.md` problem: a step nothing enforces, forgotten on the
-next machine. Options: a step in `WINDOWS.md` §4 beside the git identity lines,
-or a guarded branch in `install.sh` that recognises MSYS and stops short of the
-parts that need a package manager.
+### How it was answered
+
+**The open question was not whether to add the line, it was where.** murty chose
+the second option: **a guarded branch in `install.sh`**, over a step in
+`WINDOWS.md`. The argument against the page was its own: a step nothing enforces
+is forgotten on the next machine, which is what this item *was*.
+
+Both halves are done.
+
+- **This machine**, by hand, 2026-09-14 — the line is in `~/.bashrc` and a login
+  shell now reports 54 aliases (52 from `aliases.sh`, plus Git Bash's own `node`
+  and `winget`). It went in *before* the installer branch existed, so running
+  `install.sh` here now reports *"Already hooked"*, which is correct.
+- **The next machine**, by `install.sh` — it recognises MSYS and stops short of
+  the sections that need a package manager.
+
+**What the branch turned up, and it is the part worth remembering.** The first
+version of it printed three green *"symlinked from dotfiles"* ticks and produced
+three plain copies, because the shell running it had no
+`winsymlinks:nativestrict`. That is precisely the failure `WINDOWS.md` exists to
+warn about — reproduced by the automation written to replace the by-hand install
+it warned you to do instead. The branch now exports `nativestrict` for its own
+process, **probes** for the privilege before touching anything, and stops with
+the Developer Mode instruction if it cannot link. It also appends the export to
+`~/.bashrc`, because covering only its own process leaves the machine
+half-configured with nothing to show it.
+
+`WINDOWS.md` is updated to match, including its symlink test, which was broken:
+`ln -s /etc/hostname /tmp/lntest` fails on Git Bash because there is no
+`/etc/hostname` there, so the documented capability check failed on a machine
+where the capability works. Met first-hand at the start of this session.
+
+Rationale and verification in `dev_log.md`, 2026-09-14.
+
+## 1c — `update` has never been run on Windows
+
+Born 2026-09-14, on closing #1, and **filed rather than tested** — testing it is
+not a thing to do while closing something else.
+
+It is *reachable* now for the first time: the aliases load, so the name
+resolves. But `update` does more than `git pull` — it re-checks the symlinks and
+warns about files that are copies, and none of that has been exercised under
+MSYS. `WINDOWS.md` now says to use `git pull` on this platform until someone
+runs `update` here and writes down what happened.
 
 ## 2 — `venv` and `activate` use the Linux path unconditionally — **DONE 2026-09-14**
 
