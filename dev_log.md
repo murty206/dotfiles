@@ -9,6 +9,77 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-09-14 — `aliases.sh`: the zsh history block, and the item that was half a bug
+
+**The question:** `next_steps.md` #3 said four `setopt` lines print
+`command not found` on every Git Bash start. Guard them and move on. Was that
+the whole of it?
+
+**No — the noisy half was the harmless half.** The block is seven lines, not
+four, and the three above the `setopt` calls are not inert under bash:
+
+```
+                bash, no aliases.sh        bash, after sourcing
+HISTFILE        (unset)                    /c/Users/Y.URGEN/.zsh_history
+HISTSIZE        (unset)                    10000
+SAVEHIST        (unset)                    10000
+```
+
+`HISTFILE` is a **bash** variable as much as a zsh one. Bash takes the
+assignment and writes its history to the zsh file, leaving `~/.bash_history`
+behind without a word. Verified that the assignment is live rather than merely
+set, Windows 11 / Git Bash, 2026-09-14:
+
+```bash
+rm -f /tmp/histprobe
+bash -lic 'HISTFILE=/tmp/histprobe; history -s probe_marker_xyz; history -w'
+grep -c probe_marker_xyz /tmp/histprobe   # -> 2
+```
+
+`SAVEHIST` really is inert in bash — it wants `HISTFILESIZE` — and `HISTSIZE`
+means the same thing in both. Both are guarded with the rest anyway: the block
+is one setting, and splitting it by which lines happen to be portable would
+leave the next reader deciding that for themselves.
+
+**So the fix is `if [ -n "$ZSH_VERSION" ]` around all seven lines**, not around
+the four the item named. After it, under bash: stderr empty, `HISTFILE` unset,
+53 aliases still defined, `bash -n` clean. The zsh path is **unverified** — no
+zsh on this box.
+
+### The part worth keeping: the queue had a dependency it did not know about
+
+**#3 had to land before #1**, and nothing in the queue said so. #1 adds
+`source ~/.dotfiles/aliases.sh` to `~/.bashrc` on this machine. Done first, with
+the block unguarded, it would not merely have printed four errors — it would have
+redirected this box's bash history into `~/.zsh_history`.
+
+The tell is that **`~/.zsh_history` does not exist here**, and it does not exist
+*because* nothing sources `aliases.sh` yet. Item #1 was the only thing keeping
+item #3's silent half asleep. Fixing #1 first would have created the visible bug
+and removed the evidence of why at the same time.
+
+`next_steps.md` files items in birth order and says outright that the order "is
+not a priority call". That is honest, and this is the cost of it: a queue with no
+priority also carries no dependencies, so they have to be found by reading the
+items against each other rather than taken off the top.
+
+### Conventions set here, both firsts
+
+- **Closing an item in this queue.** Nothing had ever been closed, so there was
+  no pattern. Numbers stay standing and the item is marked `DONE` in place,
+  because this log already refers to "#1, #2, #3" by number and renumbering
+  would silently break those references.
+- **New items keep a letter.** The bash-history preference that surfaced while
+  fixing #3 is `#3b`, not `#4` — same reason.
+
+### Filed, not done
+
+`#3b` — whether bash should get `HISTSIZE=10000` and a large
+`~/.bash_history` too. A preference, not a defect, so it was written down and
+left rather than decided while passing through.
+
+---
+
 ## 2026-09-11 — `countdown.sh`: the stall at zero, which nobody had fixed
 
 **The question:** murty noticed a momentary stall at zero before this round's

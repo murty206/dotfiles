@@ -14,13 +14,34 @@ DOTFILES_DIR="$HOME/.dotfiles"
 # -----------------------------------------------------------------------------
 # Zsh history
 # -----------------------------------------------------------------------------
-HISTFILE=~/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
-setopt APPEND_HISTORY       # append to history file, don't overwrite
-setopt SHARE_HISTORY        # share history between all open terminals
-setopt HIST_IGNORE_DUPS     # don't save duplicate commands
-setopt HIST_IGNORE_SPACE    # don't save commands starting with a space
+# Guarded, because bash sources this file too: Git Bash on Windows, where
+# install.sh never runs and the source line goes in by hand (WINDOWS.md).
+#
+# Both halves of the block belong to zsh, and each failed a different way there:
+#
+#   setopt x4  fails loudly - four "command not found" lines on every shell
+#              open. Harmless on its own; noise at startup is how a real error
+#              learns to hide.
+#   HISTFILE   fails silently, which is the one that costs something. It is a
+#              bash variable as much as a zsh one, so bash accepts it and writes
+#              its own history into ~/.zsh_history, abandoning ~/.bash_history
+#              without a word.
+#
+# SAVEHIST is inert under bash (it wants HISTFILESIZE) and HISTSIZE means the
+# same in both, but they are guarded with the rest: the block is one setting,
+# and splitting it would leave the next reader working out which lines are zsh's.
+#
+# Bash keeps bash's history defaults rather than a mirror of these - see
+# next_steps.md, that is a choice and not an oversight.
+if [ -n "$ZSH_VERSION" ]; then
+    HISTFILE=~/.zsh_history
+    HISTSIZE=10000
+    SAVEHIST=10000
+    setopt APPEND_HISTORY       # append to history file, don't overwrite
+    setopt SHARE_HISTORY        # share history between all open terminals
+    setopt HIST_IGNORE_DUPS     # don't save duplicate commands
+    setopt HIST_IGNORE_SPACE    # don't save commands starting with a space
+fi
 
 # -----------------------------------------------------------------------------
 # Self-update

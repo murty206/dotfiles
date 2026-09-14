@@ -65,16 +65,39 @@ project's memory says code runs on both platforms — so: prefer
 `.venv/Scripts/activate` when it exists, fall back to `.venv/bin/activate`. One
 branch, inert on Linux.
 
-## 3 — The `setopt` block errors on every bash start
+## 3 — The `setopt` block errors on every bash start — **DONE 2026-09-14**
 
-`aliases.sh` lines 20-23 set zsh history options. Bash does not have `setopt`,
-so a Git Bash session prints four `command not found` lines before it gets to
-anything useful. Harmless — the file is sourced to the end and every alias below
-still lands — but it is noise on every single shell open, and noise on startup
-is how a real error learns to hide.
+Fixed: the whole *Zsh history* block is now guarded with `[ -n "$ZSH_VERSION" ]`.
+Numbers here are left standing rather than closed up, because `dev_log.md`
+already cites these items as “#1, #2, #3” and renumbering would break that.
 
-Guard the block with `[ -n "$ZSH_VERSION" ]`. Nothing else in the file is
-shell-specific; this is the only place bash is asked to run zsh syntax.
+**It was larger than this item said, and the extra part was the silent half.**
+The item named the four `setopt` lines, which fail loudly. `HISTFILE` two lines
+above them fails *quietly*: it is a bash variable as much as a zsh one, so bash
+accepts `~/.zsh_history` and writes its own history there, abandoning
+`~/.bash_history` with no message. Measured on Windows 11 / Git Bash,
+2026-09-14 — `bash -lic 'HISTFILE=/tmp/p; history -s m; history -w'` puts the
+marker in the named file, so the assignment is live and not decorative.
+
+**That reorders the queue: #3 had to land before #1.** Adding the source line
+from #1 to a `~/.bashrc` with the block unguarded would not just have printed
+the four errors, it would have moved this machine’s bash history into a zsh
+file. `~/.zsh_history` does not exist on this box yet — which is only true
+*because* nothing sources `aliases.sh` here. Fixing #1 first would have created
+the bug and hidden its own cause.
+
+Rationale and the verification in `dev_log.md`, 2026-09-14.
+
+## 3b — Should bash get the large history too?
+
+Born 2026-09-14 while fixing #3, and filed rather than decided — it is a
+preference, not a defect.
+
+The guard means bash now keeps bash’s defaults: 500 lines, `~/.bash_history`.
+`HISTSIZE=10000` means the same thing in both shells, so a bash arm could have
+it for free; `HISTFILE`/`SAVEHIST` could not be shared, they need
+`~/.bash_history` and `HISTFILESIZE`. Doing nothing is a defensible answer —
+Git Bash here is an occasional shell, and 500 may be plenty.
 
 ---
 
