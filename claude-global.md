@@ -89,10 +89,24 @@ memory. Nothing is lost by ending a session, provided the writing happened while
 it ran.
 
 **`Device: none.`** This rule describes how to behave generally and names no
-instant at which it fires. **It is also the only rule in this file that has been
-broken since anyone started counting** — the agent asked the user for something
-the files already held. Recorded rather than patched: an invented trigger would
-be worse than a visible gap, and the gap is the more useful thing to know.
+instant at which it fires.
+
+**Two rules in this file have been broken since anyone started counting, and the
+second one has a device.** This one: the agent asked the user for something the
+files already held. The attribution rule below, 2026-09-14: nine commits in one
+session carried the trailer, and its device is the most literal kind there is —
+a forbidden string.
+
+**So the question the bar leaves open has its first data, and it points the other
+way: a device did not save a rule.** Why it did not is recorded in the private
+workspace, item 26. The short form is that the competing instruction arrives as
+an **obligation**, and an obligation does not read as a candidate for being
+overridden — the conflict has to be noticed before any device can fire. Whether
+nine commits in one session count as nine breaches or one is an open definition
+there, and the number above should not be quoted until it is settled.
+
+Recorded rather than patched: an invented trigger would be worse than a visible
+gap, and the gap is the more useful thing to know.
 
 ### The same rule one layer out: commit and push when the decision lands
 
