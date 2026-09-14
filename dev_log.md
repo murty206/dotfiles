@@ -154,6 +154,38 @@ A fourth check was added to *Check it worked*: `alias | wc -l` prints about 54
 in a new window. It is the cheapest check on the page and the one that would
 have caught item #1 on the day it happened.
 
+### Found by running it on the real machine, not the sandbox
+
+Every test above used a redirected `HOME`. Run against the actual one, the
+installer was **idempotent in every step but one**: the mailmap step reported
+
+```
+! replacing mailmap.file — was C:/Users/Y.URGEN/.dotfiles/.mailmap
+✓ git mailmap pointed at /c/Users/Y.URGEN/.dotfiles/.mailmap
+```
+
+on every run, while replacing the value with itself. **Git for Windows rewrites
+the MSYS path it is handed into a drive-letter one**, so `git config` reads back
+`C:/Users/...` where `$DOTFILES_DIR` says `/c/Users/...` — one file, two
+spellings, and the string comparison could never match on this platform.
+
+Nothing was broken by it: the stored value round-trips to the same path, and the
+mapping is live — `git log --format=%an` gives four identities, `%aN` gives one,
+and `git shortlog -sne HEAD` is a single line over 85 commits. The cost was a
+**false warning on a line that claims a change was made**, which is the one kind
+of line this installer was rewritten to get right (`f2f1e67`). Fixed by
+comparing with `-ef`, which sees through both spellings and is equally correct on
+Linux. The re-run says *"already pointed at dotfiles"*.
+
+The sandbox could not have caught this. A fresh `HOME` has no `mailmap.file`, so
+it takes the *set* branch and never reaches the comparison — the bug only exists
+on the second run of a machine, which is the run a sandbox test never does.
+
+Worth noting the near-miss in checking it: `git shortlog -sne` with no revision
+reads **stdin**, so it printed nothing and briefly looked like the mailmap had
+broken. `HEAD` is what makes it answer. The `%an` vs `%aN` pair is the test that
+actually discriminates, which the 2026-09-09 entry already had to learn once.
+
 ### Filed, not done
 
 `#1c` — `update` has never been run on Windows. Reachable for the first time

@@ -200,7 +200,17 @@ success "Dotfiles ready at $DOTFILES_DIR"
 # commits in any of them.
 if [ -f "$DOTFILES_DIR/.mailmap" ]; then
     current_mailmap="$(git config --global mailmap.file 2>/dev/null || true)"
-    if [ "$current_mailmap" = "$DOTFILES_DIR/.mailmap" ]; then
+    # Compared as a file, not as a string. Git for Windows rewrites the MSYS
+    # path it is handed into a drive-letter one, so `git config` reads back
+    # C:/Users/... where $DOTFILES_DIR says /c/Users/... - one file under two
+    # spellings, which a string test can never match. Left as a string
+    # comparison, this step warned
+    #   ! replacing mailmap.file - was C:/Users/.../.mailmap
+    # on every run on Windows while replacing the value with itself. A
+    # misreport, and in the kind of line this installer is meant to get right.
+    # `-ef` compares the files, and is equally correct on Linux where the two
+    # spellings agree. Guarded on existence because -ef needs both to exist.
+    if [ -n "$current_mailmap" ] && [ -e "$current_mailmap" ]        && [ "$current_mailmap" -ef "$DOTFILES_DIR/.mailmap" ]; then
         success "git mailmap already pointed at dotfiles"
     else
         [ -n "$current_mailmap" ] && warn "replacing mailmap.file — was $current_mailmap"
