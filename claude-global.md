@@ -101,9 +101,14 @@ a forbidden string.
 way: a device did not save a rule.** Why it did not is recorded in the private
 workspace, item 26. The short form is that the competing instruction arrives as
 an **obligation**, and an obligation does not read as a candidate for being
-overridden — the conflict has to be noticed before any device can fire. Whether
-nine commits in one session count as nine breaches or one is an open definition
-there, and the number above should not be quoted until it is settled.
+overridden — the conflict has to be noticed before any device can fire.
+
+**The count is two because a repeated breach counts once.** Settled 2026-09-14 as
+a definition rather than a measurement: **one breach per unnoticed decision, not
+per artefact**, with the spread recorded beside it — here, *one breach spread
+over nine commits*. The count asks **which** rules fail, not how often, and
+counting artefacts would make a long session look worse than a short one for the
+same single failure.
 
 Recorded rather than patched: an invented trigger would be worse than a visible
 gap, and the gap is the more useful thing to know.
