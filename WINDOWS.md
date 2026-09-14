@@ -66,10 +66,10 @@ failed *command*, which is the same trap as everything else on this page.
 verify a file you edited is to count carriage returns:
 
 ```bash
-grep -c $'' file        # DO NOT trust this on Git Bash
+grep -c $'\r' file        # DO NOT trust this on Git Bash
 ```
 
-**It matches every line, whatever the file contains.** The `` is lost on its
+**It matches every line, whatever the file contains.** The `\r` is lost on its
 way into the native `grep.exe`, leaving an effectively empty pattern. Measured
 2026-09-14 on a file built to have exactly one CRLF line and one LF line — it
 answered **2**.
@@ -85,8 +85,7 @@ Count the bytes instead. This is what `install.sh` and every check in this repo'
 log now use:
 
 ```bash
-python -c "import io;b=io.open('file','rb').read();print(b.count(b'
-'))"
+python -c "import io;b=io.open('file','rb').read();print(b.count(b'\r\n'))"
 ```
 
 `0` means LF throughout. The same command works unchanged on Linux, so there is
