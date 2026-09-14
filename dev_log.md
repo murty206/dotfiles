@@ -9,6 +9,74 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-09-14 — `aliases.sh`: `activate` on both platforms, and why it stopped being an alias
+
+**The question:** `next_steps.md` #2 said `activate` and `venv()` hardcode
+`.venv/bin/activate`, which is wrong on Windows. Prefer `Scripts`, fall back to
+`bin`. What does Windows actually lay down?
+
+**Measured rather than assumed.** Windows 11 / Python 3.14.3, 2026-09-14:
+
+```bash
+python -m venv --without-pip .venv   # --without-pip: the pip bootstrap
+ls .venv                             # timed out at 2 minutes, and the
+                                     # layout is all the item needs
+# -> Include/  Lib/  Scripts/  pyvenv.cfg
+ls .venv/Scripts | grep -i activate
+# -> Activate.ps1  activate  activate.bat  activate.fish
+ls .venv/bin                         # -> no such directory
+```
+
+So the two layouts are **disjoint**, not overlapping — there is no `bin` on
+Windows and no `Scripts` on Linux. That is what makes the queue's one-branch fix
+safe: each arm is unreachable on the other platform, and a tree with both could
+only come from one `.venv` shared across platforms, which does not work anyway.
+
+The second finding is the one that made the fix small: **`Scripts/activate` is a
+POSIX sh script**, shipped by Python next to the `.bat` and `.ps1`, so Git Bash
+sources it unmodified. Sourcing it set `VIRTUAL_ENV` and put
+`.venv/Scripts/python` on `PATH`. No wrapper, no path translation.
+
+### Why it is a function now
+
+An alias cannot hold an `if` legibly, and the alternative —
+`source .venv/Scripts/activate 2>/dev/null || source .venv/bin/activate` — hides
+a real error inside the fallback. So `activate` became a function and moved down
+to live with the other functions, and `venv()` now **calls it** rather than
+repeating the branch.
+
+Four cases, all on Windows:
+
+| case | result |
+|---|---|
+| dir with a Windows `.venv` | `VIRTUAL_ENV` set, `Scripts/python` on `PATH` |
+| dir with no venv at all | one message on stderr, exit 1 |
+| `venv()` where `.venv` exists | did not recreate, activated |
+| synthetic `.venv/bin/activate` | fallback arm taken, `bin` sourced |
+
+The fourth is a **stand-in, not a Linux test** — a hand-made `.venv/bin/activate`
+that only exports `VIRTUAL_ENV`. It proves the branch is reachable and picks the
+right file. It does not prove a real Linux venv activates, and no zsh exists on
+this box either; both stay unverified until the Linux side runs.
+
+### Two knock-on effects, recorded because a number moved
+
+- **`alias | wc -l` now returns 52, not 53.** The audit's "35 of 53" is still a
+  true result, but its denominator has changed, and `activate` was only ever in
+  the working 35 *by resolving* — which was precisely the bug. A re-run should
+  expect 52 aliases and one more function.
+- **`venv()` reports failure now**, having gained the `else` arm by reuse.
+  `python -m venv` failing used to fall through into a confusing `source` error.
+
+### Filed, not done
+
+`#2b` — `venv()` calls `python`, and some Linux hosts ship only `python3`. The
+line was already there and was not touched. It is right on this box, where
+`python` is `/c/Python314/python` and `python3` does not exist at all. Whether it
+is right on murty's Linux boxes is a check that has to run there.
+
+---
+
 ## 2026-09-14 — `aliases.sh`: the zsh history block, and the item that was half a bug
 
 **The question:** `next_steps.md` #3 said four `setopt` lines print

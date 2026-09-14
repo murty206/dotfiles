@@ -47,23 +47,42 @@ next machine. Options: a step in `WINDOWS.md` §4 beside the git identity lines,
 or a guarded branch in `install.sh` that recognises MSYS and stops short of the
 parts that need a package manager.
 
-## 2 — `venv` and `activate` use the Linux path unconditionally
+## 2 — `venv` and `activate` use the Linux path unconditionally — **DONE 2026-09-14**
+
+Fixed to the spec as filed: `.venv/Scripts/activate` preferred, `.venv/bin/activate`
+as the fallback, one branch, inert on Linux.
+
+`activate` is now a **function rather than an alias**, because an alias cannot
+carry a branch legibly, and `venv()` calls it instead of repeating the paths.
+Two knock-on effects, neither a problem but both worth knowing:
+
+- **The alias count is 52, not 53.** The alias audit's "35 of 53" is unchanged as
+  a *result* — `activate` was in the working 35 by resolution only, which was the
+  bug — but the denominator has moved, so a re-run compares 52 aliases plus one
+  more function.
+- **`venv()` reports failure now.** It gained the `else` arm for free, and
+  `python -m venv` failing no longer falls through to a confusing `source` error.
+
+Measured on Windows 11 / Python 3.14.3, 2026-09-14: `python -m venv --without-pip
+.venv` produces `Include Lib Scripts pyvenv.cfg` and **no** `bin`, and
+`Scripts/activate` is a POSIX script Git Bash sources unmodified.
+
+Rationale and the four verification cases in `dev_log.md`, 2026-09-14.
+
+## 2b — `venv()` calls `python`, which some Linux hosts do not have
+
+Born 2026-09-14 while fixing #2, and **not** verified from Windows — noting it
+rather than guessing at it.
+
+`python -m venv .venv` was already there and was not touched. It is correct on
+this box (`/c/Python314/python`, and there is no `python3` here at all, which is
+why the `py3` alias is in #1's broken 18). On a Linux host that ships only
+`python3` the same line fails. Whether that is any of murty's machines is a
+one-command check *there*, not here:
 
 ```bash
-alias activate='source .venv/bin/activate'
-function venv() { [ ! -d .venv ] && python -m venv .venv; source .venv/bin/activate; }
+command -v python || echo "python absent - venv() needs python3"
 ```
-
-On Windows the path is `.venv/Scripts/activate`. Both resolve — `source` is a
-builtin, so nothing reports a missing command — and both fail at the moment they
-are used. **This is not hypothetical here:** the `factory-backend` project runs
-`.venv/Scripts/python.exe` and its Claude Code settings carry
-`Bash(.venv/Scripts/pip install:*)`.
-
-The fix is the repo's own rule applied to itself — `feedback_os_aware` in that
-project's memory says code runs on both platforms — so: prefer
-`.venv/Scripts/activate` when it exists, fall back to `.venv/bin/activate`. One
-branch, inert on Linux.
 
 ## 3 — The `setopt` block errors on every bash start — **DONE 2026-09-14**
 

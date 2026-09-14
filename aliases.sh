@@ -384,7 +384,8 @@ alias _='sudo '
 # -----------------------------------------------------------------------------
 alias py='python'
 alias py3='python3'
-alias activate='source .venv/bin/activate'
+# activate: a function, not an alias, and it lives with the other functions
+# below - it needs a branch, and an alias cannot carry one legibly.
 alias pipi='pip install --break-system-packages'
 alias pipr='pip install -r requirements.txt --break-system-packages'
 
@@ -466,10 +467,40 @@ function cs() { curl -m 7 "http://cheat.sh/$1"; }
 # Make directory and cd into it
 function mkcd() { mkdir -p "$1" && cd "$1"; }
 
+# Activate the venv in this directory, on either platform.
+#
+# `python -m venv` lays out a different tree per platform: Windows gets
+# .venv/Scripts and no .venv/bin, Linux and macOS get .venv/bin and no
+# .venv/Scripts. Measured on Windows 11 / Python 3.14.3, 2026-09-14 -
+# `python -m venv --without-pip .venv` produced Include, Lib, Scripts,
+# pyvenv.cfg and no bin.
+#
+# The Windows Scripts/activate is a POSIX sh script that Python ships for this
+# exact case, so Git Bash sources it unmodified - sourcing it there sets
+# VIRTUAL_ENV and puts Scripts/python on PATH.
+#
+# This used to be `alias activate='source .venv/bin/activate'`, hardcoded to
+# the Linux path. It was the quiet kind of broken: `source` is a builtin, so
+# the alias always *resolved* and only failed at the moment it was used.
+#
+# Scripts is preferred over bin per next_steps.md #2. A tree carrying both is
+# not a case that arises from `python -m venv` - it would mean one .venv shared
+# across platforms, which does not work anyway.
+function activate() {
+    if [ -f .venv/Scripts/activate ]; then          # Windows
+        source .venv/Scripts/activate
+    elif [ -f .venv/bin/activate ]; then            # Linux, macOS
+        source .venv/bin/activate
+    else
+        echo "activate: no venv here - tried .venv/Scripts and .venv/bin" >&2
+        return 1
+    fi
+}
+
 # Create and activate venv (skips creation if .venv already exists)
 function venv() {
-    [ ! -d .venv ] && python -m venv .venv
-    source .venv/bin/activate
+    [ ! -d .venv ] && { python -m venv .venv || return 1; }
+    activate
 }
 
 # Extract any archive with timer and status report
