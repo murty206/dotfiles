@@ -56,6 +56,33 @@ the line to be absent, not corrected."* The rule is about what gets written next
 So: nothing is rewritten, and **this entry's own commit is the first one that
 obeys the rule.**
 
+### A measurement trap in the rule's own check, found while using it
+
+The rule is *"checkable after the fact with `git log --grep`"*. Verifying the
+fix, that check returned **0 violating commits today** — a result that was
+false, and false in the flattering direction.
+
+```
+now: 2026-09-14 19:28
+--since='2026-09-14'        ->  0 commits
+--since='2026-09-14 00:00'  -> 10 commits
+```
+
+Git's approxidate fills an unspecified field from the **current clock**, so a
+bare date means *"since today at 19:28"*, not *"since today at 00:00"*. The true
+figures are 10 commits today, **9 carrying the trailer** and one clean.
+
+This matters beyond one mistyped flag, because it is a false negative in the
+device the rule leans on: an audit run as
+`git log --grep='...' --since=<bare date>` reports **perfect compliance** on a
+day full of violations, and reports it silently. **Give `--since` a time, or
+give it no date at all.** The `Numbers` rule's phrase for this is exact — the
+date format is *chosen*, not *observed*, and it decides what the number means.
+
+Recorded also because the total invites the same error from the other side: 43
+of 89 commits carry the trailer, and that number makes it look like a house
+style. Splitting on the adoption commit is what shows it is not.
+
 ### Why the device did not fire, which is the part worth keeping
 
 The rule names its trigger as a **forbidden string** rather than a behaviour, and
