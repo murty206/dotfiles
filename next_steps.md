@@ -77,12 +77,29 @@ where the capability works. Met first-hand at the start of this session.
 
 Rationale and verification in `dev_log.md`, 2026-09-14.
 
-## 1c — `update` has never been run on Windows
+## 1c — `update` is not used on Windows — **DECIDED 2026-09-14, not a task**
 
-Born 2026-09-14, on closing #1, and **filed rather than tested** — testing it is
-not a thing to do while closing something else.
+**murty: *"zaten çalıştırmak gibi bir niyetim de yok, Windows'ta her şey manuel
+olabilir."*** So this is closed as a decision, not as a test that was run. It was
+filed hours earlier as *"has never been run on Windows"*, which framed it as a
+gap to fill; it is not one. `git pull` by hand is the supported path here and
+`WINDOWS.md` already says so.
 
-It is *reachable* now for the first time: the aliases load, so the name
+**The scope of that, because it is narrow.** It settles `update` on Windows. It
+does not undo the `install.sh` branch — that was chosen deliberately in this same
+session, after the trade-off was put, and its argument stands: an installer runs
+**once** on a new machine, where a forgotten manual step costs you a box with no
+aliases. `update` runs **repeatedly** on a machine already working, where manual
+is merely tedious. Different frequency, different answer.
+
+**One thing found by reading it, kept below because it is real.** The
+string-vs-file mailmap comparison that `ca9646c` fixed in `install.sh` is still
+present in `update()`. It is **inert while nobody runs `update` here** — on Linux
+the two spellings agree — so it is recorded rather than chased.
+
+### What reading it turned up (unrun, and now unlikely to run)
+
+It is *reachable* for the first time: the aliases load, so the name
 resolves. But `update` does more than `git pull` — it re-checks the symlinks and
 warns about files that are copies, and none of that has been exercised under
 MSYS. `WINDOWS.md` now says to use `git pull` on this platform until someone
@@ -116,6 +133,12 @@ run is right.
 location: fixing `install.sh` and not `update` is how the two drift, and this
 repo already has a refuted-claim entry about exactly that pair being assumed to
 be in step when they were not.
+
+**Left unfixed on purpose**, and that is a choice rather than an oversight: the
+decision above means the line never executes on the only platform where it is
+wrong. Fixing it would be one character of real change and a comment explaining a
+platform this function is no longer claimed to serve. If `update` is ever wanted
+here, this is the first thing to fix and the prediction above is the test.
 
 ## 2 — `venv` and `activate` use the Linux path unconditionally — **DONE 2026-09-14**
 
