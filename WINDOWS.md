@@ -88,8 +88,21 @@ log now use:
 python -c "import io;b=io.open('file','rb').read();print(b.count(b'\r\n'))"
 ```
 
-`0` means LF throughout. The same command works unchanged on Linux, so there is
-no reason to keep two forms of the check.
+`0` means LF throughout. Verified 2026-09-14 against a file built with one CRLF
+line and one LF line — it answers `1` — and against an all-LF file, `0`. The same
+command works unchanged on Linux, so there is only one form to remember.
+
+**Give it a forward-slash path.** This is a Windows page, so the path you have to
+hand is likely `C:\Users\you\file.md`, and pasted in as-is Python reads the
+backslashes as escapes:
+
+```
+SyntaxError: (unicode error) 'unicodeescape' codec can't decode bytes
+in position 2-3: truncated \UXXXXXXXX escape
+```
+
+Nothing in that message mentions paths. `C:/Users/you/file.md` works, and so does
+running the command from the file's own directory with a bare filename.
 
 ### Route A — turn real symlinks on (recommended, one-time)
 
