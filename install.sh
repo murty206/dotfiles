@@ -751,6 +751,31 @@ if [ -n "$IS_MSYS" ]; then
     else
         success "~/.bash_profile already sources ~/.bashrc"
     fi
+
+    # Persist the symlink setting, which is the other half of Route A and the
+    # half that is easy to miss: the export above covers this script's own
+    # process only. Without it in ~/.bashrc the machine ends up half-configured
+    # with no tell - the installer's links are real, and then the first `ln -s`
+    # the user or a later `update` runs silently copies again.
+    if ! grep -qF 'winsymlinks' "$HOME/.bashrc"; then
+        cat >> "$HOME/.bashrc" <<'MSYSEOF'
+
+# Real symlinks instead of silent copies.
+#
+# Git Bash's ln -s falls back to a plain copy when it cannot create a native
+# symlink, and returns 0 while doing it. A copy does not track ~/.dotfiles, so
+# a git pull stops reaching the live files and nothing reports it.
+# "nativestrict" makes ln -s fail loudly instead. Needs Developer Mode on
+# (Settings -> Privacy & security -> For developers).
+#
+# Appended rather than assigned: Claude Code exports MSYS=disable_pcon into the
+# shells it spawns, and a bare assignment would drop it.
+export MSYS="winsymlinks:nativestrict${MSYS:+ $MSYS}"
+MSYSEOF
+        success "winsymlinks:nativestrict added to ~/.bashrc"
+    else
+        warn "winsymlinks already set in ~/.bashrc — skipping"
+    fi
 fi
 
 hook_shell "$HOME/.zshrc"
@@ -789,7 +814,14 @@ if [ -n "$IS_MSYS" ]; then
     echo "    ✓ git identity + mailmap (one contributor across every repo)"
     present "$DOTFILES_DIR/.git"        "dotfiles clone at $DOTFILES_DIR"
     present "$HOME/.claude/CLAUDE.md"   "Claude Code slash commands + global CLAUDE.md"
-    present "$DOTFILES_DIR/aliases.sh"  "Dotfiles aliases, hooked into ~/.bashrc"
+    # Checked, not asserted. `present` on the repo's own aliases.sh would only
+    # prove the clone worked - the claim being made is that the *hook* landed,
+    # so read the file the hook goes into. Same reason as the comment above.
+    if grep -qF ".dotfiles/aliases.sh" "$HOME/.bashrc" 2>/dev/null; then
+        echo "    ✓ Dotfiles aliases, hooked into ~/.bashrc"
+    else
+        echo "    · Dotfiles aliases — NOT hooked into ~/.bashrc"
+    fi
     echo ""
     echo "  Not attempted — these need a package manager:"
     echo "    zsh + plugins, Starship, JetBrains Mono Nerd Font, Kitty,"
