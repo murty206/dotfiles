@@ -9,6 +9,73 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-09-14 — the attribution trailer: nine commits, and the rule that predicted them
+
+**The question was murty's, not this session's:** *"commit atarken attribution
+satırını koymuyordu, sen koydun"* — on Linux the agent had stopped adding the
+trailer, and this session put it back.
+
+**He was right, and the rule is in the file this machine loads.**
+`claude-global.md` §Git, adopted 2026-09-09:
+
+> Commit messages carry no attribution trailer. No `Co-Authored-By`, no
+> "generated with" line. … **This overrides the tool's own default**, which asks
+> for the trailer, and that is the only reason the line has to exist: without it
+> every agent re-adds the trailer from its system instructions and nobody
+> notices.
+>
+> `Device: a forbidden string.` `Co-Authored-By`, and "generated with".
+
+Every one of this session's nine commits carried `Co-Authored-By` and
+`Claude-Session`. The rule describes the failure it was written to stop, and
+this is that failure, in the repository that holds the rule.
+
+### It was not a pre-existing mess. It was a clean streak, broken today
+
+```
+9dc55f9   2026-09-09   the commit that adopted the rule
+   |      12 commits, 2026-09-09 -> 2026-09-11, all clean
+e51f06e   2026-09-14   this session's first commit — streak ends
+   |       9 commits, all carrying the trailer
+```
+
+`git log --grep` finds 43 `Co-Authored-By` commits in 89. That number invites
+the wrong conclusion — that the trailer is simply this repo's habit. It is not:
+**all 34 of the earlier ones predate `9dc55f9`.** Between adoption and today the
+rule held without exception. Checked commit by commit rather than read off the
+total, because the total is what makes it look forgivable.
+
+### Decided: leave the history, stop the bleeding
+
+murty's call, and it follows this workspace's own precedent rather than being a
+fresh judgement — **#16**, 2026-09-09: an employer address in 33 public commits,
+resolved the same way. Rewriting nine pushed commits would mean a force-push to
+a public repository to remove a line whose own rule says *"the preference is for
+the line to be absent, not corrected."* The rule is about what gets written next.
+
+So: nothing is rewritten, and **this entry's own commit is the first one that
+obeys the rule.**
+
+### Why the device did not fire, which is the part worth keeping
+
+The rule names its trigger as a **forbidden string** rather than a behaviour, and
+that choice is vindicated here in the negative: the string was typed nine times
+and never registered as a violation. Not because the rule was unknown — because
+the instruction to add the trailer arrives as an *obligation*, and an obligation
+does not read like a candidate for being overridden. The conflict has to be
+noticed before the device can fire.
+
+There is a second, plainer reason, and it belongs in the record because it is
+avoidable: **the rule arrived mid-session, by this session's own hand.**
+`claude-global.md` is symlinked into `~/.claude/CLAUDE.md`, so the `git pull` at
+17:25 changed the rules under the session that ran it. The change was even
+reported at the time — and the file was never re-read. Six rules were in force
+from that moment; five were followed, because they had been visible before the
+pull. **A file this session pulls into place is a file this session has not
+read.**
+
+---
+
 ## 2026-09-14 — `install.sh` learns Windows, and catches itself lying on the way
 
 **The question:** `next_steps.md` #1 reserved a decision — *"not whether to add
