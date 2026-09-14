@@ -55,10 +55,96 @@ success() { echo -e "${GREEN}✓${NC} $1"; }
 error()   { echo -e "${RED}✗${NC} $1"; exit 1; }
 section() { echo -e "\n${GREEN}== $1 ==${NC}"; }
 
+# -----------------------------------------------------------------------------
+# Windows / Git Bash
+# -----------------------------------------------------------------------------
+# This script used to die six lines below: MSYS has none of paru/apt/dnf, so the
+# package-manager detection reached its `error` and exited 1 before a single
+# step ran. WINDOWS.md documented a by-hand install because of that.
+#
+# The by-hand install has its own cost, and next_steps.md #1 is what it looks
+# like: a step nothing enforces is a step the next machine misses. That machine
+# had zero aliases for as long as nobody noticed. So the installer runs here
+# too, and stops short of the sections that need a package manager.
+#
+# Both names are checked. $OSTYPE is `msys` under Git Bash and under MSYS2, and
+# `uname -s` gives MINGW64_NT-10.0-26200 there - either identifies the platform,
+# and OSTYPE alone is a bash variable that a stray environment could have set.
+# Cygwin is deliberately not matched: it has a different layout and nobody has
+# tested it.
+IS_MSYS=""
+case "${OSTYPE:-}|$(uname -s 2>/dev/null || true)" in
+    *msys*|*MSYS*|*mingw*|*MINGW*) IS_MSYS=1 ;;
+esac
+
+if [ -n "$IS_MSYS" ]; then
+    # HTTPS rather than SSH, and it is not a preference. The SSH clone needs a
+    # key generated and registered on GitHub *first*, which is the one step this
+    # script cannot do for you - and the closing summary only says so after the
+    # clone has already had to succeed. Git for Windows ships Git Credential
+    # Manager, so HTTPS pushes without further setup.
+    REPO_URL="https://github.com/murty206/dotfiles.git"
+
+    # Real symlinks, or stop. This is the first thing the Windows branch does,
+    # and it is the reason the branch is safe to have at all.
+    #
+    # Git Bash's `ln -s` falls back to a plain copy when it cannot create a
+    # native symlink, and exits 0 while doing it. Measured 2026-09-14: run from
+    # a shell without the export below, this installer reported
+    #   ✓ acilis.md symlinked from dotfiles
+    #   ✓ kapanis.md symlinked from dotfiles
+    #   ✓ global CLAUDE.md symlinked from dotfiles
+    # and produced three plain copies. A copy does not track ~/.dotfiles, so
+    # `git pull` quietly stops reaching the live files - the exact failure
+    # WINDOWS.md exists to warn about, reproduced by the automation meant to
+    # replace the by-hand install.
+    #
+    # `nativestrict` makes ln -s fail loudly instead. Appended rather than
+    # assigned, because Claude Code exports MSYS=disable_pcon into the shells it
+    # spawns and a bare assignment would drop it.
+    export MSYS="winsymlinks:nativestrict${MSYS:+ $MSYS}"
+
+    # Probed here rather than discovered at section 13, because a failure now
+    # costs nothing and a failure there leaves a half-installed machine. The
+    # privilege needs Developer Mode, which is a Windows setting only the user
+    # can turn on - so name the step and stop, instead of attempting the install
+    # around it.
+    #
+    # The probe creates its own target: MSYS needs the target to exist to decide
+    # whether to make a file or a directory link, so probing against a path that
+    # is merely plausible fails for the wrong reason.
+    _probe="$(mktemp -d)"
+    : > "$_probe/target"
+    if ln -s "$_probe/target" "$_probe/link" 2>/dev/null && [ -L "$_probe/link" ]; then
+        rm -rf "$_probe"
+        success "native symlinks available"
+    else
+        rm -rf "$_probe"
+        warn "This machine cannot create native symlinks. Every link this script"
+        warn "makes would be a silent copy that 'git pull' never updates again."
+        warn ""
+        warn "Turn it on, open a new shell, and run this script again:"
+        warn "  Settings -> Privacy & security -> For developers -> Developer Mode: On"
+        warn ""
+        warn "Or do the install by hand with cp - WINDOWS.md, Route B, and read"
+        warn "its 'Keeping it current' section, which is that route's whole cost."
+        error "stopping before anything is linked"
+    fi
+fi
+
 # Detect package manager
 if command -v paru &>/dev/null;     then PKG_INSTALL="paru -S --noconfirm"
 elif command -v apt &>/dev/null;    then PKG_INSTALL="sudo apt install -y"
 elif command -v dnf &>/dev/null;    then PKG_INSTALL="sudo dnf install -y"
+elif [ -n "$IS_MSYS" ]; then
+    # Not an error on this platform. Every section that would spend it is
+    # skipped below, and the one binary still needed from that region - git -
+    # ships with Git Bash by definition, because this script is running inside
+    # it. Pointed at a function rather than left empty so that if a future
+    # section does reach for it, it says what happened instead of running the
+    # bare package name.
+    pkg_unavailable() { error "cannot install '$*' - no package manager under MSYS; install it by hand, see WINDOWS.md"; }
+    PKG_INSTALL="pkg_unavailable"
 else error "No supported package manager found (paru/apt/dnf)."
 fi
 
@@ -122,6 +208,25 @@ if [ -f "$DOTFILES_DIR/.mailmap" ]; then
         success "git mailmap pointed at $DOTFILES_DIR/.mailmap"
     fi
 fi
+
+# =============================================================================
+# Sections 3-12 need a package manager, so they are skipped under MSYS.
+#
+# The body below is left at its original indentation on purpose. Re-indenting
+# 420 lines to sit inside this `if` would produce a diff in which every line of
+# the installer had changed and none of it reviewable - and the guard is the
+# whole change. The closing `fi` is marked where it lands.
+#
+# Safe as one block because the region is self-contained: it defines no
+# function, and of the sixteen variables it sets, only ZSH_CUSTOM is read later
+# - in the summary, through `${ZSH_CUSTOM:-$HOME/.zsh}`, which is why an unset
+# value there is already handled.
+#
+# Sections 13 (Claude Code symlinks) and Aliases run on both platforms and sit
+# after the `fi`. The Aliases hook has to stay there: it appends to ~/.zshrc,
+# and ~/.zshrc is created inside this region.
+# =============================================================================
+if [ -z "$IS_MSYS" ]; then
 
 # -----------------------------------------------------------------------------
 # 3. Install zsh
@@ -541,6 +646,15 @@ else
     esac
 fi
 
+fi  # <-- end of the "sections 3-12 need a package manager" guard
+
+if [ -n "$IS_MSYS" ]; then
+    section "Windows"
+    info "MSYS detected — skipping zsh, plugins, Starship, the Nerd Font, Kitty,"
+    info "fastfetch, tty-clock, gh and speedtest. All of them need a package"
+    info "manager; the rest of this installer runs normally."
+fi
+
 # -----------------------------------------------------------------------------
 # 13. Symlink Claude Code slash commands
 # -----------------------------------------------------------------------------
@@ -614,6 +728,31 @@ hook_shell() {
     fi
 }
 
+# Windows needs two files to exist before the hook means anything, and neither
+# is guaranteed on a fresh box.
+#
+# hook_shell is a deliberate no-op on a missing file, so without this a fresh
+# Git Bash machine gets a clean successful run and no aliases - the same silent
+# shape as everything else in WINDOWS.md.
+#
+# ~/.bash_profile is the second file and the less obvious one: Git Bash opens a
+# *login* shell, which reads ~/.bash_profile, and nothing in /etc/profile or
+# /etc/bash.bashrc sources ~/.bashrc. Without the bridge line the hook below
+# lands in a file that is never read. Same fact as WINDOWS.md Route A step 3.
+if [ -n "$IS_MSYS" ]; then
+    [ ! -f "$HOME/.bashrc" ] && touch "$HOME/.bashrc" && info "Created ~/.bashrc"
+    if [ ! -f "$HOME/.bash_profile" ]; then
+        echo '[ -f ~/.bashrc ] && . ~/.bashrc' > "$HOME/.bash_profile"
+        info "Created ~/.bash_profile, sourcing ~/.bashrc"
+    elif ! grep -qF '.bashrc' "$HOME/.bash_profile"; then
+        echo "" >> "$HOME/.bash_profile"
+        echo '[ -f ~/.bashrc ] && . ~/.bashrc' >> "$HOME/.bash_profile"
+        info "~/.bash_profile now sources ~/.bashrc"
+    else
+        success "~/.bash_profile already sources ~/.bashrc"
+    fi
+fi
+
 hook_shell "$HOME/.zshrc"
 hook_shell "$HOME/.bashrc"
 
@@ -639,6 +778,34 @@ present() {  # a path that should exist
     else                 echo "    · $2 — NOT installed"
     fi
 }
+
+# A separate summary on Windows, because the shared one would be actively
+# misleading here. Every `have` line below would print "NOT installed", which is
+# true and yet says the wrong thing: nothing tried to install them. That is the
+# same trap the comment above describes, one step further on - a summary that
+# reports a skipped step as a failed one is as wrong as one that ticks it.
+if [ -n "$IS_MSYS" ]; then
+    echo "  What was set up:"
+    echo "    ✓ git identity + mailmap (one contributor across every repo)"
+    present "$DOTFILES_DIR/.git"        "dotfiles clone at $DOTFILES_DIR"
+    present "$HOME/.claude/CLAUDE.md"   "Claude Code slash commands + global CLAUDE.md"
+    present "$DOTFILES_DIR/aliases.sh"  "Dotfiles aliases, hooked into ~/.bashrc"
+    echo ""
+    echo "  Not attempted — these need a package manager:"
+    echo "    zsh + plugins, Starship, JetBrains Mono Nerd Font, Kitty,"
+    echo "    fastfetch, tty-clock, gh, ookla-speedtest"
+    echo ""
+    echo "  Still by hand — see WINDOWS.md:"
+    echo "    1. Status line: link claude-statusline.sh, add the statusLine"
+    echo "       entry to ~/.claude/settings.json"
+    echo "    2. Session-context hook: the SessionStart block in the same file"
+    echo "    3. Developer Mode on, for real symlinks (WINDOWS.md Route A)"
+    echo ""
+    echo "  Of 53 aliases, 35 resolve under Git Bash — measured 2026-09-09. The"
+    echo "  18 that do not are systemd, Linux-only tools, and two absent packages."
+    echo ""
+    exit 0
+fi
 
 echo "  What was set up:"
 echo "    ✓ git identity + mailmap (one contributor across every repo)"
