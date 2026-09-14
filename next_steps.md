@@ -88,6 +88,35 @@ warns about files that are copies, and none of that has been exercised under
 MSYS. `WINDOWS.md` now says to use `git pull` on this platform until someone
 runs `update` here and writes down what happened.
 
+### A prediction, written before the run
+
+Read off the function on 2026-09-14 and **recorded before anyone ran it**, so
+the run is a test of the reading and not a description of the result. Four
+things are expected, in the order they would print. If the run disagrees, the
+run is right.
+
+1. **`kitty.conf` — a false success line.** `~/.config` exists on this box but
+   `~/.config/kitty` does not, so `ln -sf` should fail with *No such file or
+   directory*. The `echo "→ kitty.conf symlinked"` that follows is **not guarded
+   on it**, so the error and the success line should both appear.
+2. **`starship.toml` — a pointless symlink that succeeds.** `~/.config` does
+   exist, so this one should work, and link a config for a program not installed
+   here.
+3. **`mailmap` rewritten on every run.** The same string-vs-file comparison that
+   `ca9646c` fixed in `install.sh` is **still here**, unfixed — `git config`
+   reads back `C:/Users/...` and `$DOTFILES_DIR` says `/c/Users/...`, so the test
+   can never match. Expect `→ git mailmap pointed at dotfiles` every single time.
+4. **Six lines of package-manager noise.** `ensure_tty_clock`, `ensure_gh` and
+   `ensure_speedtest` each print *"not found — installing…"* and then *"No
+   supported package manager"*. Expected on this platform, and the pair reads as
+   a failure rather than as a skip — the same distinction `install.sh`'s Windows
+   summary was given *"Not attempted"* for.
+
+**Item 3 is the one that matters**, because it is a known bug in a second
+location: fixing `install.sh` and not `update` is how the two drift, and this
+repo already has a refuted-claim entry about exactly that pair being assumed to
+be in step when they were not.
+
 ## 2 — `venv` and `activate` use the Linux path unconditionally — **DONE 2026-09-14**
 
 Fixed to the spec as filed: `.venv/Scripts/activate` preferred, `.venv/bin/activate`
