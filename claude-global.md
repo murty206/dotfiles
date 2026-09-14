@@ -57,6 +57,13 @@ moment. Writing the absence down costs nothing and buys the question that matter
 later: are the undeviced rules the ones that get broken? That is answerable by
 counting, and the counting has started.
 
+**As of 2026-09-14 no rule here carries `Device: none` any more.** The one that
+did was given a trigger, out of the two rows that had recorded it being broken.
+So the question above is no longer answerable from inside this file — it is
+answered from the rows, each of which records the rule's device **as it stood at
+the time**. That is the better place for it anyway: a file shows the present
+state, and the count needs the state at the moment of the breach.
+
 Every line also costs context in every session everywhere, and the repo is
 public — no host paths, no project names, no client names. Machine-specific
 rules belong in that machine's or that project's own `CLAUDE.md`.
@@ -126,18 +133,35 @@ Two things follow, and they are the practical half of the rule:
   retrievable, retrieve it.
 - **When something new surfaces mid-work, write it down and leave it.** Filing it
   is not the same as doing it; it waits its turn. Chasing it is how the current
-  question stops closing.
+  question stops closing. **Asking whether to do it now is already the
+  deviation** — the default is written, so the question is only the polite form
+  of jumping the queue. Say what you filed, then go back to the interrupted
+  work. **The exception is a finding that blocks the work in hand:** say that it
+  blocks, clear it, and say you are doing so — never change direction silently.
 
 The counterpart is that conversation is *disposable on purpose* — it is working
 memory. Nothing is lost by ending a session, provided the writing happened while
 it ran.
 
-**`Device: none.`** This rule describes how to behave generally and names no
-instant at which it fires.
+**`Device: a question you are about to ask whose answer is already written
+down.`** Adopted 2026-09-14, by the third route — two dated rows in a violation
+count, plus a project-level counterpart that supplied the wording. **This
+section said `Device: none` until that date**, and the rows are why it no longer
+does: **both violations of it on record are the same move** — asking the user to
+settle what a file had already settled, and offering a measurement as an option
+instead of taking it, answered *"Sormuyorum, ölçüyorum."* **The question reads
+as deference**, which is why neither agent saw it as a breach, and why naming
+the moment was worth more than restating the rule.
 
-**Two rules in this file have been broken since anyone started counting, and the
-second one has a device.** This one: the agent asked the user for something the
-files already held. The attribution rule below, 2026-09-14: nine commits in one
+**One device, not two, because it covers both bullets.** The first bullet's
+failure is asking for what you could retrieve; the second's is asking whether to
+do the new thing now. Same sentence being typed, same answer already on disk.
+
+**Two rules in this file have been broken since anyone started counting, and at
+the moment each was broken only the second had a device.** This one: the agent
+asked the user for something the files already held — the section carried
+`Device: none` then, and the trigger above was written afterwards, out of that
+row. The attribution rule below, 2026-09-14: nine commits in one
 session carried the trailer, and its device is the most literal kind there is —
 a forbidden string.
 
