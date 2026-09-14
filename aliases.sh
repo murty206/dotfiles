@@ -31,8 +31,15 @@ DOTFILES_DIR="$HOME/.dotfiles"
 # same in both, but they are guarded with the rest: the block is one setting,
 # and splitting it would leave the next reader working out which lines are zsh's.
 #
-# Bash keeps bash's history defaults rather than a mirror of these - see
-# next_steps.md, that is a choice and not an oversight.
+# Bash gets the same depth, by its own names. next_steps.md #3b, decided
+# 2026-09-14: the two arms are not symmetric and cannot be, which is why this is
+# an if/else and not three shared lines above it.
+#
+#   HISTSIZE      means the same in both - entries kept in the running shell
+#   SAVEHIST      is zsh's name for the on-disk limit; bash calls it HISTFILESIZE
+#   HISTFILE      is set only under zsh. Bash's own default is ~/.bash_history
+#                 and it is correct; naming it here would only be a chance to
+#                 point it at the wrong file, which is the bug this guard fixed.
 if [ -n "$ZSH_VERSION" ]; then
     HISTFILE=~/.zsh_history
     HISTSIZE=10000
@@ -41,6 +48,9 @@ if [ -n "$ZSH_VERSION" ]; then
     setopt SHARE_HISTORY        # share history between all open terminals
     setopt HIST_IGNORE_DUPS     # don't save duplicate commands
     setopt HIST_IGNORE_SPACE    # don't save commands starting with a space
+else
+    HISTSIZE=10000
+    HISTFILESIZE=10000
 fi
 
 # -----------------------------------------------------------------------------

@@ -200,16 +200,22 @@ the bug and hidden its own cause.
 
 Rationale and the verification in `dev_log.md`, 2026-09-14.
 
-## 3b — Should bash get the large history too?
+## 3b — Should bash get the large history too? — **DONE 2026-09-14, yes**
 
-Born 2026-09-14 while fixing #3, and filed rather than decided — it is a
-preference, not a defect.
+murty's call. An `else` arm gives bash `HISTSIZE=10000` and `HISTFILESIZE=10000`.
 
-The guard means bash now keeps bash’s defaults: 500 lines, `~/.bash_history`.
-`HISTSIZE=10000` means the same thing in both shells, so a bash arm could have
-it for free; `HISTFILE`/`SAVEHIST` could not be shared, they need
-`~/.bash_history` and `HISTFILESIZE`. Doing nothing is a defensible answer —
-Git Bash here is an occasional shell, and 500 may be plenty.
+**`HISTFILE` is deliberately not set in that arm**, and the comment in the file
+says why: bash's own default is `~/.bash_history` and it is already correct, so
+naming it there would buy nothing and offer one more chance to point it at the
+wrong file — which is precisely the bug #3 was fixing.
+
+So the two arms are not symmetric and cannot be: `HISTSIZE` means the same in
+both, `SAVEHIST` is zsh's name for what bash calls `HISTFILESIZE`, and `HISTFILE`
+belongs to zsh alone here. That asymmetry is the reason it is an `if/else` rather
+than three shared lines lifted above the guard.
+
+Verified in a login shell: `HISTSIZE=10000`, `HISTFILESIZE=10000`,
+`HISTFILE=~/.bash_history`, `SAVEHIST` empty, stderr clean, 54 aliases.
 
 ---
 
