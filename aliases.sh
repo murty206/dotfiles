@@ -300,7 +300,7 @@ unalias up 2>/dev/null
 
 if command -v paru &>/dev/null; then
     # Arch Linux
-    alias up='paru --noconfirm && paru -c --noconfirm'
+    alias up='paru && paru -c'
     alias i='paru -S --noconfirm'
     alias rm-pkg='paru -Rns --noconfirm'
     alias search='paru -Ss'
