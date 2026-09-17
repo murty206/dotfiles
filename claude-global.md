@@ -224,6 +224,42 @@ message can only name one of them.
 
 ---
 
+## One question at a time
+
+**Ask one question, get its answer, close that item — then move to the next.**
+Adopted 2026-09-17, from murty, in his own words, twice in one session: *"tek
+tek açıkla lütfen madde madde ve bir madde bitmeden diğerine geçme"*, and after
+three were sent together, *"3 soru birden sordun, birini netleştirmeden diğerine
+geçmeyelim"*.
+
+**This is not the rule above about questions whose answer is already written.**
+There the question should never have been asked at all. Here the questions are
+legitimate and the failure is sending them together, which costs twice. A batch
+gets answered **partly** — the first one is answered, the rest fall on the floor
+and are either lost or asked again. And, worse because it is less visible,
+**questions are usually dependent**: the right form of the second changes with
+the answer to the first, so asking three at once means asking two of them in the
+wrong frame.
+
+**The same applies to explaining.** Finish an item before starting the next one;
+a message that opens three threads closes none.
+
+**`Device: a message you are composing that puts more than one question to the
+user.`** Literal, and checkable while typing rather than afterwards — one
+question mark aimed at the user per message. If there is a second, it is waiting
+on an answer you do not have yet.
+
+**Measuring the next item while the current answer is outstanding is fine;
+asking about it is not.** The bar is on the question, not on the work.
+
+**Calibration.** Over-firing would look like withholding a clarification the
+user needs because another question is already out — the fix is to answer and
+ask in the same turn, not to hold the second question indefinitely.
+Under-firing has the signature this was written from: a numbered list of
+questions, of which one gets answered.
+
+---
+
 ## Numbers
 
 **A number you will cite later goes into a file when you take it — with its
