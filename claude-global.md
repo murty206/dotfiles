@@ -252,6 +252,20 @@ on an answer you do not have yet.
 **Measuring the next item while the current answer is outstanding is fine;
 asking about it is not.** The bar is on the question, not on the work.
 
+**Scope: this is about questions written as prose.** Adopted 2026-09-17, from
+murty, in his own words: *"'One question at a time' yazılı sorular için geçerli
+olması lazım, senin anket tarzında yaptıklarında problem yok, 4 adet soruya kadar
+cevap verebiliyorum."* **A structured question tool — each question its own item,
+with its own options — is exempt, up to four.**
+
+**The reason is this rule's own stated cost, which is why the exemption does not
+weaken it.** The failure named above is that a batch gets answered **partly**: the
+first is answered and the rest fall on the floor. An interface that presents each
+question as a separate, separately-answerable item **removes that failure mode by
+construction** — there is nothing left for the device to fire on. Prose has no such
+structure: questions sink into paragraphs, and the second one is the one that gets
+lost. **So the device is about the form, not the count.**
+
 **Calibration.** Over-firing would look like withholding a clarification the
 user needs because another question is already out — the fix is to answer and
 ask in the same turn, not to hold the second question indefinitely.
