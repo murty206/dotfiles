@@ -232,6 +232,14 @@ tek açıkla lütfen madde madde ve bir madde bitmeden diğerine geçme"*, and a
 three were sent together, *"3 soru birden sordun, birini netleştirmeden diğerine
 geçmeyelim"*.
 
+**And the question carries your recommendation.** Same route, three days earlier,
+in another project: *"teker teker sor önerilerinde beraber ben cevaplayayım."*
+**He is not asking for a neutral menu.** Take a position — say which option you
+would choose and why — and leave him the overruling. **A one-at-a-time question
+with no recommendation satisfies the pacing and hands the thinking straight back**,
+which is the cost he was trying to stop paying. This half applies whichever form
+the question takes, prose or structured.
+
 **This is not the rule above about questions whose answer is already written.**
 There the question should never have been asked at all. Here the questions are
 legitimate and the failure is sending them together, which costs twice. A batch
