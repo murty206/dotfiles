@@ -219,6 +219,21 @@ Verified in a login shell: `HISTSIZE=10000`, `HISTFILESIZE=10000`,
 
 ---
 
+## 4 — makepkg's `debug` option is off on this box only
+
+Filed 2026-09-21. `~/.config/pacman/makepkg.conf` here carries
+`OPTIONS=(… !debug lto)`, because with `debug` on, makepkg's *"Copying source
+files needed for debug symbols"* step walks every file in the package — measured
+that day at 287,040 files for `tela-circle-icon-theme-git` (`find pkg -type f |
+wc -l`), several minutes for a package that has no symbols — and it produces
+`-debug` packages nobody installs on purpose (`paru-debug` was one). The file is
+user-level and machine-local; the next Arch box will not have it.
+
+Open question, not decided: should `install.sh` ship it for hosts where
+`makepkg` exists, the way it ships `kitty.conf`? The argument for is item #1's —
+a step nothing enforces is a step the next machine misses. The argument against
+is that it is a *build* setting, and this repo has stayed out of those.
+
 ## Notes
 
 **These three were found together**, by asking one question on 2026-09-08 —

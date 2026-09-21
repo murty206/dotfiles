@@ -9,6 +9,69 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-09-21 — `up` logs its runs, and the alias it replaced was never the one running
+
+**The question:** *"up alias'ına log tutması için bir şeyler yapalım mı?"* —
+asked after a morning in which `paru` tried to build `webkit2gtk-imgpaste`
+from source, failed in CMake, and the failure scrolled out of a terminal that
+was later closed. `pacman.log` had the installs and removals; nothing had the
+build. Answered yes, and then *"dotfiles deposuna da ekleyelim, diğer
+sistemlerde de aktif olsun"* — which moved it from a local script to
+`aliases.sh`.
+
+### What was decided
+
+- **`up` is a function on all three distro branches**, wrapping its commands in
+  `_up_run`, which runs them under `script -qeac … "$UP_LOG"`. One log per run
+  in `~/.local/state/up/`, pruned at 90 days, path printed at the end.
+- **`script`, not `tee`.** `tee` puts a pipe on stdout, and paru then drops
+  colours, progress bars and the PKGBUILD pager — the review prompt is the one
+  place AUR scripts get looked at (commit `346fb0b`), so a logger that quietly
+  degraded it would cost more than it kept. `script` gives the child a pty and
+  the tools cannot tell. Checked on util-linux 2.42.3: `-a`, `-c`, `-e`, `-q`
+  all present; `-e` returns the child's exit code, verified with `exit 3`.
+- **The apt branch logs its own prose too** — the autoremove plan, a refusal,
+  and the answer typed at the prompt — via `tee -a` / `>>`, so the file reads as
+  the whole run. Its `read` stays outside `script`, on the real terminal.
+- **`paru -Syu` spelled out** where the alias said bare `paru`. Same command;
+  `script` writes the command into the log's header line, and a reader should
+  not need to know paru's default.
+- **Without `script`** (Git Bash) the command runs via `eval`, unlogged, and
+  says so. `up` is undefined there anyway — no paru/apt/dnf — so this is
+  belt-and-braces for some future distro branch.
+
+### What was refuted, on the way
+
+- **The local `alias up=` in this machine's `~/.zshrc` and `~/.bashrc` was dead
+  code.** Both files source `aliases.sh` *after* it (`.zshrc` line 66 versus the
+  alias at 29), and `aliases.sh` redefines `up`. So the alias that ran all along
+  was the repo's `paru && paru -c`, identical in effect — deleting the local
+  lines changed nothing, and the first version of this work, a
+  `~/.local/bin/up` script, **would have been shadowed by that alias in every
+  new shell.** The claim that it would take effect "from the next terminal" was
+  wrong and is withdrawn; the test that produced it had `unalias up` in it,
+  which is the test proving nothing. The script is deleted; the function in
+  `aliases.sh` is the only `up`.
+- **`pgrep -f makepkg` reporting the build still running** was matching the
+  shell that ran the `pgrep`. `ps -eo cmd | grep '[m]akepkg'` showed nothing;
+  the build had finished. Two false positives in one morning from the same
+  pattern.
+
+### Unverified
+
+- **Only the Arch branch ran for real** (`up` on this box). The apt and dnf
+  branches were checked with `bash -n`/`zsh -n` and by exercising the three
+  helpers with a stub command; the full functions were not run, since neither
+  package manager is here.
+- **No Windows check.** `script` is absent on Git Bash; the fallback path was
+  reasoned, not run.
+
+### Filed, not done
+
+`next_steps.md` #4 — makepkg `!debug` is set on this box only.
+
+---
+
 ## 2026-09-14 — `install.sh` learns Windows, and catches itself lying on the way
 
 **The question:** `next_steps.md` #1 reserved a decision — *"not whether to add

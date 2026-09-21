@@ -270,16 +270,21 @@ needs to name a real project belongs in that project, not here.
 ### Package management (auto-detects distro)
 | Alias | Arch (paru) | Debian/Ubuntu (apt) | Fedora (dnf) |
 |-------|-------------|---------------------|--------------|
-| `up` | Full system upgrade + cleanup | `apt update && upgrade`, then autoremove **only after showing the plan and asking** — see below | `dnf upgrade && autoremove` |
+| `up` | `paru -Syu`, then `paru -c` orphan cleanup | `apt update && upgrade`, then autoremove **only after showing the plan and asking** — see below | `dnf upgrade && autoremove` |
 | `i <pkg>` | Install package | `apt install` | `dnf install` |
 | `rm-pkg <pkg>` | Remove package + deps | `apt remove --purge` | `dnf remove` |
 | `search <pkg>` | Search for package | `apt search` | `dnf search` |
 | `pkg-info <pkg>` | Show package info | `apt show` | `dnf info` |
 | `als` | List all active aliases | same | same |
 
-On Debian/Ubuntu `up` is a function, not an alias. It upgrades, then prints what
-`autoremove` would delete and waits for a `y` — it never removes packages
-unattended. A package that has dropped out of the archive is indistinguishable
+`up` is a function on every distro, and every run is logged to
+`~/.local/state/up/<date>_<time>.log` — the whole terminal session, not just the
+exit code, because a package that fails to build says why exactly once and the
+package manager's own history never has it. The path is printed at the end. Logs
+keep their colour codes (read with `less -R`) and are dropped after 90 days.
+
+On Debian/Ubuntu `up` also prints what `autoremove` would delete and waits for
+a `y` — it never removes packages unattended. A package that has dropped out of the archive is indistinguishable
 from garbage to `autoremove`, and an interpreter some venv depends on, or a
 library a hand-built binary links against, is exactly that kind of package.
 

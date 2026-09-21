@@ -291,6 +291,50 @@ alias countdown='bash "$DOTFILES_DIR/countdown.sh"'   # countdown to a wall-cloc
 # -----------------------------------------------------------------------------
 alias als='alias'
 
+# Every `up` run is logged — one file per run, in ~/.local/state/up/. Added
+# 2026-09-21. The package manager already records what it installed
+# (/var/log/pacman.log, /var/log/apt/history.log, dnf history); what it does
+# not record is the *build*: an AUR package that fails to compile prints the
+# reason once, to a terminal that then closes. Met that day with webkit2gtk —
+# the failure had to be re-run to be read. Three helpers, so each distro branch
+# below wraps only its own commands and keeps its own prompts:
+#
+#   _up_begin  picks the log path and drops logs older than 90 days
+#   _up_run    runs one command string under `script`, appending to the log.
+#              `script` hands the command a real terminal, so paru's colours,
+#              progress bars and the PKGBUILD pager behave exactly as unlogged.
+#              A plain `| tee` would not: the same tools see a pipe on stdout
+#              and switch to non-interactive output. Where `script` is missing
+#              (Git Bash has none) the command runs unlogged and says so.
+#   _up_end    prints the log path and returns the run's exit code
+#
+# Logs keep their escape codes: read them with `less -R`. A sudo password is
+# never echoed, so it is never in the file.
+UP_LOGDIR="$HOME/.local/state/up"
+
+function _up_begin() {
+    mkdir -p "$UP_LOGDIR"
+    find "$UP_LOGDIR" -name '*.log' -mtime +90 -delete 2>/dev/null
+    UP_LOG="$UP_LOGDIR/$(date +%Y-%m-%d_%H%M%S).log"
+}
+
+function _up_run() {
+    if command -v script &>/dev/null; then
+        script -qeac "$1" "$UP_LOG"
+    else
+        echo "! script not found — running unlogged" >&2
+        eval "$1"
+    fi
+}
+
+function _up_end() {
+    local rc=$1
+    echo
+    echo "log: $UP_LOG"
+    [ "$rc" -ne 0 ] && echo "up: exit $rc" >&2
+    return "$rc"
+}
+
 # Must happen before the if/elif below, not inside it. bash parses that whole
 # compound command before running any of it, so an `up` alias left over from a
 # previous source would still be live when `up() {` is parsed — and bash expands
@@ -299,8 +343,13 @@ alias als='alias'
 unalias up 2>/dev/null
 
 if command -v paru &>/dev/null; then
-    # Arch Linux
-    alias up='paru && paru -c'
+    # Arch Linux. `paru -Syu` is what bare `paru` does; spelled out so the
+    # log's own header (script records the command) reads without knowing that.
+    up() {
+        _up_begin
+        _up_run 'paru -Syu && paru -c'
+        _up_end $?
+    }
     alias i='paru -S --noconfirm'
     alias rm-pkg='paru -Rns --noconfirm'
     alias search='paru -Ss'
@@ -317,35 +366,45 @@ elif command -v apt &>/dev/null; then
     # never be autoremoved on this machine; a match turns the prompt into a
     # refusal. Example:
     #   UP_KEEP='python3\.11|libav|libvpx'
+    #
+    # The plan, the refusal and the answer go into the log too (tee / >>), so a
+    # log reads as the whole run and not just the two apt commands.
     up() {
-        sudo apt update && sudo apt upgrade -y || return
+        _up_begin
+        _up_run 'sudo apt update && sudo apt upgrade -y' || { _up_end $?; return; }
         local plan hits reply
         plan=$(apt-get --dry-run --purge autoremove 2>/dev/null \
                | awk '/^(Remv|Purg) /{print $2}')
         if [ -z "$plan" ]; then
-            echo "autoremove: nothing to remove"
-            return 0
+            echo "autoremove: nothing to remove" | tee -a "$UP_LOG"
+            _up_end 0; return
         fi
-        echo
-        echo "autoremove wants to remove $(printf '%s\n' "$plan" | wc -l) package(s):"
-        printf '%s\n' "$plan" | sed 's/^/  /'
+        {
+            echo
+            echo "autoremove wants to remove $(printf '%s\n' "$plan" | wc -l) package(s):"
+            printf '%s\n' "$plan" | sed 's/^/  /'
+        } | tee -a "$UP_LOG"
         if [ -n "${UP_KEEP:-}" ]; then
             hits=$(printf '%s\n' "$plan" | grep -E "$UP_KEEP")
             if [ -n "$hits" ]; then
-                echo
-                echo "refusing — these match UP_KEEP:"
-                printf '%s\n' "$hits" | sed 's/^/  /'
-                echo "nothing removed. Find out why they went orphaned first."
-                return 1
+                {
+                    echo
+                    echo "refusing — these match UP_KEEP:"
+                    printf '%s\n' "$hits" | sed 's/^/  /'
+                    echo "nothing removed. Find out why they went orphaned first."
+                } | tee -a "$UP_LOG"
+                _up_end 1; return
             fi
         fi
         echo
         printf 'remove them? [y/N] '
         read -r reply
+        echo "remove them? [y/N] $reply" >> "$UP_LOG"
         case "$reply" in
-            [yY]|[yY][eE][sS]) sudo apt autoremove -y ;;
-            *) echo "skipped — run 'sudo apt autoremove' by hand if you want them gone" ;;
+            [yY]|[yY][eE][sS]) _up_run 'sudo apt autoremove -y' ;;
+            *) echo "skipped — run 'sudo apt autoremove' by hand if you want them gone" | tee -a "$UP_LOG" ;;
         esac
+        _up_end $?
     }
     alias i='sudo apt install -y'
     alias rm-pkg='sudo apt remove --purge -y'
@@ -353,7 +412,11 @@ elif command -v apt &>/dev/null; then
     alias pkg-info='apt show'
 elif command -v dnf &>/dev/null; then
     # Fedora / RHEL
-    alias up='sudo dnf upgrade -y && sudo dnf autoremove -y'
+    up() {
+        _up_begin
+        _up_run 'sudo dnf upgrade -y && sudo dnf autoremove -y'
+        _up_end $?
+    }
     alias i='sudo dnf install -y'
     alias rm-pkg='sudo dnf remove -y'
     alias search='dnf search'
