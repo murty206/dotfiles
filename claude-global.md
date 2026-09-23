@@ -351,6 +351,53 @@ one afternoon.
 
 ---
 
+## A setting you did not set
+
+**A setting the user chose on purpose is not raw material for fixing a symptom.
+Changing it needs their word, not your diagnosis.** Adopted 2026-09-23, at
+murty's direction, by the third route — the evidence is a dated entry in a
+committed log, and the provenance is stated plainly because it is the weaker
+kind: **the rule is the agent's own proposal.** That clears no route on its own.
+What carries it is the recorded instance.
+
+**The instance, in one paragraph.** A complaint was brought about a desktop
+panel: pressing an application's launcher from one virtual desktop opened a
+**new** window instead of switching to the one already open elsewhere. Two
+filters could each produce that symptom. The agent turned **both** off. The
+second was a setting murty had configured deliberately, and he said so —
+*"sadece o ekrandaki görevleri gösteri ben ayarladım sorunum o değil."* It was
+restored, and the real cause turned out to be the first filter alone.
+
+**Why it is worth a section rather than a sentence, and it is not about
+panels.** When several settings could each explain a symptom, switching off the
+nearest one is cheap and often works. **A non-default value is itself evidence
+that somebody set it on purpose** — that is what non-default means — so changing
+it silently deletes a decision in order to test a hypothesis.
+
+**The cost runs two ways, and the second is the one that gets missed.** One side
+is the user's preference, lost without anyone noticing. The other is
+diagnostic: **if the symptom disappears after changing two things, the wrong
+explanation now looks confirmed**, and the real cause stays hidden behind it. In
+the recorded instance the real cause surfaced only because the change was
+challenged out loud.
+
+**`Device: you are about to change a setting whose current value is not the
+default, in order to make a reported symptom go away.`** The moment is before
+writing the change, and the check is one question — *did they put it there on
+purpose?* Cheap to ask, because non-default values are rare and stand out.
+
+**Scope, or it over-fires.** This is about settings met **during diagnosis**, not
+settings the user asked you to change: when the request names the setting, there
+is nothing to ask. It is also not a rule about reading every value before
+touching anything — only the ones you are changing **to chase a symptom**.
+
+**Calibration.** The failure it prevents is silent by construction, so the
+honest test runs the other way: an instance where asking first cost a round trip
+and the user says so. If those accumulate, the device is too wide and the scope
+clause above is where the fix belongs.
+
+---
+
 ## Working with the shell
 
 **Commands that need root are handed to the user to run, not attempted first.**
