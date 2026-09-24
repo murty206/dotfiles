@@ -79,26 +79,52 @@ best and wrong at worst.
 | `[Session:…]` in `ksmserverrc` | Last logout's window list, with client ids |
 | `lastImageSaveLocation` in `spectaclerc` | The name of one screenshot |
 
-## What this does not carry: the themes themselves
+## The themes: fetched, not carried
 
-**The configuration names themes; it cannot install them.** `kdeglobals` asks
-for an icon set by name, and if that set is absent KDE falls back silently —
-the same failure mode the `$HOME` substitution above exists to avoid.
+**The configuration names themes; the repo does not contain them.** `kdeglobals`
+asks for an icon set by name, and if that set is absent KDE falls back silently —
+the same failure mode the `$HOME` substitution above exists to avoid. So they are
+downloaded on the machine that needs them:
 
-The set these files expect:
+```
+bash kde/themes.sh
+```
+
+`install.sh` runs it automatically when it finds Plasma. It is safe to re-run:
+every entry is skipped once its target exists.
+
+What gets fetched is in `themes.tsv` — KDE Store content ids, two GitHub
+repositories, and two AUR packages. The download URLs themselves are signed and
+expire, so they are resolved through the Store API at run time and cannot be
+written down.
 
 | Component | Name |
 |---|---|
 | Look and feel | `Beauty-Color-Global-6` |
+| Plasma style | `Beauty-Color-Plasma` |
 | Icons | `Slot-Beauty-Dark-Icons-V-3` |
 | Window decoration | `BonaFides-Rounded-Blur-Dark-Color-Aurorae-6` |
-| Cursor | `Bibata-Modern-Classic` |
+| Cursor | `Bibata-Modern-Classic` (AUR package) |
+| Panel widgets | `a2n.blur`, `window-title-reborn`, and two more |
 
-Method, settled before this directory existed: **look for an AUR package
-first** — it then belongs to the package manager, updates with everything else
-and uninstalls without a trace. Only if there is none does the component get
-downloaded from the KDE Store into the home directory, and then it is recorded
-file by file, because nothing else will remember it is there.
+**Two things about this are worth knowing before reading the script.**
+
+**The obvious tool is the wrong one for two of the entries.** Installing the
+global theme with `kpackagetool6 -t Plasma/LookAndFeel -i` resolves the theme's
+dependencies through KNewStuff and downloads them: measured into an empty home,
+**89,470 files and 817 MB of icon themes** — five of them, and *not* the one the
+configuration selects. The same archive unpacked with `tar` produces 9 files.
+The set as listed fetches roughly 140 MB of things that are used; the
+convenient route fetches roughly 960 MB, most of it never looked at. It also
+explains the five unused icon sets in this machine's own
+`~/.local/share/icons`: nobody chose them.
+
+**The Store rate-limits.** A dozen downloads in a few minutes is enough to be
+refused, and the refusal arrives as HTTP 200 with an XML body where the archive
+should be — so it has to be detected on purpose or it surfaces as a confusing
+unpack error. The script spaces its requests out, names the refusal when it
+happens, and says to run it again later; the second run only fetches what is
+still missing.
 
 ## What has not been tested
 
@@ -107,3 +133,10 @@ extracted from a working desktop, and that is not the same as knowing they
 reproduce one. `apply.sh` backs up everything it replaces for exactly this
 reason. The first real installation is the test, and what it finds belongs
 back in this file.
+
+**`themes.sh` has been run end to end into an empty home** — 13 of 16 entries
+installed on the first pass, 2 already present as system packages, and 1 refused
+by the Store's rate limit, which is what prompted the handling described above.
+Every install route was exercised: `tar`, `kpackagetool6`, a `.plasmoid` file,
+and two GitHub clones. What that does **not** prove is that the result *looks*
+right — only that the files land where the configuration expects them.

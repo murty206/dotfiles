@@ -1,0 +1,58 @@
+# What the KDE configuration in config/ NAMES but cannot contain.
+#
+# Nothing here is stored in this repo — it is fetched on the machine that
+# needs it. The icon set alone is 129 MB across 15,706 files; the rest is
+# small, but keeping the whole set on one route is worth more than saving a
+# few megabytes on some of it.
+#
+# Columns, tab-separated:
+#   source   store | git | aur
+#   ref      KDE Store content id  |  git URL  |  package name
+#   pattern  store: ERE matched against the download file names, last match
+#            wins (so a version bump upstream still resolves).
+#            git: the sub-directory holding metadata.json, "." for the root.
+#   method   tar:<dir under ~/.local/share>  |  kpackage:<KPackage type>
+#   target   path under ~/.local/share that exists once it is installed;
+#            this is what makes the script skip work already done.
+#
+# Why the look-and-feel and Plasma style are unpacked with tar rather than
+# installed with kpackagetool6, which is the obvious tool and was how they were
+# installed here by hand in the first place:
+#
+#   kpackagetool6 -t Plasma/LookAndFeel -i Beauty-Color-Global-6.tar.gz
+#
+# resolves the global theme's dependencies through KNewStuff and downloads them
+# — measured 2026-09-24 into an empty home: 89,470 files, 817 MB of icon themes,
+# five of them, none of which is the Slot-Beauty-Dark-Icons-V-3 the config
+# actually selects, plus both colour schemes, both wallpapers and the Aurorae
+# theme. Unpacking the same archive with tar produces 9 files and nothing else.
+#
+# So the tar route is not a simplification, it is the difference between
+# fetching ~140 MB that is used and ~960 MB that mostly is not. It also explains
+# the five unused icon sets sitting in this machine's own ~/.local/share/icons:
+# nobody chose them.
+#
+# The .plasmoid and applet entries below stay on kpackagetool6 — a .plasmoid is
+# a zip, tar cannot open it, and applets pull nothing in.
+
+# Store ids come from ~/.local/share/kde-store-installs.md, written by hand
+# on 2026-09-23 while these were installed one at a time. Without that file
+# this list could not have been reconstructed — the Store has no "what did I
+# install" view.
+
+store	2342252	^Beauty-Color-Global-6\.tar\.gz$	tar:plasma/look-and-feel	plasma/look-and-feel/Beauty-Color-Global-6
+store	2342243	^Beauty-Color-Plasma\.tar\.gz$	tar:plasma/desktoptheme	plasma/desktoptheme/Beauty-Color-Plasma
+store	2342241	^Beauty\.colors\.tar\.gz$	tar:color-schemes	color-schemes/Beauty.colors
+store	2342242	^BeautyDarker\.colors\.tar\.gz$	tar:color-schemes	color-schemes/BeautyDarker.colors
+store	2342238	^Beauty-Color-Aurorae-6\.tar\.gz$	tar:aurorae/themes	aurorae/themes/Beauty-Color-Aurorae-6
+store	2334835	^BonaFides-Blur-Color-Dark-Aurorae-6\.tar\.gz$	tar:aurorae/themes	aurorae/themes/BonaFides-Blur-Color-Dark-Aurorae-6
+store	2348143	^BonaFides-Rounded-Blur-Dark-Color-Aurorae-6\.tar\.gz$	tar:aurorae/themes	aurorae/themes/BonaFides-Rounded-Blur-Dark-Color-Aurorae-6
+store	2342234	^Beauty-Plasma\.tar\.gz$	tar:wallpapers	wallpapers/Beauty-Plasma
+store	2342233	^Beauty\.tar\.gz$	tar:wallpapers	wallpapers/Beauty
+store	2371169	^Slot-Beauty-Dark-Icons-V-3\.tar\.xz$	tar:icons	icons/Slot-Beauty-Dark-Icons-V-3
+store	2134907	^a2n\.blur\.[0-9.]+\.tar\.gz$	kpackage:Plasma/Wallpaper	plasma/wallpapers/a2n.blur
+store	2350022	^window-title-reborn-.*\.plasmoid$	kpackage:Plasma/Applet	plasma/plasmoids/org.kde.plasma.windowtitlereborn
+git	https://github.com/EliverLara/AndromedaLauncher	.	kpackage:Plasma/Applet	plasma/plasmoids/AndromedaLauncher
+git	https://github.com/EliverLara/kde-control-station	package	kpackage:Plasma/Applet	plasma/plasmoids/KdeControlStation
+aur	bibata-cursor-theme-bin	-	-	-
+aur	kwin-effect-rounded-corners-x11-git	-	-	-

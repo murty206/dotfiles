@@ -68,5 +68,6 @@ echo
 echo "Done. Log out and back in — panels, shortcuts and the root-window"
 echo "cursor are read once at session start."
 echo
-echo "The themes these files NAME are not installed by this script."
-echo "See kde/README.md for the list and where each one came from."
+echo "The themes these files NAME are installed separately, by:"
+echo "    bash $src/themes.sh"
+echo "Without them KDE falls back to its defaults without saying so."

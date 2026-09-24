@@ -782,11 +782,22 @@ else
         warn "kde/apply.sh not found in dotfiles — skipping"
     fi
 
-    # Said here rather than left to the summary, because it is the one part of
-    # this section the script cannot do and the desktop will look wrong without
-    # it: the config names themes by name, and a name that resolves to nothing
-    # makes KDE fall back silently. kde/README.md lists the set.
-    info "Themes are not installed by this script — see kde/README.md"
+    # The themes the configuration names. Run AFTER the config rather than
+    # before only because the config is the cheap half: if the download is
+    # rate-limited or the machine is offline, the desktop still comes up with
+    # its panels, shortcuts and window rules, wearing stock Plasma colours.
+    # The reverse order would leave the expensive half done and the useful
+    # half missing.
+    #
+    # Nothing here is vendored in this repo — see kde/themes.tsv for what is
+    # fetched and from where. Re-running is safe and picks up only what is
+    # missing, which matters: the KDE Store rate-limits and a big set can
+    # need a second pass.
+    if [ -x "$DOTFILES_DIR/kde/themes.sh" ]; then
+        bash "$DOTFILES_DIR/kde/themes.sh" || warn "theme install reported problems — see above"
+    else
+        warn "kde/themes.sh not found in dotfiles — themes not installed"
+    fi
 fi
 
 # -----------------------------------------------------------------------------
