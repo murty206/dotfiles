@@ -274,7 +274,7 @@ carried-over one on this machine, which is the check the whole ritual is gated
 on. It falls back to reading the conversation, and that fallback is the agent's
 judgment rather than a fact from the harness.
 
-## 6 — No image viewer on a fresh KDE box, and `install.sh` already installs apps
+## 6 — No image viewer on a fresh KDE box — **DONE 2026-09-24**
 
 Filed 2026-09-24, from a complaint with a one-line cause: *"bilgisayarımda
 fotoğraf görüntüleyici yok."* Measured before filing — 19 common viewers
@@ -311,7 +311,36 @@ is not an available argument — it does. What needs a call is narrower:
 So the honest form of the question is whether `install.sh` grows a *"is there a
 Plasma session"* branch, which is a new kind of condition for it. That is the
 same argument as #4 and #5 — a step nothing enforces is a step the next machine
-misses — and, like those, it is not decided here.
+misses.
+
+### How it was answered — murty's call, same day
+
+**Yes, and the branch went in.** *"install.sh'a 'Plasma oturumu var mı' dalını
+ekleyelim."* Section 14, the first in the file that branches on something other
+than the package manager.
+
+**The test is `command -v plasmashell`, not `XDG_CURRENT_DESKTOP`, and the
+difference decides whether the branch ever fires.** `XDG_CURRENT_DESKTOP` asks
+whether Plasma is the session *running this script* — usually false on a fresh
+machine, where the installer runs from a TTY or over SSH before anyone has
+logged into the desktop. Testing it would have skipped exactly the case the
+branch exists for. `plasmashell` on `PATH` asks whether Plasma is *installed*,
+which is the question.
+
+**It grew a second customer while being written**, and that is what made the
+decision cheap: the same branch now carries the desktop configuration in
+`kde/`, which was a separate request. One condition, two items.
+
+**Four paths, all exercised before pushing** — against scratch `HOME`s, never
+against the live desktop: no Plasma (skips), viewer already present (reports
+it), viewer missing and the install failing (warns, and `set -e` does not
+abort — verified rather than assumed), and a machine that already has the
+config (skips on the marker file, printing the commit it was applied from).
+
+**The summary lines are guarded too.** Listing gwenview unconditionally would
+print *"NOT installed"* on every headless box — true, and the exact misreport
+the comment above that summary already warns about: nothing tried to install
+it.
 
 ## Notes
 

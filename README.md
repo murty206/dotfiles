@@ -83,6 +83,7 @@ Pulls latest from GitHub and reloads aliases instantly. No restart needed.
 | `claude-session-context.sh` | `SessionStart` hook — says whether the context is fresh, counts compactions |
 | `claude-global.md` | Global `CLAUDE.md` — symlinked to `~/.claude/CLAUDE.md`, loaded in every project |
 | `WINDOWS.md` | Setting up the Claude Code pieces on Windows — what `install.sh` does there, and what is left by hand |
+| `kde/` | KDE Plasma desktop config that travels — panels, shortcuts, window rules, themes named but not installed (see `kde/README.md`) |
 | `kitty.conf` | Kitty terminal config (1984 Dark + JetBrains Mono) |
 | `starship.toml` | Starship prompt config (Tokyo Night) |
 | `install.sh` | One-command installer |

@@ -731,6 +731,65 @@ if [ -f "$CLAUDE_GLOBAL_SRC" ]; then
 fi
 
 # -----------------------------------------------------------------------------
+# 14. KDE Plasma — image viewer and the desktop configuration
+# -----------------------------------------------------------------------------
+# The first section here that branches on something other than the package
+# manager, and the reason is that both things below are wrong on a machine with
+# no desktop. Installing gwenview on a headless box drags in the KDE stack for
+# an application nobody can open; applying panel and shortcut files there writes
+# configuration for a session that will never start.
+#
+# The test is `plasmashell` on PATH — is Plasma INSTALLED — not
+# XDG_CURRENT_DESKTOP, which asks whether Plasma is the session running this
+# script. That is usually false on a fresh machine: the installer is run from a
+# TTY or over SSH before anyone logs into the desktop.
+section "KDE Plasma"
+
+if ! command -v plasmashell &>/dev/null; then
+    info "No Plasma on this machine — skipping viewer and desktop config"
+else
+    # An image viewer, because KDE ships none by default and the gap is
+    # invisible until a photo opens in a browser: xdg-open falls through to
+    # whatever claims image/jpeg, and on a machine with a browser that is the
+    # browser. gwenview is the Plasma-native answer and shares the Qt and KDE
+    # libraries already pulled in above, so on a Plasma box it is close to free.
+    _viewer=""
+    for v in gwenview loupe eog nomacs qimgv gthumb; do
+        command -v "$v" &>/dev/null && { _viewer="$v"; break; }
+    done
+
+    if [ -n "$_viewer" ]; then
+        success "Image viewer already present ($_viewer)"
+    else
+        info "Installing gwenview (no image viewer found)"
+        $PKG_INSTALL gwenview && success "gwenview installed" \
+            || warn "gwenview install failed — install it by hand"
+    fi
+
+    # The desktop configuration itself. Applied ONCE and then left alone: this
+    # overwrites panels, shortcuts and window rules, and a second run would
+    # discard whatever was tuned by hand since the first. The marker is written
+    # by apply.sh, which is also the way to re-apply deliberately.
+    KDE_MARKER="$HOME/.config/.dotfiles-kde-applied"
+
+    if [ -f "$KDE_MARKER" ]; then
+        warn "KDE config already applied ($(grep -s '^commit=' "$KDE_MARKER" | cut -d= -f2)) — skipping"
+        info "To re-apply on purpose:  bash $DOTFILES_DIR/kde/apply.sh"
+    elif [ -x "$DOTFILES_DIR/kde/apply.sh" ]; then
+        bash "$DOTFILES_DIR/kde/apply.sh" && success "KDE configuration applied" \
+            || warn "KDE configuration not applied — see the output above"
+    else
+        warn "kde/apply.sh not found in dotfiles — skipping"
+    fi
+
+    # Said here rather than left to the summary, because it is the one part of
+    # this section the script cannot do and the desktop will look wrong without
+    # it: the config names themes by name, and a name that resolves to nothing
+    # makes KDE fall back silently. kde/README.md lists the set.
+    info "Themes are not installed by this script — see kde/README.md"
+fi
+
+# -----------------------------------------------------------------------------
 # 8. Hook aliases.sh into shell configs
 # -----------------------------------------------------------------------------
 section "Aliases"
@@ -877,6 +936,13 @@ have    gh                                         "GitHub CLI"
 have    ookla-speedtest                            "Ookla Speedtest CLI (run 'speed')"
 present "$HOME/.claude/CLAUDE.md"                  "Claude Code slash commands + global CLAUDE.md"
 present "$DOTFILES_DIR/aliases.sh"                 "Dotfiles aliases"
+# Guarded, not listed unconditionally. On a machine with no Plasma these two
+# would print "NOT installed", which is true and misleading in the way the
+# comment above this summary describes: nothing tried to install them.
+if command -v plasmashell &>/dev/null; then
+    have    gwenview                               "Gwenview (KDE image viewer)"
+    present "$HOME/.config/.dotfiles-kde-applied"  "KDE desktop config (themes still by hand)"
+fi
 echo ""
 echo "  Next steps:"
 echo "    1. Log out and back in to start using zsh + Kitty"

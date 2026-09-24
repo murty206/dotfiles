@@ -9,6 +9,71 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-09-24 — The desktop joined the repo, and `install.sh` learned its first non-package-manager condition
+
+**The question arrived in three steps, and each one changed the answer.** It
+started as *"bilgisayarımda fotoğraf görüntüleyici yok"*, became *"bu yaptığımız
+kde özelleştirmelerini kaybetmek istemiyorum"*, and settled as **"ama makineden
+bağımsız her kde kurulumumda bu ayarları almak istiyorum."** The third sentence
+is the one that belongs here: it turned a backup problem into a portability
+problem, which is this repo's own subject.
+
+### What was decided
+
+- **`kde/` carries configuration, not a copy of `~/.config`.** 14 files, 42,244
+  bytes. The line between them is whether a file records a *choice* or a
+  *state*: `kwinoutputconfig.json` holds six `edidHash` entries and is monitor
+  identity, the automounter file holds disk and USB labels, `kconf_updaterc` is
+  KDE's own migration ledger. None of those mean anything on another machine,
+  and `kde/README.md` names every exclusion with its reason.
+- **`$HOME` is stored literally and substituted at apply time.** murty's
+  reason, and it is the whole argument: *"shalafi kullanıcı adı sabit
+  olmayabilir."* Hard-coding would work today and fail **silently** on the
+  first machine with another user name — KDE does not complain about a
+  wallpaper it cannot find, it falls back without a word.
+- **`install.sh` section 14 branches on `command -v plasmashell`.** Not
+  `XDG_CURRENT_DESKTOP`: that asks whether Plasma is the session running the
+  script, which on a fresh machine is usually false, since the installer runs
+  from a TTY or over SSH. The branch would have skipped its own reason for
+  existing.
+- **The config is applied once, then left alone.** A marker file records the
+  commit it came from. A second run would discard whatever was tuned by hand
+  since the first, and re-applying is available on purpose: `kde/apply.sh`.
+
+### What the measuring changed
+
+**Two numbers were retracted the same day they were taken, and the method note
+is the useful part.** The config set was reported first as 204 KB, then as
+~186 KB; it is **65.9 KB** for the touched set and **41.3 KB** for what is
+carried. Two separate faults: `du` rounds every file up to a 4 KB block, which
+on 25 files averaging 2.7 KB more than doubles the answer — and the command had
+quietly measured *all* `rc` files in `~/.config` rather than the 25 it claimed.
+**Many small files are counted with `find -printf '%s'`, not `du`.**
+
+**The claim that this could not go in a public repo did not survive a grep.**
+The first reading was that these files are machine-specific — monitor
+identities, hardware names. Measured file by file: of eight, **two** match
+`/home/`, `/run/media`, `/dev/disk` or `UUID`, for **ten lines**, all of them
+wallpaper paths under `$HOME`. A substitution, not an obstacle. The genuinely
+machine-bound files are few, and they are excluded rather than templated.
+
+### What is not done, and is written down rather than assumed
+
+**These files have never been restored onto a fresh install.** They were
+extracted from a working desktop, which is not the same as knowing they rebuild
+one. `apply.sh` backs up everything it replaces for that reason, and the four
+branches of section 14 were exercised against scratch `HOME` directories — the
+live desktop was never written to. The first real installation is the test.
+
+**The themes are not installed by any of this.** `kdeglobals` names
+`Slot-Beauty-Dark-Icons-V-3`, `Beauty-Color-Global-6`,
+`BonaFides-Rounded-Blur-Dark-Color-Aurorae-6` and `Bibata-Modern-Classic`; a
+name that resolves to nothing makes KDE fall back silently, the same failure the
+`$HOME` substitution exists to avoid. The asset list is the other half and it
+lives outside this repo.
+
+---
+
 ## 2026-09-21 — `up` logs its runs, and the alias it replaced was never the one running
 
 **The question:** *"up alias'ına log tutması için bir şeyler yapalım mı?"* —

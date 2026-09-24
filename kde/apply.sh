@@ -14,10 +14,22 @@ src="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 stamp="$(date +%Y%m%d-%H%M%S)"
 backup="$HOME/.config/kde-backup-$stamp"
 
-if [ "${XDG_CURRENT_DESKTOP:-}" != "KDE" ]; then
-    echo "This is not a KDE session (XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-unset})."
+# The test is whether Plasma is INSTALLED, not whether it is the session
+# running right now. On a fresh machine this is most often run from a TTY or
+# over SSH before anyone has logged into the desktop, and XDG_CURRENT_DESKTOP
+# is empty there — refusing on that would refuse exactly the case the whole
+# directory exists for.
+if ! command -v plasmashell &>/dev/null; then
+    echo "Plasma is not installed here (no plasmashell on PATH)."
     echo "Nothing was changed."
     exit 1
+fi
+
+if [ "${XDG_CURRENT_DESKTOP:-}" = "KDE" ]; then
+    echo "Note: Plasma is running. It keeps its own copy of these settings in"
+    echo "memory and rewrites some of them at logout, which can undo this."
+    echo "Log out right after this finishes."
+    echo
 fi
 
 echo "KDE configuration -> $HOME/.config"
@@ -43,6 +55,14 @@ if [ -e "$HOME/.icons/default/index.theme" ]; then
 fi
 cp "$src/icons/default/index.theme" "$HOME/.icons/default/index.theme"
 echo "  ~/.icons/default/index.theme"
+
+# A marker, so install.sh can tell a fresh machine from one that already has
+# this. It records which commit was applied: "when" alone would not say what,
+# and the set changes over time.
+{
+    echo "applied=$(date -Iseconds)"
+    echo "commit=$(git -C "$src" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+} > "$HOME/.config/.dotfiles-kde-applied"
 
 echo
 echo "Done. Log out and back in — panels, shortcuts and the root-window"
