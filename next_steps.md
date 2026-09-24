@@ -274,6 +274,45 @@ carried-over one on this machine, which is the check the whole ritual is gated
 on. It falls back to reading the conversation, and that fallback is the agent's
 judgment rather than a fact from the harness.
 
+## 6 — No image viewer on a fresh KDE box, and `install.sh` already installs apps
+
+Filed 2026-09-24, from a complaint with a one-line cause: *"bilgisayarımda
+fotoğraf görüntüleyici yok."* Measured before filing — 19 common viewers
+searched on `PATH`, **zero** found, and `xdg-mime query default` returned
+`chromium.desktop` for both `image/jpeg` and `image/png`. Every double-clicked
+photo was opening in the browser.
+
+**Fixed on this box by hand:** `gwenview` installed (26.08.1-1, 6.62 MiB down,
+11.46 MiB installed). Only one of its dependencies was missing — `kimageannotator`;
+`baloo`, `cfitsio`, `exiv2`, `libkdcraw`, `purpose` and `qt6-multimedia` were
+already present on a Plasma box, which is what made it the cheap choice here.
+
+**No `xdg-mime` call was needed, and that is worth recording rather than
+assuming.** The install alone moved all 24 of gwenview's declared `image/*`
+types off Chromium — checked one by one afterwards. The plan had been to set the
+defaults by hand; the measurement retired the step.
+
+**The extra formats came free, verified not asserted:** `kimageformats` and
+`qt6-imageformats` were already installed, and `/usr/lib/qt6/plugins/imageformats/`
+carries `kimg_avif`, `kimg_heif`, `kimg_jxl`, `kimg_psd`, `kimg_xcf`, `kimg_raw`,
+`kimg_exr` among others. So AVIF/HEIF/JXL/PSD/XCF/RAW open without another package.
+
+Open question, not decided: **should `install.sh` install a viewer on hosts that
+have a desktop?** It already installs `kitty`, `fastfetch` and `github-cli` across
+all three package-manager branches, so "this repo does not install applications"
+is not an available argument — it does. What needs a call is narrower:
+
+- A viewer is **desktop-environment-specific** in a way `kitty` is not. `gwenview`
+  is the right answer on KDE and the wrong one on a headless host or a bare WM,
+  and `install.sh` currently branches on *package manager*, not on desktop.
+- The cheapness measured above is **a property of this box**, not of the package.
+  On a GNOME or WM host `gwenview` drags in the KDE stack it found already here.
+
+So the honest form of the question is whether `install.sh` grows a *"is there a
+Plasma session"* branch, which is a new kind of condition for it. That is the
+same argument as #4 and #5 — a step nothing enforces is a step the next machine
+misses — and, like those, it is not decided here.
+
 ## Notes
 
 **These three were found together**, by asking one question on 2026-09-08 —
