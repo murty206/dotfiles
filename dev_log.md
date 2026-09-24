@@ -57,6 +57,52 @@ identities, hardware names. Measured file by file: of eight, **two** match
 wallpaper paths under `$HOME`. A substitution, not an obstacle. The genuinely
 machine-bound files are few, and they are excluded rather than templated.
 
+### The themes are fetched, not vendored — and the obvious tool was the wrong one
+
+Offering to add the 9.6 MB of theme assets to the repo was declined, and the
+reason was better than the offer: *"zaten indirebiliyoruz."* They are on the KDE
+Store with stable content ids, so the repo carries the **list**, not the bytes.
+`themes.tsv` names 16 entries; `themes.sh` resolves each at run time, because the
+Store's download URLs are signed and expire.
+
+**The convenient route would have cost seven times the download.** Installing the
+global theme the documented way —
+
+```
+kpackagetool6 -t Plasma/LookAndFeel -i Beauty-Color-Global-6.tar.gz
+```
+
+— resolves the theme's dependencies through KNewStuff and fetches them:
+**89,470 files, 817 MB of icon themes**, five of them, and none is the
+`Slot-Beauty-Dark-Icons-V-3` the configuration actually selects. The same
+archive unpacked with `tar` gives **9 files**. Measured into an empty home,
+both ways. The list as written fetches ~140 MB that is used; the convenient
+route fetches ~960 MB, most of it never looked at.
+
+**And it answers a question filed earlier the same day.** The five unused icon
+sets in `~/.local/share/icons` were noted as a curiosity, with "they may have
+been left on purpose" as the charitable reading. They were not chosen at all —
+they arrived as dependencies of the global theme, on this machine, the same way.
+
+**The Store rate-limits, and lies about it in a way that misdirects.** A dozen
+downloads inside a few minutes gets refused, and the refusal comes back as HTTP
+200 with an XML error body written to disk under the archive's filename. Left
+undetected it surfaces three steps later as *"unpack failed"*, which points at
+the archive instead of the server. Now checked for by name.
+
+### Two bugs that reading would not have found
+
+Both were caught by running the thing, and both are the kind that look correct
+on the page:
+
+- `local id="$1" pattern="$2" xml="$tmp/$id.xml"` — bash expands every word of a
+  `local` command before assigning any of them, so `$id` is not yet set when
+  `xml` is built. Silent normally; fatal under `set -u`.
+- The download was saved as `<name>.pkg`. `kpackagetool6` chooses its reader
+  from the **extension**, so a perfectly good tarball was refused. `tar` sniffs
+  the content and did not care, which is why half the entries worked and half
+  did not.
+
 ### What is not done, and is written down rather than assumed
 
 **These files have never been restored onto a fresh install.** They were
