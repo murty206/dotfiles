@@ -1,0 +1,26 @@
+[63eb7261-4eee-4d39-ae6b-99413ca0eff8]
+Description=Window settings for btop-monitor
+clientmachine=localhost
+position=2801,44
+positionrule=3
+size=960,677
+sizerule=3
+title=btop
+titlematch=1
+types=1
+wmclass=btop-monitor
+wmclassmatch=1
+
+[General]
+count=2
+rules=63eb7261-4eee-4d39-ae6b-99413ca0eff8,e9266357-7f86-41b1-82fe-66b82ae663ff
+
+[e9266357-7f86-41b1-82fe-66b82ae663ff]
+Description=kitty: konumu ve boyutu hatırla
+position=2402,307
+positionrule=4
+size=960,677
+sizerule=4
+types=1
+wmclass=kitty
+wmclassmatch=1

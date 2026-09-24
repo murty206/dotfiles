@@ -1,0 +1,14 @@
+[Annotations]
+annotationToolType=12
+
+[General]
+ocrLanguages=tur
+
+[GuiConfig]
+includePointer=true
+
+[ImageSave]
+translatedScreenshotsFolder=Screenshots
+
+[VideoSave]
+translatedScreencastsFolder=Screencasts
