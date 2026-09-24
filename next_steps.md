@@ -177,6 +177,17 @@ one-command check *there*, not here:
 command -v python || echo "python absent - venv() needs python3"
 ```
 
+**Run on this Arch box, 2026-09-24** — `python` is present: `/usr/bin/python`,
+owned by `python 3.14.7-1`, resolving to `/usr/bin/python3.14`. `python3` is
+there too, at `/usr/bin/python3`. **So `venv()` works here, and the item does
+not close on that** — the exposure was never this machine. It is the apt branch:
+Debian and Ubuntu ship `python3` and no bare `python` unless `python-is-python3`
+is installed, and `aliases.sh` has an apt branch precisely because such a host
+is expected.
+
+**Not measured:** any apt or dnf host. Nothing here can speak for them, which is
+the whole reason the item says the check belongs *there*.
+
 ## 3 — The `setopt` block errors on every bash start — **DONE 2026-09-14**
 
 Fixed: the whole *Zsh history* block is now guarded with `[ -n "$ZSH_VERSION" ]`.
