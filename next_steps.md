@@ -234,6 +234,35 @@ Open question, not decided: should `install.sh` ship it for hosts where
 a step nothing enforces is a step the next machine misses. The argument against
 is that it is a *build* setting, and this repo has stayed out of those.
 
+## 5 — The session-context hook is not installed on this machine
+
+Filed 2026-09-24, found by `/acilis` failing its own first check: no
+`session-context:` line was printed, so the freshness check fell back to judging
+the conversation by eye.
+
+`claude-session-context.sh` is in the repo and `README.md` documents its
+installation — a symlink into `~/.claude/` plus a `hooks` block in
+`settings.json`. **Neither exists here.** Verified 2026-09-24 on this Arch box:
+`~/.claude/session-context.sh` absent, and `grep -c '"hooks"'` returns **0** for
+both `settings.json` and `settings.local.json`.
+
+**This is item #1's shape again, one layer up.** #1 was a step nothing enforces,
+missed on the next machine; the answer chosen there was a guarded branch in
+`install.sh` over a page in `WINDOWS.md`. This is the same thing: the hook's
+install lives in prose and the prose was not followed. The symmetry is the
+argument, but the decision is not made here.
+
+Open question, not decided: should `install.sh` write the `hooks` block into
+`~/.claude/settings.json`? It already symlinks `CLAUDE.md` and the statusline, so
+the symlink half is uncontroversial; the half that needs a call is **editing a
+JSON file Claude Code also writes to**, which is a different risk from appending
+a line to `~/.zshrc`.
+
+**What it costs while open:** `/acilis` cannot tell a fresh context from a
+carried-over one on this machine, which is the check the whole ritual is gated
+on. It falls back to reading the conversation, and that fallback is the agent's
+judgment rather than a fact from the harness.
+
 ## Notes
 
 **These three were found together**, by asking one question on 2026-09-08 —
