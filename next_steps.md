@@ -274,6 +274,14 @@ carried-over one on this machine, which is the check the whole ritual is gated
 on. It falls back to reading the conversation, and that fallback is the agent's
 judgment rather than a fact from the harness.
 
+**And the second cost landed at the close of the very session that filed this,
+which is worth recording because it is not recoverable.** `/kapanis` asks for
+`.claude/compact-count` — how many times the context was compacted — and that
+counter is written by the same missing hook. So the session's own entry says
+*"compactions: unknown"*. It is the one field that says whether a session was the
+right size, the next fresh start resets it, and a number not written at close is
+a number that never existed. Two sessions in a row have now logged that gap.
+
 ## 6 — No image viewer on a fresh KDE box — **DONE 2026-09-24**
 
 Filed 2026-09-24, from a complaint with a one-line cause: *"bilgisayarımda

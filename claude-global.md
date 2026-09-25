@@ -318,6 +318,34 @@ file.
 a figure into a file or a message — if it is not yet recorded anywhere with its
 method, the rule is firing. Cheap to check, and the check is the fix.
 
+### One tool named, because it produced three wrong numbers in one session
+
+**The size of many small files is counted with `find -printf '%s'`, not `du`.**
+Adopted 2026-09-25, at murty's direction, by the third route — the evidence is
+dated and committed in two repositories.
+
+`du` reports **disk** usage and rounds every file up to a block, typically 4 KB.
+That is the right answer to a different question, and on a set of small files it
+is not close: measured the same day, 25 files averaging 2.7 KB read as **204 KB**
+by `du` and **65.9 KB** by their actual sizes, and 15,706 icon files read as
+**246 MB** against **129 MB**. Three figures were retracted in one session, all
+from this one substitution, and two of them had already been quoted to the user.
+
+**`Device: the size you are about to quote — did it come from `du`?`** The moment
+is before the figure leaves the shell, and the check is re-running the count the
+other way. It costs one command.
+
+**Scope, or it over-fires.** This is about a size that will be **cited** — the
+rule above already draws that line. `du -sh` to see whether a directory is big
+is fine and stays fine; nothing is being claimed. It is also not a rule about
+`du` being wrong: for one large file, or for "how much disk will this free", `du`
+is the correct tool and `find` is the misleading one.
+
+**Calibration.** Under-firing has the signature it was written from: a number
+that has to be withdrawn after someone recomputes it. Over-firing would look
+like re-measuring sizes nobody will quote — correct that in conversation, not by
+widening the scope clause.
+
 ---
 
 ## Your own earlier output

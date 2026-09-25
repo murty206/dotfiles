@@ -9,7 +9,7 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
-## 2026-09-24 — The desktop joined the repo, and `install.sh` learned its first non-package-manager condition
+## 2026-09-24 08:20 → 2026-09-25 08:59 — The desktop joined the repo, and `install.sh` learned its first non-package-manager condition
 
 **The question arrived in three steps, and each one changed the answer.** It
 started as *"bilgisayarımda fotoğraf görüntüleyici yok"*, became *"bu yaptığımız
@@ -111,12 +111,42 @@ one. `apply.sh` backs up everything it replaces for that reason, and the four
 branches of section 14 were exercised against scratch `HOME` directories — the
 live desktop was never written to. The first real installation is the test.
 
-**The themes are not installed by any of this.** `kdeglobals` names
-`Slot-Beauty-Dark-Icons-V-3`, `Beauty-Color-Global-6`,
-`BonaFides-Rounded-Blur-Dark-Color-Aurorae-6` and `Bibata-Modern-Classic`; a
-name that resolves to nothing makes KDE fall back silently, the same failure the
-`$HOME` substitution exists to avoid. The asset list is the other half and it
-lives outside this repo.
+**The themes are installed by `themes.sh`, added later in the same session —**
+see the two sections above. What is still not proven is that the *result looks
+right*: every route was exercised into scratch homes, which shows the files land
+where the configuration expects them and nothing more.
+
+### The record the ids came from was retired, and it split in two
+
+The list of KDE Store ids had been kept by hand in a note under
+`~/.local/share/`. It was retired, and the answer was not "move it" but "split
+it", because it had been holding two different kinds of thing:
+
+- **The ids** belong here, in `kde/themes.tsv`, where they are **executed**. A
+  wrong id in a note sits there quietly; a wrong id in this file fails the run.
+  That is the property a record cannot have. All ten transferred, checked with
+  `comm`.
+- **The machine-specific residue** — an SDDM theme installed by hand as root
+  with two-screen logic, a lock-screen wallpaper history, the settings the
+  rounded-corners effect writes into `breezerc` by itself — belongs in the
+  machine's own private repository, and went there.
+
+`next_steps.md` #1 pointed at that note as the place to record a new component;
+it now points here, and that is the improvement: writing an id into `themes.tsv`
+**installs** it, so the record and the action are the same act.
+
+### Session metadata
+
+Ran **24 h 39 m** wall clock across two days, one item at a time, every decision
+committed as it landed — all three repositories were clean at close with nothing
+to sweep in.
+
+**Compactions: unknown, and that is itself a finding.** `.claude/compact-count`
+does not exist on this machine because the `SessionStart` hook that writes it was
+never installed here — which is `next_steps.md` **#5**, filed at the very start
+of this session when `/acilis` failed its own freshness check. So the one number
+that says whether a session was the right size is missing, and the item that
+would have supplied it was open the whole time.
 
 ---
 
