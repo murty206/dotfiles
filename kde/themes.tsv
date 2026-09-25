@@ -35,10 +35,12 @@
 # The .plasmoid and applet entries below stay on kpackagetool6 — a .plasmoid is
 # a zip, tar cannot open it, and applets pull nothing in.
 
-# Store ids come from ~/.local/share/kde-store-installs.md, written by hand
-# on 2026-09-23 while these were installed one at a time. Without that file
-# this list could not have been reconstructed — the Store has no "what did I
-# install" view.
+# The store ids were written down by hand on 2026-09-23, while these were being
+# installed one at a time. Without that record this list could not have been
+# reconstructed: the Store has no "what did I install" view, and a theme on disk
+# does not carry the id it came from. That note has since been retired into this
+# file, which is the better home for it — a list that is executed fails loudly
+# when an id is wrong, and a list that is only read does not.
 
 store	2342252	^Beauty-Color-Global-6\.tar\.gz$	tar:plasma/look-and-feel	plasma/look-and-feel/Beauty-Color-Global-6
 store	2342243	^Beauty-Color-Plasma\.tar\.gz$	tar:plasma/desktoptheme	plasma/desktoptheme/Beauty-Color-Plasma
