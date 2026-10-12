@@ -306,10 +306,32 @@ alias als='alias'
 #              A plain `| tee` would not: the same tools see a pipe on stdout
 #              and switch to non-interactive output. Where `script` is missing
 #              (Git Bash has none) the command runs unlogged and says so.
-#   _up_end    prints the log path and returns the run's exit code
+#   _up_end    cleans the log, prints its path and returns the run's exit code
+#   _up_clean  rewrites the log as plain text — see below
 #
-# Logs keep their escape codes: read them with `less -R`. A sudo password is
-# never echoed, so it is never in the file.
+# A sudo password is never echoed, so it is never in the file.
+#
+# The log is cleaned once the run is over. Added 2026-10-12. `script` records
+# every byte the terminal was sent, and a progress bar is drawn by sending the
+# same line again and again: the first real apt run came to 1,551,267 bytes, of
+# which 99,797 were left after cleaning — 1,305 lines, none of them a redraw.
+# What _up_clean keeps is what the scrollback would have shown at the end:
+#
+#   - of a line rewritten with carriage returns, only its last state
+#   - nothing drawn on the alternate screen (a pager, a whiptail dialog) — the
+#     terminal throws that away on exit too, and flattened it is one
+#     7,000-character line
+#   - nothing drawn between "save cursor" and "restore cursor" — apt's status
+#     bar at the bottom row
+#   - no escape codes, so the file is read with plain `less` and `grep`
+#
+# The colours go with them. That is the trade: the log exists to be searched
+# after the fact, and the run itself is still shown in full colour, because
+# cleaning happens after `script` has exited, not in a pipe in front of it.
+#
+# `command` on every tool in there: this file aliases mv to `mv -iv`, and an
+# alias is expanded when a function is *defined*, so a bare `mv` would stop and
+# ask before overwriting the log at the end of every run.
 UP_LOGDIR="$HOME/.local/state/up"
 
 function _up_begin() {
@@ -327,8 +349,45 @@ function _up_run() {
     fi
 }
 
+function _up_clean() {
+    [ -f "$1" ] || return 0
+    local esc=$'\033' cr=$'\r' bel=$'\a' on=$'\001' off=$'\002'
+    # In order: mark alternate-screen on/off with one byte each, so "up to the
+    # next off" can be written as a character class; drop a dialog that opened
+    # and closed on one line, then one that spans several — an interrupted run
+    # never sends the "off", so script's own footer ends the range as well;
+    # CSI (with # as the delimiter: its intermediate bytes are the range
+    # space-to-slash, and a backslash is literal inside a bracket, so escaping
+    # the slash would widen the range to everything up to "\" and eat text);
+    # OSC; the status bar; any other two-byte escape; then the carriage
+    # returns. LC_ALL=C because `.` refuses to cross a byte that is not valid
+    # UTF-8, and a build log is where those turn up.
+    LC_ALL=C command sed -E \
+        -e "s/${esc}\[\?(1049|1047|47)h/${on}/g" \
+        -e "s/${esc}\[\?(1049|1047|47)l/${off}/g" \
+        -e "s/${on}[^${off}]*${off}//g" \
+        -e "/${on}/,/${off}|^Script done on /{ /${on}/!{ /${off}|^Script done on /!d; }; s/${on}.*//; s/.*${off}//; }" \
+        -e "s#${esc}\[[0-9;?]*[ -/]*[@-~]##g" \
+        -e "s/${esc}\][^${bel}${esc}]*${bel}//g" \
+        -e "s/${esc}7[^${esc}]*${esc}8//g" \
+        -e "s/${esc}.//g" \
+        -e "s/${cr}+\$//" \
+        -e "s/.*${cr}//" \
+        -e 's/[[:space:]]+$//' \
+        "$1" | command cat -s > "$1.tmp"
+    # The pipeline's status is cat's, so a sed that failed outright would leave
+    # an empty file and report success. A real log is never empty — script's
+    # header line is always in it — so empty means keep the raw one.
+    if [ -s "$1.tmp" ]; then
+        command mv -f "$1.tmp" "$1"
+    else
+        command rm -f "$1.tmp"
+    fi
+}
+
 function _up_end() {
     local rc=$1
+    _up_clean "$UP_LOG"
     echo
     echo "log: $UP_LOG"
     [ "$rc" -ne 0 ] && echo "up: exit $rc" >&2

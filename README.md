@@ -281,8 +281,10 @@ needs to name a real project belongs in that project, not here.
 `up` is a function on every distro, and every run is logged to
 `~/.local/state/up/<date>_<time>.log` — the whole terminal session, not just the
 exit code, because a package that fails to build says why exactly once and the
-package manager's own history never has it. The path is printed at the end. Logs
-keep their colour codes (read with `less -R`) and are dropped after 90 days.
+package manager's own history never has it. The path is printed at the end. When
+the run is over the log is rewritten as plain text — progress-bar redraws,
+full-screen dialogs and colour codes removed, so `less` and `grep` work on it as
+it stands. Logs are dropped after 90 days.
 
 On Debian/Ubuntu `up` also prints what `autoremove` would delete and waits for
 a `y` — it never removes packages unattended. A package that has dropped out of the archive is indistinguishable
