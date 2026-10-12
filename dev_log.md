@@ -9,6 +9,127 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-10-12 — `up` cleans its own log, and the apt branch ran for real for the first time
+
+**The question:** *"gürültü işini düzeltebilir misin?"* — asked after the first
+`up` on a Debian machine had been read back from its log. The log answered
+everything that was asked of it, and three of the answers were in no system
+log at all: the twenty minutes of downloading that happen before
+`history.log` opens its entry, a 1.2 GB tarball fetched by one package's
+`preinst` while dpkg sat waiting, and an earlier attempt abandoned with
+Ctrl-C. Reading it was the problem. It had to be stripped by hand first.
+
+### What was measured, before anything was changed
+
+One run, 2026-10-12, apt branch, 62 minutes. Sizes are `find -printf '%s'`,
+lines are `wc -l`, carriage returns are `tr -cd '\r' | wc -c`.
+
+| | raw | cleaned |
+|---|---|---|
+| bytes | 1,551,267 | 99,797 |
+| lines | 1,310 | 1,305 |
+| carriage returns | 13,131 | 0 |
+| other control bytes | — | 0 |
+
+**The noise is redraws, not length.** The file has 1,310 lines either way; a
+progress bar is one line sent thousands of times, each ending in `\r` instead
+of `\n`. So the fix is not a filter on *lines* — there is nothing to filter —
+but on what a line looked like when the terminal was done with it.
+
+### What was decided
+
+- **`_up_clean` rewrites the log in place, called from `_up_end`.** After
+  `script` has exited, not in a pipe in front of it — a pipe is what the
+  2026-09-21 entry rejected `tee` for, and the reason has not changed. The run
+  on screen is untouched, colours included.
+- **The rule is "what the scrollback would have shown".** Last state of a line
+  rewritten with `\r`; nothing from the alternate screen; nothing drawn
+  between save-cursor and restore-cursor; no escape codes. Each of the four is
+  something a terminal already does, which is what makes the result
+  predictable instead of a list of tools whose output happens to be recognised.
+- **The alternate screen is dropped, not flattened.** needrestart's whiptail
+  dialog came out of a plain escape-strip as one 6,934-character line. Its
+  content is not lost — needrestart prints what it restarted and what it
+  deferred in plain text straight afterwards.
+- **The raw log is not kept.** One file per run was the design, and the raw
+  one is fifteen times the size for nothing a reader wants. The cost is real
+  and stated: **colours are gone from the log**, and so is anything the
+  cleaner removes wrongly. The check below is what that risk was weighed
+  against.
+- **An empty result never replaces the log.** The pipeline's exit status is
+  `cat`'s, so a `sed` that failed outright would hand back an empty file and
+  report success. A real log always has `script`'s header in it.
+
+### The check: was anything dropped that was not a redraw?
+
+Every `\r`-separated segment of the raw log, stripped by a **separate**
+implementation (python `re`, written without looking at the sed), compared
+against the lines of the cleaned file: **11,526 distinct segments, 10,293
+absent, 0 unexplained.** The absent ones, by pattern:
+
+| | |
+|---|---|
+| apt download progress (`NN% [...]`) | 2,779 |
+| wget progress bar | 7,290 |
+| needrestart scan bars | 180 |
+| percent counters (`Reading database ... NN%` and the like) | 44 |
+
+**What this does not show:** that the cleaner is right on output it has never
+seen. One log, one distro, one terminal.
+
+### What was refuted, on the way
+
+- **The first CSI expression was wrong and the test did not catch it.**
+  `[ -\/]` was meant as the range space-to-slash; inside a bracket a backslash
+  is literal, so it was space-to-backslash plus a slash, and it would have
+  eaten upper-case text following an erase-line. On this log the fixed and the
+  broken expression give **byte-identical output** — the bug was found by
+  reading the line, and the first version of the check above could not have
+  found it, because its reference used the same expression. That is why the
+  reference was rewritten separately, and why a synthetic case
+  (`ESC[K` followed by capitals) now exists.
+- **`mv` in the function was `mv -iv`.** This file aliases it, and an alias is
+  expanded when a function is defined. Met for real before it was reasoned
+  about: the test harness's own `cp` stopped on *"overwrite?"* and sat there
+  until the 120-second timeout. Every tool in `_up_clean` now goes through
+  `command`, and the tests run with `mv`, `cat` and `sed` aliased to something
+  hostile.
+
+### Verified
+
+bash and zsh, same bytes out, on both real logs and on eleven synthetic
+cases: a redraw, a colour, an OSC title, a dialog on one line, a dialog over
+three, **an interrupted dialog that never sends its closing sequence**
+(`script`'s footer ends the range, so the tail of the file survives), the
+status bar, an invalid UTF-8 byte, blank runs, and plain `tee`d lines with no
+`\r`. Running the cleaner twice changes nothing. `_up_begin` / `_up_run` /
+`_up_end` run end to end under real `script(1)` with a stub command: exit
+code 3 came back as 3.
+
+### This also closes half of an older "Unverified"
+
+2026-09-21 recorded that only the Arch branch had run for real. **The apt
+branch has now**: `apt update && upgrade` under `script`, the autoremove plan
+printed and logged, the `y` logged, autoremove run, both exits 0 — and, in a
+separate run, a Ctrl-C during `apt update` returned 130 with the log closed
+properly. `UP_KEEP` was set and the plan did not match it, so **the refusal
+path has still not fired on a real machine.** dnf is where it was.
+
+### Unverified
+
+- **Nothing was run on Arch.** paru's PKGBUILD review opens in a pager, which
+  is the alternate screen, so by the rule above it will not be in the log. That
+  follows from the design and has not been looked at.
+- **Whether `_up_end` runs after a Ctrl-C under zsh.** The interrupted log on
+  this machine predates the change. If it does not run, the log stays raw —
+  intact, just uncleaned.
+- **Backspaces are not handled.** Two in the sample, both inside the dialog. A
+  build tool that draws a spinner with `\b` would leave its frames in the log.
+- **The two logs already on this machine are still raw.** `_up_clean <file>`
+  does one by hand.
+
+---
+
 ## 2026-09-24 08:20 → 2026-09-25 08:59 — The desktop joined the repo, and `install.sh` learned its first non-package-manager condition
 
 **The question arrived in three steps, and each one changed the answer.** It
