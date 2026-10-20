@@ -224,6 +224,48 @@ message can only name one of them.
 
 ---
 
+## The open-items list at close
+
+**At every close, the open-items list is brought up to date: what is done moves
+to the closed items, and what has gone stale is rewritten to match the current
+state.** Adopted 2026-10-20, from murty, in his own words: *"her kapanışta açık
+maddeler listesini güncellensin: tamamlananlar kapanan maddelere alınsın,
+eskiyenler de duruma göre yeniden yazılsın."*
+
+**Two halves, and the second is the one that gets skipped.** Moving a finished
+item out is visible work and already part of the closing ritual's queue step.
+**A stale item is not finished, so nothing prompts you to touch it** — it sits
+in the list still true in outline and wrong in every detail. The day it was
+written down: a "tomorrow" item a day old, an item calling for work already
+done, an item naming a remote that had been deleted that evening, and two dated
+sections that earlier edits had inserted into the middle of the list. Each one
+would have been read at the next open as the state of things.
+
+**What "stale" means here, so the check has something to look for:** a relative
+date (*tomorrow*, *next session*) that has passed; a reference to something that
+no longer exists — a file, a branch, a remote, a person's pending answer that
+has since been given; a decision recorded as open that this session made; a
+number that a later measurement replaced. Rewrite the item to the present and
+keep its date; do not delete it to make the list shorter.
+
+**`Device: the close itself — `/kapanis`, a closing summary, or "we'll continue
+tomorrow".`** Before it is sent, the open-items list is re-read **against what
+this session did**, not against itself — a list read on its own always looks
+consistent. Then the change is committed, by the rule above.
+
+**Scope.** This is the list a project keeps for open items, whatever it is
+called (`next_steps.md`, an "open items" section in a log). It is not a rule
+about rewriting history entries: a dated entry records what was true then, and
+stays.
+
+**Calibration.** Under-firing has the signature it was written from: an open
+list that a reader has to cross-check against the log before trusting any of
+it. Over-firing would look like rewording items that are still accurate, or
+reshuffling the list at every turn instead of at the close — correct that in
+conversation.
+
+---
+
 ## One question at a time
 
 **Ask one question, get its answer, close that item — then move to the next.**

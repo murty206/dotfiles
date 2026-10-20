@@ -9,6 +9,39 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-10-20 — claude-global: the open-items list is brought up to date at every close
+
+**The question:** *"her kapanışta açık maddeler listesini güncellensin:
+tamamlananlar kapanan maddelere alınsın, eskiyenler de duruma göre yeniden
+yazılsın bunu dotfiles repomda global claude.md dosyama ekler misin?"* — asked
+in another project's session, right after the agent had cleaned up that
+project's open-items list on request.
+
+**Route:** the first — murty's own words, quoted in the section. He named the
+global file himself, so the "say which `CLAUDE.md`" step of `/kapanis` was
+settled by the request.
+
+**What was found when it was cleaned, which is why the second half is in the
+rule.** A "tomorrow" item a day old; an item calling for work already done; an
+item naming a remote deleted that same evening; and two dated sections earlier
+edits had inserted into the middle of the list. None of these were finished
+items, so `/kapanis` step 3 ("move closed items out, number anything newly
+opened") would not have touched any of them.
+
+**Decided:** a section of its own, after "What survives a session", with the
+close as its device and a definition of *stale* so the check has something to
+look for. Not merged into `/kapanis` step 3: the rule also has to fire at a
+close that does not run `/kapanis` — the session it came from never ran
+`/acilis`.
+
+**Not done, and named:** `/kapanis` step 3 still reads only "move closed items
+out". Whether to point it at the new section is left to murty.
+
+**Branch, not main:** pushed as `kural-acik-maddeler`. The background session
+it was written in may not push to `main`; merging is a fast-forward for murty.
+
+---
+
 ## 2026-10-12 — `up` cleans its own log, and the apt branch ran for real for the first time
 
 **The question:** *"gürültü işini düzeltebilir misin?"* — asked after the first
