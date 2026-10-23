@@ -282,7 +282,29 @@ questions, of which one gets answered.
 
 ---
 
-## Numbers
+## Messages that arrive while you work
+
+**Every message the user sends mid-turn gets its answer in the turn's last
+message, in its own headed block at the top — not in the text between tool
+calls.** Adopted 2026-10-23, from murty, in his own words: *"arada gönderdiğim
+mesajlarında tamamına cevap istiyorum diğer işlerin arasında az önce yaptığın
+gibi sokarsan gözümden kaçıyor"* — and he chose the global scope himself when
+asked whether it belonged to one project.
+
+**The failure it was written from:** two mid-turn questions were answered in the
+narration between tool calls, while work continued below them. Both answers
+existed; neither was seen. Text between tool calls scrolls past while the user
+is reading the next result.
+
+**How:** finish the work in hand or stop it at a safe point, then open the final
+message with a block that names each mid-turn message by a short quote and
+answers it. An answer already given in passing is repeated there, not referred
+to.
+
+**`Device: a user message that arrived while tool calls were running.`** The
+moment is composing the final message — if one arrived and the message does not
+open with its answer, the rule is already broken.
+
 
 **A number you will cite later goes into a file when you take it — with its
 method, and dated.** Adopted 2026-09-11, at murty's direction, and the reason is
