@@ -9,6 +9,27 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-10-25 — claude-global: the "Numbers" heading restored
+
+**What was found:** `5301935` (2026-10-23, mid-turn messages) inserted its new
+section by **replacing** the line `## Numbers` instead of adding above it. The
+Numbers rule's body — and its `du` subsection — kept reading on as if it were
+part of "Messages that arrive while you work". Nothing was lost; the text was
+orphaned under the wrong heading.
+
+**How it surfaced:** merging `kural-acik-maddeler` into a `main` that was behind
+`origin/main`; the push was rejected, and reading `5301935`'s diff before the
+pull (a file put in place mid-session is a file not read) showed `-## Numbers`
+with no matching `+`. After `pull --rebase` and push (`821531a`) the heading
+list confirmed it: no `## Numbers` between "Messages…" and "Your own earlier
+output".
+
+**Fix:** the `---` separator and `## Numbers` heading put back above the rule's
+first sentence; no wording changed. On branch `numbers-baslik`, for murty to
+merge — agents do not push to `main`.
+
+---
+
 ## 2026-10-20 — claude-global: the open-items list is brought up to date at every close
 
 **The question:** *"her kapanışta açık maddeler listesini güncellensin:

@@ -347,6 +347,9 @@ to.
 moment is composing the final message — if one arrived and the message does not
 open with its answer, the rule is already broken.
 
+---
+
+## Numbers
 
 **A number you will cite later goes into a file when you take it — with its
 method, and dated.** Adopted 2026-09-11, at murty's direction, and the reason is
