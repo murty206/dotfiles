@@ -182,7 +182,7 @@ Claude reads:
 | `session-context: CARRIED OVER` | `resume` or `fork` |
 | `session-context: COMPACTED — compaction N` | `compact`, with a running count |
 
-On the second compaction it adds an `ACTION` line telling the agent to say,
+On the third compaction (two until 2026-10-27) it adds an `ACTION` line telling the agent to say,
 unprompted and once, that the session has outgrown its question — and to
 **split** it rather than simply close it: name the finished part, close that
 with `/kapanis`, queue the rest, then `/clear` and `/acilis`. Closing without

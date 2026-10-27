@@ -44,16 +44,18 @@ KIND="${1:-unknown}"
 STATE_DIR="${CLAUDE_PROJECT_DIR:-$PWD}/.claude"
 COUNTER="$STATE_DIR/compact-count"
 
-# How many compactions before the session is called too long. Two, because one
-# is normal on a working afternoon and the second is the one that says the
-# session stopped being a question and started being a container.
+# How many compactions before the session is called too long. Three since
+# 2026-10-27 (murty): two fired on a hardware-trial day whose one question held
+# all day — the context was filled by log and CAN-dump reads, not by new
+# questions. It was two from 2026-08-28: one is normal on a working afternoon,
+# and the second was taken to mean the session had become a container.
 #
 # What it asks for is "split", not "close", and the difference is the whole
 # point: a session that closes with its question still open writes a half-entry
 # into the log, and a log of half-entries is worth less than no log. The
 # compaction count is not a new rule, it is an existing one becoming visible —
 # a question that will not close in one session was scoped too big.
-COMPACT_LIMIT=2
+COMPACT_LIMIT=3
 
 mkdir -p "$STATE_DIR" 2>/dev/null || true
 

@@ -39,7 +39,7 @@ because it will be averaged into a measurement later.
 
 Also read `.claude/compact-count` if it exists — how many times the context was
 compacted. **Record the number in the entry**, even when it is zero, and note
-whether the two-compaction warning fired and what happened next: the question
+whether the compaction warning (third compaction since 2026-10-27) fired and what happened next: the question
 was split, closed whole, or the warning was ignored.
 
 This is the only chance to keep it. The next fresh start resets the counter, so
