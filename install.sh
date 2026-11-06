@@ -26,6 +26,7 @@
 #  11. Installs Ookla Speedtest CLI (backs the `speed` alias)
 #  12. Symlinks the Claude Code slash commands and the global CLAUDE.md
 #  13. Hooks aliases.sh into ~/.zshrc and ~/.bashrc
+#  14. Installs tealdeer (`tldr`, the offline fallback for `cs`)
 #
 # On Windows (MSYS / Git Bash) it runs a subset, and says so as it goes:
 #   - probes for native symlinks first and REFUSES TO START without them,
@@ -667,12 +668,32 @@ else
     esac
 fi
 
+# -----------------------------------------------------------------------------
+# 14. Install tealdeer (tldr — the fallback `cs` uses when cheat.sh fails)
+# -----------------------------------------------------------------------------
+# Package `tealdeer` on all three distros, binary `tldr`, so the guard checks the
+# command. `--update` fetches the page cache, which the package does not ship.
+# Mirrors ensure_tldr() in aliases.sh; keep the two in step.
+section "tldr"
+
+if command -v tldr &>/dev/null; then
+    success "tldr already installed"
+else
+    info "Installing tealdeer..."
+    if $PKG_INSTALL tealdeer && command -v tldr &>/dev/null; then
+        tldr --update || warn "tldr page cache download failed — run: tldr --update"
+        success "tldr installed"
+    else
+        warn "tealdeer unavailable in this distro's repos — 'cs' will have no fallback"
+    fi
+fi
+
 fi  # <-- end of the "sections 3-12 need a package manager" guard
 
 if [ -n "$IS_MSYS" ]; then
     section "Windows"
     info "MSYS detected — skipping zsh, plugins, Starship, the Nerd Font, Kitty,"
-    info "fastfetch, tty-clock, gh and speedtest. All of them need a package"
+    info "fastfetch, tty-clock, gh, speedtest and tldr. All of them need a package"
     info "manager; the rest of this installer runs normally."
 fi
 
@@ -916,7 +937,7 @@ if [ -n "$IS_MSYS" ]; then
     echo ""
     echo "  Not attempted — these need a package manager:"
     echo "    zsh + plugins, Starship, JetBrains Mono Nerd Font, Kitty,"
-    echo "    fastfetch, tty-clock, gh, ookla-speedtest"
+    echo "    fastfetch, tty-clock, gh, ookla-speedtest, tldr"
     echo ""
     echo "  Still by hand — see WINDOWS.md:"
     echo "    1. Status line: link claude-statusline.sh, add the statusLine"
@@ -945,6 +966,7 @@ have    fastfetch                                  "Fastfetch (system overview o
 have    tty-clock                                  "tty-clock (terminal clock — run 'clock')"
 have    gh                                         "GitHub CLI"
 have    ookla-speedtest                            "Ookla Speedtest CLI (run 'speed')"
+have    tldr                                       "tealdeer (tldr — fallback for 'cs')"
 present "$HOME/.claude/CLAUDE.md"                  "Claude Code slash commands + global CLAUDE.md"
 present "$DOTFILES_DIR/aliases.sh"                 "Dotfiles aliases"
 # Guarded, not listed unconditionally. On a machine with no Plasma these two
