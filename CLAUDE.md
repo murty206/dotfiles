@@ -54,6 +54,8 @@ Three moving parts, plus the installer that wires them together:
 
    **Write to them during the session, not at its close.** An interrupted session loses whatever was still waiting to be written, and the rationale is the expensive half.
 
+   **Commits that touch only these two files go straight to `main`; everything else goes through a branch and a PR that murty merges.** Decided 2026-11-06, by murty: *"evet, log commit'lerini doğrudan main'e pushla"* — after a one-line dev_log fix had been put on its own branch under the general "agents do not push to `main`" practice. A record that waits on a merge is a record not yet saved, which is the failure the commit-at-decision rule exists to stop. A commit that mixes a log edit with any other file is not a log commit and takes the PR route.
+
 8. **`.mailmap`** — collapses the four git identities in this repo's history (`Muharrem ARLI`, `Murty`, `murty`, `Shalafi`) into one, for `log`, `shortlog` and `blame`. Mapping is **by email**, so no name appears in the file. It changes no commit, and GitHub's own interface does not read it. History was deliberately not rewritten: `dev_log` and `next_steps` in the other repos cite commit hashes.
 
    It has no extension, so `.gitattributes` names it explicitly — git parses this file itself and a CRLF checkout puts a trailing `\r` inside the email being matched, at which point nothing maps and nothing says so.
