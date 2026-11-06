@@ -9,6 +9,27 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-11-06 — `cs` falls back to tldr; tealdeer installed by `update`
+
+**What was found:** every cheat.sh query returned HTTP 500 — `scp`, `tar`, and
+`:help`, over both http and https — so the fault is the server's, not the
+function's. But `cs` printed the error page as if it were the answer: plain
+`curl` exits 0 on a 5xx.
+
+**Fix:** `curl -sf`, so an HTTP error or the 7 s timeout fails, and `cs` then runs
+`tldr`. tealdeer added as a dependency: `ensure_tldr` in `aliases.sh` (called by
+`update`) and section 14 in `install.sh`, both running `tldr --update` because the
+package ships no page cache. Package name is `tealdeer` on paru/apt/dnf;
+verified only for Arch (`extra/tealdeer 1.9.1`), not on an apt or dnf host.
+
+**Trap found on the way:** `~/.zshrc` on this machine also defines `cs`, above the
+line that sources `aliases.sh` — so the `aliases.sh` definition wins and an edit
+to the `.zshrc` copy does nothing. The first fix went there and was dead code; it
+was reverted. The stale `.zshrc` duplicate is machine-local and was left alone.
+
+**Unverified:** the fallback with tldr actually installed — not installed here at
+the time of writing; tested only the "not installed" branch.
+
 ## 2026-10-25 — claude-global: the "Numbers" heading restored
 
 **What was found:** `5301935` (2026-10-23, mid-turn messages) inserted its new

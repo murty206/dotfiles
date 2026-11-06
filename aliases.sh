@@ -134,6 +134,7 @@ function update() {
     ensure_tty_clock
     ensure_gh
     ensure_speedtest
+    ensure_tldr
 
     source "$DOTFILES_DIR/aliases.sh"
     echo "✓ Aliases updated and reloaded."
@@ -155,6 +156,25 @@ function ensure_tty_clock() {
         echo "! No supported package manager — install tty-clock manually."
         return 1
     fi
+}
+
+# tldr is the offline fallback for `cs`. The client is tealdeer — the package
+# is `tealdeer` on all three distros, the binary is `tldr`, so the guard checks
+# the command. It ships with no pages: `--update` fetches the cache, and without
+# it the first `tldr` call errors instead of answering.
+# Mirrors the tealdeer section in install.sh; keep the two in step.
+function ensure_tldr() {
+    command -v tldr &>/dev/null && return 0
+
+    echo "→ tldr not found — installing tealdeer (fallback for 'cs')..."
+    if command -v paru &>/dev/null;    then paru -S --noconfirm tealdeer
+    elif command -v apt &>/dev/null;   then sudo apt install -y tealdeer
+    elif command -v dnf &>/dev/null;   then sudo dnf install -y tealdeer
+    else
+        echo "! No supported package manager — install tealdeer manually."
+        return 1
+    fi
+    command -v tldr &>/dev/null && tldr --update
 }
 
 # GitHub CLI. Note the package name is NOT the command name on Arch — the
@@ -594,7 +614,17 @@ alias speed='ookla-speedtest --accept-license --accept-gdpr'
 # -----------------------------------------------------------------------------
 
 # Cheat sheet lookup: cs tar, cs python, etc.
-function cs() { curl -m 7 "http://cheat.sh/$1"; }
+#
+# Falls back to tldr when cheat.sh fails. `-f` is what makes that work: without
+# it curl exits 0 on an HTTP 500 and prints the server's error page as if it
+# were the answer — which is how this was found, on 2026-11-06, with every
+# cheat.sh query returning 500. A timeout takes the same path.
+function cs() {
+    curl -sf -m 7 "http://cheat.sh/$1" && return
+    echo "cheat.sh did not answer — falling back to tldr" >&2
+    if command -v tldr &>/dev/null; then tldr "$1"
+    else echo "! tldr not installed — run 'update' to install it" >&2; return 1; fi
+}
 
 # Make directory and cd into it
 function mkcd() { mkdir -p "$1" && cd "$1"; }
