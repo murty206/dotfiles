@@ -27,8 +27,10 @@ line that sources `aliases.sh` — so the `aliases.sh` definition wins and an ed
 to the `.zshrc` copy does nothing. The first fix went there and was dead code; it
 was reverted. The stale `.zshrc` duplicate is machine-local and was left alone.
 
-**Unverified:** the fallback with tldr actually installed — not installed here at
-the time of writing; tested only the "not installed" branch.
+**Verified the same day, on Arch:** `update` ran `ensure_tldr`, which installed
+`tealdeer-1.9.1-1` through paru and downloaded the page cache (en); `cs scp` then
+printed the fallback notice and the tldr page while cheat.sh was still at 500.
+**Still unverified:** the apt and dnf branches — no such host tested.
 
 ## 2026-10-25 — claude-global: the "Numbers" heading restored
 
