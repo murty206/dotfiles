@@ -54,6 +54,26 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# Kitty keyboard protocol reset
+# -----------------------------------------------------------------------------
+# A program that turns on kitty's keyboard protocol (Claude Code, Neovim) turns
+# it off again on exit. When an ssh session drops, that exit never reaches the
+# local terminal: the protocol stays on and the prompt gets raw escape codes.
+# With NumLock on, Up arrives as ESC[1;129A and zsh prints "29A"; Delete
+# prints "129~". Seen 2026-11-12 after an ssh timeout.
+#
+# Reset at every prompt. Nothing that wants the protocol is running at a prompt,
+# and the next program that does will turn it back on itself.
+#
+# zsh only (add-zsh-hook), and only under kitty: other terminals have no use
+# for the sequence.
+if [ -n "$ZSH_VERSION" ] && [ "$TERM" = "xterm-kitty" ]; then
+    autoload -Uz add-zsh-hook
+    _reset_kitty_kbd() { printf '\e[=0;1u'; }
+    add-zsh-hook precmd _reset_kitty_kbd
+fi
+
+# -----------------------------------------------------------------------------
 # Self-update
 # -----------------------------------------------------------------------------
 function update() {
