@@ -350,6 +350,14 @@ print *"NOT installed"* on every headless box — true, and the exact misreport
 the comment above that summary already warns about: nothing tried to install
 it.
 
+## 7 — A second, stale clone at `~/dotfiles`
+
+Found 2026-11-12. Besides `~/.dotfiles`, this machine has `~/dotfiles` (no
+dot): same remote, last commit 2026-03-11 *"fix header comment"*, three tracked
+files. Nothing sources it, as far as was checked (`~/.zshrc` points at
+`~/.dotfiles`). Not touched. Open question: is anything else pointing at it, and
+can it go?
+
 ## Notes
 
 **These three were found together**, by asking one question on 2026-09-08 —

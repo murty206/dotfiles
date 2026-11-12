@@ -9,6 +9,44 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-11-12 — kitty keyboard protocol reset at the prompt; PR rule dropped
+
+**What was found:** after an ssh session timed out, Up at the local zsh prompt
+printed `29A` and Delete printed `129~`. The remote Claude Code had turned on
+kitty's keyboard protocol and the drop meant its "off" never arrived. 129 is the
+modifier field: 1 + 128 for NumLock, which SDDM turns on at boot — so with
+NumLock off the arrows would probably have kept working and nobody would have
+noticed.
+
+**Fix:** a zsh `precmd` hook in `aliases.sh` sends `ESC[=0;1u` (set flags to 0).
+Put in `aliases.sh`, not `~/.zshrc`, though murty asked for `.zshrc`: the repo
+has no `.zshrc`, `aliases.sh` is what `~/.zshrc` sources, and the 2026-11-06
+entry below records what a `.zshrc` duplicate costs. Guarded to zsh and
+`TERM=xterm-kitty`, because bash sources this file too.
+
+**Verified:** `zsh -n` and `bash -n` pass; under zsh with `TERM=xterm-kitty`
+the function is in `precmd_functions` and prints exactly `ESC [ = 0 ; 1 u`;
+with another `TERM` it is not registered; bash sources the file without error
+and does not define it. **Not verified:** that the sequence actually clears a
+stuck protocol in a live kitty — that needs the next dropped ssh session.
+
+**Trap on the way:** `{ printf '…' }` with no `;` before the brace is valid zsh
+and a syntax error in bash. bash parses the whole `if` before evaluating the
+guard, so the zsh-only block broke every bash that sources the file. Caught by
+`bash -n` before commit.
+
+**Rule change:** the branch-and-PR rule is gone, at murty's word mid-change —
+*"repodaki PR kuralını kaldır"*, then *"direk maine push et"*. The change above
+was already on a branch, pushed, PR not yet opened; it was rebased onto `main`
+and pushed, and the branch deleted locally and on the remote. `CLAUDE.md` §7
+rewritten.
+
+**Left as found:** `~/dotfiles` (no dot) on this machine is a second, stale
+clone of the same remote, last commit 2026-03-11 and only three tracked files.
+Filed in `next_steps.md`, not touched.
+
+---
+
 ## 2026-11-06 — `cs` falls back to tldr; tealdeer installed by `update`
 
 **What was found:** every cheat.sh query returned HTTP 500 — `scp`, `tar`, and
