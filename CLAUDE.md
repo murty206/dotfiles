@@ -54,7 +54,7 @@ Three moving parts, plus the installer that wires them together:
 
    **Write to them during the session, not at its close.** An interrupted session loses whatever was still waiting to be written, and the rationale is the expensive half.
 
-   **Commits that touch only these two files go straight to `main`; everything else goes through a branch and a PR that murty merges.** Decided 2026-11-06, by murty: *"evet, log commit'lerini doğrudan main'e pushla"* — after a one-line dev_log fix had been put on its own branch under the general "agents do not push to `main`" practice. A record that waits on a merge is a record not yet saved, which is the failure the commit-at-decision rule exists to stop. A commit that mixes a log edit with any other file is not a log commit and takes the PR route.
+   **All commits go straight to `main`; no branch, no PR.** Decided 2026-11-12, by murty: *"repodaki PR kuralını kaldır"* — said while an `aliases.sh` change was about to go out as a PR under the old rule. That rule (2026-11-06, *"evet, log commit'lerini doğrudan main'e pushla"*) let only `dev_log`/`next_steps` commits skip the PR; it is gone, not narrowed. Keep log edits and code edits in separate commits anyway: one message per decision is what makes the history readable.
 
 8. **`.mailmap`** — collapses the four git identities in this repo's history (`Muharrem ARLI`, `Murty`, `murty`, `Shalafi`) into one, for `log`, `shortlog` and `blame`. Mapping is **by email**, so no name appears in the file. It changes no commit, and GitHub's own interface does not read it. History was deliberately not rewritten: `dev_log` and `next_steps` in the other repos cite commit hashes.
 
