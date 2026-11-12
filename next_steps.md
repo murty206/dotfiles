@@ -350,7 +350,15 @@ print *"NOT installed"* on every headless box — true, and the exact misreport
 the comment above that summary already warns about: nothing tried to install
 it.
 
-## 7 — A second, stale clone at `~/dotfiles`
+## 7 — A second, stale clone at `~/dotfiles` — **DONE 2026-11-12, removed**
+
+Removed at murty's word (*"~/dotfiles (noktasız) olanı kaldır"*), after
+checking it held nothing unique: clean tree, no untracked or ignored files, no
+stash, `HEAD` (7c96efa) an ancestor of `origin/main`. No references found in
+`~/.zshrc`, `~/.bashrc`, `~/.profile`, `~/.zprofile`, kitty, autostart, user
+systemd units, `~/.claude/settings.json`, this repo's scripts or crontab, and no
+symlinks into it within 4 levels of `~`. The original finding follows.
+
 
 Found 2026-11-12. Besides `~/.dotfiles`, this machine has `~/dotfiles` (no
 dot): same remote, last commit 2026-03-11 *"fix header comment"*, three tracked
