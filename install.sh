@@ -471,6 +471,11 @@ url_style single
 window_padding_width    8
 background_opacity      0.85
 confirm_os_window_close 0
+# Fixed starting size in cells, so it survives font and scale changes.
+# remember_window_size would reopen at whatever the last window happened to be.
+remember_window_size    no
+initial_window_width    126c
+initial_window_height   34c
 
 # Scrollback
 scrollback_lines        10000
