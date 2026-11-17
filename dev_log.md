@@ -9,6 +9,25 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-11-17 — kitty opens at a fixed 126×34
+
+murty: *"şu anki terminal boyutlarını varsayılan yap"*. Measured, not asked:
+`stty -F /dev/pts/0 size` on the active window's tty gave **34 rows, 126
+cols**; the other two open kitty windows were 125–126 × 34. KWin reported the
+active window's client area as 1030×649 logical px. kitty's remembered size in
+`~/.cache/kitty/main.json` was 960×649, saved at the 16:49 shutdown — so
+`remember_window_size` (default on) had been reopening narrower windows.
+
+**Chosen, not observed:** the size is set in **cells** (`126c`/`34c`), not
+pixels, so it holds if the font size or display scale changes, and
+`remember_window_size no` so it does not drift with the last window closed.
+Mirrored in the `install.sh` fallback heredoc, per the sync rule in
+`CLAUDE.md`. Checked with kitty's own config loader: `False (126, 'cells')
+(34, 'cells')`. **Not verified:** a new window actually opening at that size —
+takes effect for windows opened after the change.
+
+---
+
 ## 2026-11-12 — kitty keyboard protocol reset at the prompt; PR rule dropped
 
 **What was found:** after an ssh session timed out, Up at the local zsh prompt
