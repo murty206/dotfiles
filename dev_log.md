@@ -23,8 +23,8 @@ pixels, so it holds if the font size or display scale changes, and
 `remember_window_size no` so it does not drift with the last window closed.
 Mirrored in the `install.sh` fallback heredoc, per the sync rule in
 `CLAUDE.md`. Checked with kitty's own config loader: `False (126, 'cells')
-(34, 'cells')`. **Not verified:** a new window actually opening at that size —
-takes effect for windows opened after the change.
+(34, 'cells')`. **Verified the same day:** a kitty window opened at 17:02, after the change,
+reports `stty size` 34 126 on `/dev/pts/4`.
 
 ---
 
