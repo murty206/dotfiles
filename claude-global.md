@@ -138,6 +138,12 @@ Two things follow, and they are the practical half of the rule:
   of jumping the queue. Say what you filed, then go back to the interrupted
   work. **The exception is a finding that blocks the work in hand:** say that it
   blocks, clear it, and say you are doing so — never change direction silently.
+- **When an item closes and the queue names the next one, start it.** Say *"now
+  X"* and begin; do not ask *"shall I move on to X?"*. Adopted 2026-11-22, from
+  murty, in his own words, after exactly that question: *"sorman hata"* — and he
+  asked for it here himself. The order was on disk, so the question only handed a
+  settled decision back. **Ask only when the next item needs his step or his
+  decision** — a setting, a closure, a recommendation to approve.
 
 The counterpart is that conversation is *disposable on purpose* — it is working
 memory. Nothing is lost by ending a session, provided the writing happened while
