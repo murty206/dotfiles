@@ -366,6 +366,27 @@ files. Nothing sources it, as far as was checked (`~/.zshrc` points at
 `~/.dotfiles`). Not touched. Open question: is anything else pointing at it, and
 can it go?
 
+## 8 — Pull the repo automatically when it changes
+
+Raised by murty 2026-11-24: *"dotfiles reposu güncellendikçe sistemde otomatik
+güncelleme yapan bir servis mi eklesek"*. Open, design not yet agreed.
+
+What `update` does today, and why it cannot run unattended as-is: `git pull
+--rebase`, link missing symlinks and commands, then `ensure_tty_clock`,
+`ensure_gh`, `ensure_speedtest`, `ensure_tldr` — package installs through
+paru/apt/dnf, which need sudo and a terminal — then `source` into the current
+shell, which a service has no shell to do. So an unattended version is a subset:
+**fast-forward pull + symlinks**, no package installs, no source. kitty and
+starship pick up a pulled config on their own (symlinks); `aliases.sh` reaches a
+shell only when it is next opened or `reload`ed.
+
+Points to settle: trigger (timer vs. login only); `--ff-only` so a diverged or
+dirty tree fails instead of rebasing under someone's in-progress edit; how a
+failure is surfaced (`notify-send`, since `update`'s "refuses on dirty tree" is
+otherwise silent); install from `install.sh` as an optional section, and
+`WINDOWS.md` excluded. Trust: it runs whatever lands on `main`, with no
+`update` keypress in between — same trust as today, one moment fewer to look.
+
 ## Notes
 
 **These three were found together**, by asking one question on 2026-09-08 —
