@@ -366,7 +366,12 @@ files. Nothing sources it, as far as was checked (`~/.zshrc` points at
 `~/.dotfiles`). Not touched. Open question: is anything else pointing at it, and
 can it go?
 
-## 8 — Pull the repo automatically when it changes
+## 8 — Pull the repo automatically when it changes — **DROPPED 2026-11-24**
+
+murty, after the limited design below was offered: *"gerek yok ben değişiklik
+varsa update çalıştırırım"*. Manual `update` stays the mechanism. Kept for the
+reasoning, in case it is raised again.
+
 
 Raised by murty 2026-11-24: *"dotfiles reposu güncellendikçe sistemde otomatik
 güncelleme yapan bir servis mi eklesek"*. Open, design not yet agreed.
