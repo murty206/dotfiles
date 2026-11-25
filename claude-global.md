@@ -485,6 +485,50 @@ measurement, with the premise never re-examined. That is the failure this rule
 was written from — eight recorded instances across two sessions, three of them in
 one afternoon.
 
+### After a resume: read the record before you speak
+
+**When a session resumes, the conversation you are holding may be missing its
+most recent stretch. Before saying that something was not done, not measured or
+not decided, read what the files and the history say happened.** Adopted
+2026-11-25, at murty's direction — *"global claude dosyasına da ekleyelim"* — and
+by the third route: the wording is the agent's own proposal, which clears no
+route on its own; what carries it is a dated, committed record.
+
+**The instance.** A session was resumed after the machine it ran on was
+power-cycled. About two hours of the conversation — a test that had been run and
+a decision taken on its result — were absent from the agent's context, **with
+nothing marking the gap.** Asked about that test, the agent said it had not been
+done, proposed doing it, and wrote three records saying so. The files and the
+commits held the truth throughout; the agent did not open them. murty corrected
+it from memory.
+
+**Why this is not the section above.** That rule fires on a result you *have*
+and are about to reuse. This one is about a result you **do not know you are
+missing**: there is no *"as we found earlier"* to catch, because nothing is
+there. The only signal is the resume itself.
+
+**`Device: a resume marker — the session was continued, reconnected or
+restored — and the next thing you are about to say is about the state of the
+work.`** The check is two reads: the history since the session opened
+(`git log --since=<start>`), and the end of whatever file the project keeps the
+day's decisions in. Then speak.
+
+**Scope, or it over-fires.** After a resume, once — not before every reply. And
+it is about claims on **what has or has not happened**; a question that does not
+depend on the session's history needs no reading first.
+
+**Calibration.** Under-firing has the signature it was written from: the user
+saying *"we did that already"*. Over-firing would look like re-reading the log
+at every turn of an uninterrupted session — correct that in conversation.
+
+**The evidence is one instance**, recorded in
+`measurements/2026-08-28-ritual-trial.md`, row dated 2026-11-25, and in that
+project's own evidence file under the same date. Thinner than this bar usually
+takes, and stated so nobody later mistakes one case for a rate. Twice more in
+the same session the agent contradicted its own earlier records without opening
+them, with no resume involved — those belong to the section above, and are the
+reason this one is filed beside it rather than alone.
+
 ---
 
 ## A setting you did not set
