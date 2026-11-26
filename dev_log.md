@@ -33,7 +33,7 @@ the inner quotes → `build_tree` parses → search over sample titles matches t
 five editor titles and not `~/.dotfiles`, `cat local.sh`, `nanostat`; and
 `Window.matches` uses `pat.search(title)` (window.py). Lesson: `load_config`
 alone does not validate `--when-focus-on`; it is parsed only at key-press time.
-**Verified in the shell** by murty: *"oldu çalışıyor açık bir kittyde sonuna geldi"*. **Unverified:** the nano exception, test in progress.
+**Verified in the shell** by murty: *"oldu çalışıyor açık bir kittyde sonuna geldi"*. **Verified in nano** too: *"nano'da da çalışıyor, sona gitti ctrl+home da başa gitti"* (200-line test file) — the title match hands the key back as intended. vi/vim/nvim/micro not tried (not installed except nano).
 
 ---
 
