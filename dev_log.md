@@ -22,8 +22,18 @@ mappings"); the title is the running command via kitty's shell integration.
 parsed as a literal `b` — kitty.conf parsing drops the backslash. Rewritten
 without one; checked with `load_config` + `re.search` against ten sample
 titles (editors match; `cat local.sh`, `nanostat`, `microsoft` do not).
-**Unverified:** that the window title really is `nano …` while nano runs, and
-the key in practice — pending murty trying it in the shell and in nano.
+**Broke on first use, same day:** murty pressed Ctrl+End and got *"The match
+expression … is not valid for --when-focus-on"* — `NoLocation: No location
+specified before sudo.` The search-query parser reads `(` `)` as its own
+grouping, so the regex must be a quoted value; and kitty's config reader strips
+one level of quotes (`title:"…"` arrived unquoted). Final form:
+`'title:"^(sudo.)?(nano|n?vim?|micro)([^a-z]|$)"'`. **Checked this time through
+kitty's own code path**, not just `re`: `load_config` → `when_focus_on` keeps
+the inner quotes → `build_tree` parses → search over sample titles matches the
+five editor titles and not `~/.dotfiles`, `cat local.sh`, `nanostat`; and
+`Window.matches` uses `pat.search(title)` (window.py). Lesson: `load_config`
+alone does not validate `--when-focus-on`; it is parsed only at key-press time.
+**Unverified:** the key in practice, pending murty.
 
 ---
 
