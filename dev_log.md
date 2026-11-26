@@ -19,8 +19,8 @@ and inserts the trailing `~`. Kitty's own page-scroll is `kitty_mod+page_up/down
 `kitty_mod` override here). Proposed adding the Konsole habit, Shift+PageUp/Down;
 murty: *"evet ekle"*. Added to `kitty.conf` and the `install.sh` fallback
 heredoc (diffed equal), config parsed with `load_config`, running kitty
-reloaded with `SIGUSR1`. **Unverified:** the key itself, pending murty trying
-it. Not done: binding PageUp/Down inside zsh, so plain PageDown still types `~`.
+reloaded with `SIGUSR1`. **Verified** by murty the same day: *"tamam çalışıyor"*.
+Not done: binding PageUp/Down inside zsh, so plain PageDown still types `~`.
 
 ---
 
