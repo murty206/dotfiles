@@ -9,6 +9,24 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-11-26 — Ctrl+End jumps to the bottom in kitty
+
+murty: *"ctrl + end ile terminalin sonuna inmeyi yapabilir miyiz"*. Kitty has
+`scroll_end` (default `kitty_mod+end`); mapped `ctrl+end` to it. **Conflict
+found before mapping:** nano (installed) uses Ctrl+End for end-of-file, and a
+kitty map swallows the key for every program. So the key is handed back with
+`map --when-focus-on title:^(sudo.)?(nano|n?vim?|micro)([^a-z]|$) ctrl+end` —
+an empty conditional map unmaps (kitty docs, `mapping.rst`, "Conditional
+mappings"); the title is the running command via kitty's shell integration.
+**Refuted on the way:** the first regex ended in `\b`; `load_config` showed it
+parsed as a literal `b` — kitty.conf parsing drops the backslash. Rewritten
+without one; checked with `load_config` + `re.search` against ten sample
+titles (editors match; `cat local.sh`, `nanostat`, `microsoft` do not).
+**Unverified:** that the window title really is `nano …` while nano runs, and
+the key in practice — pending murty trying it in the shell and in nano.
+
+---
+
 ## 2026-11-26 — Shift+PageUp/PageDown scroll kitty
 
 murty pressed plain PageDown after a long `cat` and got `~~~~~~-` on the
