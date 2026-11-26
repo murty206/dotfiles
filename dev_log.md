@@ -9,6 +9,21 @@ settled in `becoming_power_user` on 2026-09-08.
 
 ---
 
+## 2026-11-26 — Shift+PageUp/PageDown scroll kitty
+
+murty pressed plain PageDown after a long `cat` and got `~~~~~~-` on the
+command line, then *"zsh: command not found"*. Cause: PageDown sends
+`ESC [ 6 ~`; zsh (`bindkey -e`, nothing bound to `^[[6~`) swallows the prefix
+and inserts the trailing `~`. Kitty's own page-scroll is `kitty_mod+page_up/down`
+(ctrl+shift; checked in `/usr/lib/kitty/kitty/options/definition.py`, no
+`kitty_mod` override here). Proposed adding the Konsole habit, Shift+PageUp/Down;
+murty: *"evet ekle"*. Added to `kitty.conf` and the `install.sh` fallback
+heredoc (diffed equal), config parsed with `load_config`, running kitty
+reloaded with `SIGUSR1`. **Unverified:** the key itself, pending murty trying
+it. Not done: binding PageUp/Down inside zsh, so plain PageDown still types `~`.
+
+---
+
 ## 2026-11-17 — kitty opens at a fixed 126×34
 
 murty: *"şu anki terminal boyutlarını varsayılan yap"*. Measured, not asked:
