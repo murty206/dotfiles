@@ -163,6 +163,28 @@ the moment was worth more than restating the rule.
 failure is asking for what you could retrieve; the second's is asking whether to
 do the new thing now. Same sentence being typed, same answer already on disk.
 
+**The same moment also arrives as a sentence, not only as a question.**
+Adopted 2026-11-28, at murty's request (*"~/.claude/CLAUDE.md için bir önerini
+ekle"*) — **the rule is the agent's own proposal, and that clears no route on its
+own; what carries it is a dated, checkable record**, thin and stated as such:
+**one session, three instances, one shape** — `measurements/2026-09-09-rule-violations.md`
+row 6 and the 2026-11-28 row of `measurements/2026-08-28-ritual-trial.md`. The
+agent asked the user for a fact the project's files held, then twice **wrote that a
+fact was "not recorded" / "not given" / "not known"** when its own earlier notes
+held it, and the user had to say *"it's recorded, we looked at it"*. **The device
+above fires on a question; two of the three were statements, so it never did.**
+
+**`Device: the words "not recorded", "not known", "not given", "no such …"
+about a fact in the user's own project, before the sentence is sent.`** The check
+is **one search** of the project's own files — queue, log, evidence, notes — and if
+it finds the fact, say so and say where.
+
+**Scope, or it over-fires.** Facts about **this** project or **this** user's work.
+Not general knowledge, and not a measurement nobody took — for that, *"not
+measured"* is the correct word and needs no search. **Calibration:** over-firing
+looks like searching before every *"I don't know"*; under-firing has the
+signature it was written from — the user answering *"bakmıştık"*.
+
 **Two rules in this file have been broken since anyone started counting, and at
 the moment each was broken only the second had a device.** This one: the agent
 asked the user for something the files already held — the section carried
